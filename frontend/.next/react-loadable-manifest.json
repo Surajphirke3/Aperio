@@ -1,1 +1,23 @@
-{}
+{
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_app": {
+    "id": 45139,
+    "files": [
+      "static/chunks/139.8d54880d25bc452f.js"
+    ]
+  },
+  "..\\node_modules\\next\\dist\\client\\index.js -> ../pages/_error": {
+    "id": 31646,
+    "files": [
+      "static/chunks/646.c2c67a3e35c59670.js"
+    ]
+  },
+  "shared\\utils\\api.ts -> @/core/auth/firebase": {
+    "id": 39802,
+    "files": [
+      "static/chunks/bc9e92e6-7ebc58d1690a0ccf.js",
+      "static/chunks/ae6eea6a-1f265f6b8149f5ff.js",
+      "static/chunks/477-e776bb8bfdc24018.js",
+      "static/chunks/802.c108f6b668dcb9a8.js"
+    ]
+  }
+}

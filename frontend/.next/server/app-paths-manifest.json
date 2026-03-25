@@ -1,1 +1,10 @@
-{}
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/page": "app/page.js",
+  "/(app)/batches/[id]/page": "app/(app)/batches/[id]/page.js",
+  "/(app)/chat/page": "app/(app)/chat/page.js",
+  "/(app)/vendors/page": "app/(app)/vendors/page.js",
+  "/(app)/batches/page": "app/(app)/batches/page.js",
+  "/(auth)/login/page": "app/(auth)/login/page.js",
+  "/(app)/dashboard/page": "app/(app)/dashboard/page.js"
+}
