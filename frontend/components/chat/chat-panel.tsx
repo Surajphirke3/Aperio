@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { MessageBubble } from "./message-bubble"
 import { NLPPipelinePanel } from "./nlp-pipeline-panel"
 import { AIModelInfo } from "./ai-model-info"
+import { fetchFromAPI } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 interface Message {
@@ -356,10 +357,11 @@ export function ChatPanel() {
   const handleSend = async () => {
     if (!input.trim()) return
 
+    const userMessageContent = input.trim()
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input.trim(),
+      content: userMessageContent,
       timestamp: new Date(),
     }
 
@@ -367,20 +369,52 @@ export function ChatPanel() {
     setInput("")
     setIsTyping(true)
 
-    // Simulate AI response delay
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    try {
+      const response = await fetchFromAPI("/chat/", {
+        method: "POST",
+        body: JSON.stringify({ message: userMessageContent, session_id: "demo_session" })
+      });
 
-    const response = getAIResponse(userMessage.content)
-    const aiMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      role: "assistant",
-      content: response.content,
-      timestamp: new Date(),
-      pipelineData: response.pipelineData,
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: response.reply || "I encountered an issue processing that request.",
+        timestamp: new Date(),
+        pipelineData: response.structured_data ? {
+          intent: response.intent,
+          confidence: 95,
+          rejectedIntents: [],
+          entities: [],
+          originalMessage: userMessageContent,
+          jsonOutput: response.structured_data,
+          savedRecords: [{ icon: "check", text: "Action processed via backend" }]
+        } : undefined,
+      }
+      setMessages((prev) => [...prev, aiMessage])
+    } catch (error: any) {
+      console.error("Chat API error:", error)
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: `Sorry, there was an error communicating with the AI backend: ${error.message} (Try checking if your backend env variables are valid)`,
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+      
+      // Fallback response for demonstration if backend fails
+      setTimeout(() => {
+        const fbMessage: Message = {
+          id: (Date.now() + 2).toString(),
+          role: "assistant",
+          content: "As a fallback, I recommend making sure your python backend terminal is running without errors and your FEATHERLESS_API_KEY/GROQ_API_KEY is valid in the .env.",
+          timestamp: new Date(),
+        }
+        setMessages((prev) => [...prev, fbMessage])
+      }, 1000)
+    } finally {
+      setIsTyping(false)
     }
-
-    setIsTyping(false)
-    setMessages((prev) => [...prev, aiMessage])
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

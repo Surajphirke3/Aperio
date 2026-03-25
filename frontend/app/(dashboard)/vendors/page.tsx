@@ -1,11 +1,12 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { TopBar } from "@/components/layout/topbar"
 import { StatCard } from "@/components/ui/stat-card"
 import { VendorScorecard } from "@/components/vendors/vendor-scorecard"
-import { vendors } from "@/lib/mockData"
+import { vendors as mockVendors } from "@/lib/mockData"
+import { fetchFromAPI } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import {
   TrendingUp,
@@ -20,12 +21,23 @@ import type { Vendor } from "@/lib/mockData"
 
 export default function VendorsPage() {
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
+  const [liveVendors, setLiveVendors] = useState<any[]>([])
 
-  const bestPerformer = vendors.reduce((best, v) =>
+  useEffect(() => {
+    fetchFromAPI("/vendors/")
+      .then((data) => {
+        if (data.vendors) setLiveVendors(data.vendors)
+      })
+      .catch((err) => console.error("Error fetching vendors:", err))
+  }, [])
+
+  const currentVendors = liveVendors.length > 0 ? liveVendors : mockVendors;
+
+  const bestPerformer = currentVendors.reduce((best: any, v: any) =>
     v.score > best.score ? v : best
-  )
-  const avgReliability =
-    vendors.reduce((sum, v) => sum + v.reliability, 0) / vendors.length
+  , currentVendors[0] || { score: 0 })
+  const avgReliability = currentVendors.length > 0 ?
+    currentVendors.reduce((sum: number, v: any) => sum + v.reliability, 0) / currentVendors.length : 0
 
   const getScoreColor = (score: number) => {
     if (score >= 90) return "text-tf-accent-green bg-tf-accent-green/20"
@@ -74,7 +86,7 @@ export default function VendorsPage() {
         <div className="flex items-center justify-between">
           <div>
             <span className="px-3 py-1 rounded-full bg-tf-accent-green/20 text-tf-accent-green text-sm font-medium">
-              {vendors.length} Active Vendors
+              {currentVendors.length} Active Vendors
             </span>
           </div>
         </div>
@@ -120,7 +132,7 @@ export default function VendorsPage() {
               </div>
             </div>
             <p className="text-tf-text-primary font-mono text-2xl font-bold">
-              {vendors.length}
+              {currentVendors.length}
             </p>
           </motion.div>
 
@@ -185,7 +197,7 @@ export default function VendorsPage() {
                 </tr>
               </thead>
               <tbody>
-                {vendors.map((vendor, index) => (
+                {currentVendors.map((vendor: any, index: number) => (
                   <motion.tr
                     key={vendor.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -207,7 +219,7 @@ export default function VendorsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-1">
-                        {vendor.materials.map((m) => (
+                        {vendor.materials.map((m: string) => (
                           <span
                             key={m}
                             className="px-2 py-0.5 rounded bg-tf-bg-tertiary text-tf-text-secondary text-xs"

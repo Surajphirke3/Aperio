@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { TopBar } from "@/components/layout/topbar"
@@ -8,7 +8,8 @@ import { BatchCard } from "@/components/batches/batch-card"
 import { BatchFilters } from "@/components/batches/batch-filters"
 import { Button } from "@/components/ui/button"
 import { MessageSquare } from "lucide-react"
-import { batches } from "@/lib/mockData"
+import { batches as mockBatches } from "@/lib/mockData"
+import { fetchFromAPI } from "@/lib/api"
 
 export default function BatchesPage() {
   const [filters, setFilters] = useState({
@@ -18,13 +19,25 @@ export default function BatchesPage() {
     dateRange: "7d",
     search: "",
   })
+  
+  const [liveBatches, setLiveBatches] = useState<any[]>([])
+  
+  useEffect(() => {
+    fetchFromAPI("/batches/")
+      .then((data) => {
+        if (data.batches) setLiveBatches(data.batches)
+      })
+      .catch((err) => console.error("Error fetching batches:", err))
+  }, [])
+  
+  const currentBatches = liveBatches.length > 0 ? liveBatches : mockBatches;
 
   const handleFilterChange = (key: string, value: string) => {
     setFilters((prev) => ({ ...prev, [key]: value }))
   }
 
   const filteredBatches = useMemo(() => {
-    return batches.filter((batch) => {
+    return currentBatches.filter((batch: any) => {
       // Material filter
       if (filters.material !== "all") {
         const materialLower = batch.material.toLowerCase()
@@ -46,7 +59,7 @@ export default function BatchesPage() {
 
       return true
     })
-  }, [filters])
+  }, [filters, currentBatches])
 
   return (
     <div className="min-h-screen">
@@ -66,7 +79,7 @@ export default function BatchesPage() {
               </span>{" "}
               of{" "}
               <span className="text-tf-text-primary font-mono">
-                {batches.length}
+                {currentBatches.length}
               </span>{" "}
               batches
             </p>

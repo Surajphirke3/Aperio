@@ -44,6 +44,7 @@ class Settings(BaseSettings):
         env_file=str(BASE_DIR / ".env"),
         case_sensitive=False,
         protected_namespaces=("settings_",),
+        extra="ignore",
     )
 
 

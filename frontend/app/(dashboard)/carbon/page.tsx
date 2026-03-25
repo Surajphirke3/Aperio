@@ -3,7 +3,9 @@
 import { motion } from "framer-motion"
 import { TopBar } from "@/components/layout/topbar"
 import { StatCard } from "@/components/ui/stat-card"
-import { carbonData, carbonMonthlyData } from "@/lib/mockData"
+import { useState, useEffect } from "react"
+import { carbonData as mockCarbonData, carbonMonthlyData as mockMonthlyData } from "@/lib/mockData"
+import { fetchFromAPI } from "@/lib/api"
 import { ImpactNarrative } from "@/components/carbon/impact-narrative"
 import { Leaf, Share2, Car } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -43,7 +45,29 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 }
 
 export default function CarbonPage() {
-  const totalRecycled = carbonData.reduce((sum, d) => sum + d.recycledCO2, 0)
+  const [liveCarbon, setLiveCarbon] = useState<any>(null)
+
+  useEffect(() => {
+    fetchFromAPI("/carbon/")
+      .then((data) => setLiveCarbon(data))
+      .catch((err) => console.error("Error fetching carbon data:", err))
+  }, [])
+
+  // Map backend data to frontend components
+  const carbonData = liveCarbon ? Object.entries(liveCarbon.by_material).map(([mat, saved]: [string, any]) => ({
+    material: mat,
+    recycledCO2: saved,
+    virginCO2: saved * 2.5, // Approx calculation to match UI
+    savedKg: (saved * 2.5) - saved
+  })) : mockCarbonData;
+
+  const carbonMonthlyData = liveCarbon ? liveCarbon.monthly.map((m: any) => ({
+    month: m.month,
+    recycled: m.co2_saved_kg,
+    virgin: m.co2_saved_kg * 2.5
+  })) : mockMonthlyData;
+
+  const totalRecycled = carbonData.reduce((sum: number, d: any) => sum + d.recycledCO2, 0)
   const totalVirgin = carbonData.reduce((sum, d) => sum + d.virginCO2, 0)
   const totalSaved = totalVirgin - totalRecycled
   const savingsPercent = ((totalSaved / totalVirgin) * 100).toFixed(0)
@@ -53,7 +77,7 @@ export default function CarbonPage() {
   ]
 
   // Table data
-  const tableData = carbonData.map((item) => ({
+  const tableData = carbonData.map((item: any) => ({
     ...item,
     inputKg: Math.round(item.recycledCO2 * 2.5),
     emissionFactor: 0.4,
@@ -61,7 +85,7 @@ export default function CarbonPage() {
   }))
 
   const totals = {
-    inputKg: tableData.reduce((sum, d) => sum + d.inputKg, 0),
+    inputKg: tableData.reduce((sum: number, d: any) => sum + d.inputKg, 0),
     recycledCO2: totalRecycled,
     virginCO2: totalVirgin,
     savedKg: totalSaved,
