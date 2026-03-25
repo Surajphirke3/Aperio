@@ -63,7 +63,7 @@ export function ImpactNarrative({
 
           <p className="text-tf-text-secondary leading-relaxed mb-6">
             By using recycled plastic instead of making new plastic,
-            TraceFlow-tracked batches avoided{" "}
+            Aperio-tracked batches avoided{" "}
             <span className="text-tf-accent-green font-bold text-xl">
               {totalSavedKg.toLocaleString()} kg
             </span>{" "}

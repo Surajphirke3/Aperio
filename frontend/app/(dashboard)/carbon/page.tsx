@@ -360,7 +360,7 @@ export default function CarbonPage() {
             </div>
             <div className="flex-1">
               <p className="text-tf-text-primary text-xl leading-relaxed">
-                This month, TraceFlow-tracked batches avoided the equivalent of{" "}
+                This month, Aperio-tracked batches avoided the equivalent of{" "}
                 <span className="text-tf-accent-green font-bold text-2xl">
                   {totalSaved.toLocaleString()} kg CO2
                 </span>{" "}

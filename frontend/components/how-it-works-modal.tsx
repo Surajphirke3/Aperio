@@ -49,7 +49,7 @@ export function HowItWorksModal() {
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-tf-border">
                 <h2 className="text-tf-text-primary font-semibold text-lg">
-                  How TraceFlow Works
+                  How Aperio Works
                 </h2>
                 <button
                   onClick={() => setIsOpen(false)}
@@ -162,7 +162,7 @@ export function HowItWorksModal() {
                       className="space-y-4"
                     >
                       <p className="text-tf-text-secondary text-sm leading-relaxed">
-                        Core data structures that power TraceFlow:
+                        Core data structures that power Aperio:
                       </p>
                       <div className="bg-tf-bg-tertiary rounded-lg p-4 font-mono text-xs overflow-x-auto">
                         <pre className="text-tf-text-secondary">

@@ -90,7 +90,7 @@ export default function LandingPage() {
               <Recycle className="w-5 h-5 text-tf-accent-green" />
             </div>
             <span className="text-tf-text-primary font-semibold text-lg">
-              TraceFlow
+              Aperio
             </span>
           </Link>
 
@@ -397,7 +397,7 @@ export default function LandingPage() {
               Ready to Transform Your Traceability?
             </h2>
             <p className="text-tf-text-secondary text-lg mb-8 max-w-xl mx-auto">
-              Join industry leaders who trust TraceFlow for end-to-end material
+              Join industry leaders who trust Aperio for end-to-end material
               tracking and sustainability reporting.
             </p>
             <Link href="/dashboard">
@@ -419,7 +419,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-3">
             <Recycle className="w-5 h-5 text-tf-accent-green" />
             <span className="text-tf-text-secondary">
-              TraceFlow - Hackniche 4.0 Demo
+              Aperio - Hackniche 4.0 Demo
             </span>
           </div>
           <p className="text-tf-text-muted text-sm">

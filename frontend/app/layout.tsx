@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "TraceFlow | Intelligent Traceability Management",
+  title: "Aperio | Intelligent Traceability Management",
   description:
     "Track every gram. Trust every chain. Intelligent traceability for recycled plastic materials — from collection to dispatch.",
   keywords: [

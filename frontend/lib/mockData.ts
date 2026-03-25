@@ -1,4 +1,4 @@
-// Mock data for TraceFlow application
+// Mock data for Aperio application
 
 export interface Batch {
   id: string

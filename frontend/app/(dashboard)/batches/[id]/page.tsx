@@ -93,7 +93,7 @@ export default function BatchDetailPage({ params }: BatchDetailPageProps) {
       icon: "truck" as const,
     },
     {
-      name: "TraceFlow Facility",
+      name: "Aperio Facility",
       role: "Processing site",
       timestamp: "Mar 18, 14:00",
       verification: "Shredder #3",

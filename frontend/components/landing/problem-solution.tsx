@@ -69,7 +69,7 @@ export function ProblemSolutionSection() {
           </h2>
           <p className="text-tf-text-secondary text-lg max-w-2xl mx-auto">
             Current traceability systems are rigid, fragmented, and hard to use.
-            TraceFlow transforms every pain point into a streamlined solution.
+            Aperio transforms every pain point into a streamlined solution.
           </p>
         </motion.div>
 

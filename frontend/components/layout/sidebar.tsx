@@ -34,7 +34,7 @@ export function Sidebar() {
             <Recycle className="w-6 h-6 text-tf-accent-green" />
           </div>
           <div>
-            <span className="text-tf-text-primary font-semibold text-lg">TraceFlow</span>
+            <span className="text-tf-text-primary font-semibold text-lg">Aperio</span>
             <span className="text-tf-accent-green font-mono text-xs ml-2">v2.0</span>
           </div>
         </Link>
