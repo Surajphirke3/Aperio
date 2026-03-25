@@ -22,7 +22,7 @@ class BatchLifecycleORM(Base):
     __tablename__ = "batch_lifecycle"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    batch_id = Column(String, ForeignKey("batches.id"), nullable=False)
+    batch_id = Column(String, ForeignKey("batches.id"), nullable=False, index=True)
     stage = Column(String, nullable=False)
     quantity_kg = Column(Float, nullable=False)
     loss_kg = Column(Float, default=0.0)
@@ -36,7 +36,7 @@ class EntryORM(Base):
     __tablename__ = "entries"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
-    batch_id = Column(String, ForeignKey("batches.id"), nullable=True)
+    batch_id = Column(String, ForeignKey("batches.id"), nullable=True, index=True)
     intent = Column(String, nullable=False)
     material = Column(String, nullable=False)
     quantity_kg = Column(Float, nullable=False)

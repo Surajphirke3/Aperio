@@ -1,4 +1,5 @@
 from typing import Any, Optional
+import re
 
 
 def validate_positive_number(value: Any, field_name: str = "value") -> float:
@@ -26,3 +27,34 @@ def validate_enum_value(value: str, allowed: list[str], field_name: str = "value
     if normalized not in allowed_upper:
         raise ValueError(f"{field_name} must be one of {allowed}, got: {value}")
     return allowed[allowed_upper.index(normalized)]
+
+
+def sanitize_input(text: str, max_length: int = 1000) -> str:
+    """Sanitize user input for safe processing.
+    
+    - Strips control characters
+    - Limits length
+    - Removes potential prompt injection patterns
+    """
+    if not isinstance(text, str):
+        raise ValueError("Input must be a string")
+    
+    # Limit length
+    text = text[:max_length]
+    
+    # Remove control characters except newlines and tabs
+    text = "".join(char for char in text if char == "\n" or char == "\t" or (ord(char) >= 32 and ord(char) <= 126) or ord(char) > 127)
+    
+    # Remove common prompt injection patterns
+    dangerous_patterns = [
+        r"ignore previous instructions",
+        r"ignore all prior",
+        r"system prompt",
+        r"you are now",
+        r"DAN mode",
+        r"developer mode",
+    ]
+    for pattern in dangerous_patterns:
+        text = re.sub(pattern, "[REMOVED]", text, flags=re.IGNORECASE)
+    
+    return text.strip()

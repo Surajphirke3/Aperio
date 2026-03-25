@@ -2,11 +2,17 @@ import httpx
 from .base import AIAdapter, AIResponse
 
 
+class AIAdapterError(Exception):
+    """Raised when AI adapter fails to complete a request."""
+    pass
+
+
 class OllamaAdapter(AIAdapter):
     """Local Ollama adapter for development/offline use."""
 
-    def __init__(self, base_url: str = "http://localhost:11434"):
+    def __init__(self, base_url: str = "http://localhost:11434", model: str = "llama3.2"):
         self.base_url = base_url
+        self.model = model
 
     async def complete(
         self,
@@ -20,7 +26,7 @@ class OllamaAdapter(AIAdapter):
                 resp = await client.post(
                     f"{self.base_url}/api/chat",
                     json={
-                        "model": "llama3.2",
+                        "model": self.model,
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": prompt},
@@ -37,11 +43,17 @@ class OllamaAdapter(AIAdapter):
                 data = resp.json()
                 return AIResponse(
                     content=data["message"]["content"],
-                    model=data.get("model", "ollama"),
+                    model=data.get("model", self.model),
                     tokens_used=data.get("eval_count", 0),
                 )
+            except httpx.TimeoutException as e:
+                raise AIAdapterError(f"Ollama request timed out after 60s: {e}") from e
+            except httpx.ConnectError as e:
+                raise AIAdapterError(f"Cannot connect to Ollama at {self.base_url}: {e}") from e
             except httpx.HTTPError as e:
-                raise ConnectionError(f"Ollama not reachable: {e}")
+                raise AIAdapterError(f"Ollama HTTP error: {e}") from e
+            except (KeyError, IndexError) as e:
+                raise AIAdapterError(f"Invalid response format from Ollama: {e}") from e
 
     async def health_check(self) -> bool:
         async with httpx.AsyncClient() as client:

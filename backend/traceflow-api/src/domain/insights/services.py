@@ -1,5 +1,7 @@
 from .models import Insight, BatchSummary
 from src.shared.types.protocols import AIAdapterProtocol, BatchRepositoryProtocol
+from src.domain.batches.exceptions import BatchNotFoundError
+from src.infrastructure.adapters.ai.prompts.insight_prompt import INSIGHT_SYSTEM_PROMPT
 
 
 class InsightService:
@@ -16,7 +18,8 @@ class InsightService:
     async def generate_batch_insight(self, batch_id: str) -> Insight:
         """Generate an AI narrative insight for a specific batch."""
         batch = await self.batch_repo.get_batch(batch_id)
-        from src.infrastructure.adapters.ai.prompts.insight_prompt import INSIGHT_SYSTEM_PROMPT
+        if batch is None:
+            raise BatchNotFoundError(f"Batch {batch_id} not found")
 
         prompt = f"Generate insight for batch: {batch}"
         response = await self.ai.complete(prompt, INSIGHT_SYSTEM_PROMPT)
@@ -31,13 +34,15 @@ class InsightService:
     async def generate_summary(self, batch_id: str) -> BatchSummary:
         """Generate a statistical summary for a batch."""
         batch = await self.batch_repo.get_batch(batch_id)
-        # Build summary from batch data
+        if batch is None:
+            raise BatchNotFoundError(f"Batch {batch_id} not found")
+        # Build summary from batch data (batch is a dict from repository)
         return BatchSummary(
             batch_id=batch_id,
-            material=getattr(batch, "material", "unknown"),
-            vendor=getattr(batch, "vendor", "unknown"),
-            initial_kg=getattr(batch, "initial_quantity_kg", 0),
-            final_kg=getattr(batch, "current_quantity_kg", 0),
-            total_loss_pct=getattr(batch, "total_loss_pct", 0),
-            stages_completed=len(getattr(batch, "lifecycle", [])),
+            material=batch.get("material", "unknown"),
+            vendor=batch.get("vendor", "unknown"),
+            initial_kg=batch.get("initial_quantity_kg", 0),
+            final_kg=batch.get("current_quantity_kg", 0),
+            total_loss_pct=batch.get("total_loss_pct", 0),
+            stages_completed=len(batch.get("lifecycle", [])),
         )

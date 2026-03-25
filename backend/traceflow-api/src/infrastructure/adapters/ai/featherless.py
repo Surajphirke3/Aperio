@@ -3,6 +3,14 @@ from .base import AIAdapter, AIResponse
 from src.config.settings import settings
 
 
+from src.domain.chat.exceptions import ChatDomainError
+
+
+class AIAdapterError(ChatDomainError):
+    """Raised when AI adapter fails to complete a request."""
+    pass
+
+
 class FeatherlessAdapter(AIAdapter):
     def __init__(self, api_key: str, primary_model: str, fallback_model: str):
         self.api_key = api_key
@@ -18,10 +26,11 @@ class FeatherlessAdapter(AIAdapter):
         temperature: float = 0.1,
     ) -> AIResponse:
         async with httpx.AsyncClient() as client:
-            response = await self._call(
-                client, prompt, system_prompt, self.primary_model, max_tokens, temperature
-            )
-            if response is None:
+            try:
+                response = await self._call(
+                    client, prompt, system_prompt, self.primary_model, max_tokens, temperature
+                )
+            except AIAdapterError:
                 # Automatic fallback to secondary model
                 response = await self._call(
                     client, prompt, system_prompt, self.fallback_model, max_tokens, temperature
@@ -54,8 +63,10 @@ class FeatherlessAdapter(AIAdapter):
                 model=model,
                 tokens_used=data.get("usage", {}).get("total_tokens", 0),
             )
-        except httpx.HTTPError:
-            return None
+        except httpx.HTTPError as e:
+            raise AIAdapterError(f"Featherless API error: {e}") from e
+        except (KeyError, IndexError) as e:
+            raise AIAdapterError(f"Invalid response format from Featherless API: {e}") from e
 
     async def health_check(self) -> bool:
         async with httpx.AsyncClient() as client:

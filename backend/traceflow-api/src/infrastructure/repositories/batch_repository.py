@@ -19,13 +19,13 @@ class BatchRepository:
             "vendor": entry.vendor,
         }
 
-    async def get_batch(self, batch_id: str) -> dict:
+    async def get_batch(self, batch_id: str) -> dict | None:
         """Retrieve a batch by ID."""
         # TODO: Implement with ORM models
         return {"id": batch_id}
 
-    async def list_batches(self, **filters) -> list[dict]:
-        """List batches with optional filters."""
+    async def list_batches(self, skip: int = 0, limit: int = 100) -> list[dict]:
+        """List batches with pagination."""
         # TODO: Implement with ORM models
         return []
 

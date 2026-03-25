@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, Session, DeclarativeBase
+from typing import Generator
 from src.config.settings import settings
 
 
@@ -16,10 +17,14 @@ class Base(DeclarativeBase):
     pass
 
 
-def get_db_session() -> Session:
-    """FastAPI dependency — yields a DB session per request."""
+def get_db_session() -> Generator[Session, None, None]:
+    """FastAPI dependency — yields a DB session per request with transaction management."""
     db = SessionLocal()
     try:
         yield db
+        db.commit()
+    except Exception:
+        db.rollback()
+        raise
     finally:
         db.close()

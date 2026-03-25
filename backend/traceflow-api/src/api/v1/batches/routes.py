@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from .schemas import BatchResponse, BatchListResponse
 from src.api.dependencies import get_batch_repository
 from src.infrastructure.repositories.batch_repository import BatchRepository
@@ -8,10 +8,12 @@ router = APIRouter(prefix="/batches", tags=["batches"])
 
 @router.get("/", response_model=BatchListResponse)
 async def list_batches(
+    skip: int = Query(0, ge=0, description="Number of records to skip"),
+    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
     batch_repo: BatchRepository = Depends(get_batch_repository),
 ) -> BatchListResponse:
-    """List all batches with optional filters."""
-    batches = await batch_repo.list_batches()
+    """List all batches with pagination."""
+    batches = await batch_repo.list_batches(skip=skip, limit=limit)
     return BatchListResponse(batches=batches, total=len(batches))
 
 

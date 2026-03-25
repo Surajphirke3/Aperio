@@ -14,7 +14,10 @@ def get_ai_adapter() -> AIAdapter:
     global _adapter_instance
     if _adapter_instance is None:
         if settings.ai_provider == AIProvider.OLLAMA:
-            _adapter_instance = OllamaAdapter(base_url=settings.ollama_base_url)
+            _adapter_instance = OllamaAdapter(
+                base_url=settings.ollama_base_url,
+                model=settings.ollama_model
+            )
         else:
             _adapter_instance = FeatherlessAdapter(
                 api_key=settings.featherless_api_key,

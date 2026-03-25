@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
@@ -8,4 +8,4 @@ class InsightResponse(BaseModel):
     narrative: str
     batch_id: Optional[str] = None
     category: str = "general"
-    generated_at: datetime = None
+    generated_at: datetime = Field(default_factory=datetime.utcnow)
