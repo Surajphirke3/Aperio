@@ -1,12 +1,26 @@
-import { NextResponse } from 'next/server';
-import { getDashboardStats } from '@/infrastructure/db/queries';
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET() {
+const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:8000';
+
+export async function GET(req: NextRequest) {
   try {
-    const stats = await getDashboardStats();
-    return NextResponse.json({ data: stats });
+    const url = new URL(req.url);
+    const endpoint = url.searchParams.get('endpoint') ?? 'dashboard'; // 'dashboard' or 'sankey'
+
+    const response = await fetch(`${BACKEND_URL}/api/v1/stats/${endpoint}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Backend error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json({ data });
   } catch (error) {
     console.error('Stats API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch stats from backend' }, { status: 500 });
   }
 }
