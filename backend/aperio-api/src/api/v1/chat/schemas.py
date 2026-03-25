@@ -1,15 +1,21 @@
-from pydantic import BaseModel, Field
-from typing import Optional, Literal, Any
-from datetime import datetime
+from pydantic import BaseModel
+from typing import Optional
 
 
 class ChatRequest(BaseModel):
-    message: str = Field(..., min_length=1, max_length=1000)
+    message: str
+    session_id: Optional[str] = None
 
 
 class ChatResponse(BaseModel):
-    success: bool
+    session_id: str
     reply: str
-    action: Literal["stored", "queried", "error"]
-    structured_data: Optional[Any] = None
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    intent: str
+    structured_data: Optional[dict] = None
+    success: bool = True
+
+
+class SessionListResponse(BaseModel):
+    session_id: str
+    messages: list[dict]
+    count: int

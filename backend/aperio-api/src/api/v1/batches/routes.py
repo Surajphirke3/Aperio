@@ -1,29 +1,28 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from .schemas import BatchResponse, BatchListResponse
-from src.api.dependencies import get_batch_repository
-from src.infrastructure.repositories.batch_repository import BatchRepository
+from fastapi import APIRouter, Depends, HTTPException
+from src.domain.batches.services import BatchService
+from src.api.dependencies import verify_token
 
 router = APIRouter(prefix="/batches", tags=["batches"])
 
-
-@router.get("/", response_model=BatchListResponse)
-async def list_batches(
-    skip: int = Query(0, ge=0, description="Number of records to skip"),
-    limit: int = Query(100, ge=1, le=1000, description="Maximum number of records to return"),
-    batch_repo: BatchRepository = Depends(get_batch_repository),
-) -> BatchListResponse:
-    """List all batches with pagination."""
-    batches = await batch_repo.list_batches(skip=skip, limit=limit)
-    return BatchListResponse(batches=batches, total=len(batches))
+_service = BatchService()
 
 
-@router.get("/{batch_id}", response_model=BatchResponse)
+@router.get("/")
+async def get_batches(
+    limit: int = 50,
+    user_id: str = Depends(verify_token),
+):
+    batches = await _service.get_batches(limit=limit)
+    return {"batches": batches, "count": len(batches)}
+
+
+@router.get("/{batch_id}")
 async def get_batch(
     batch_id: str,
-    batch_repo: BatchRepository = Depends(get_batch_repository),
-) -> BatchResponse:
-    """Get a specific batch by ID."""
-    batch = await batch_repo.get_batch(batch_id)
+    user_id: str = Depends(verify_token),
+):
+    batch = await _service.get_batch(batch_id)
     if not batch:
-        raise HTTPException(status_code=404, detail=f"Batch {batch_id} not found")
-    return BatchResponse(**batch)
+        raise HTTPException(status_code=404, detail=f"Batch not found: {batch_id}")
+    anomalies = _service.detect_anomalies(batch)
+    return {**batch, "anomalies": anomalies}

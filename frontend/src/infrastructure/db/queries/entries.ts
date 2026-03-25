@@ -1,7 +1,16 @@
 import { prisma } from '../prisma';
 import type { ParsedIntent } from '@/shared/types';
 
-export async function createMaterialEntry(entities: ParsedIntent) {
+interface Batch {
+  id: string;
+  materialType: string;
+  quantity_kg: number;
+  vendor?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+export async function createMaterialEntry(entities: ParsedIntent): Promise<Batch> {
   const batch = await prisma.batch.create({
     data: {
       materialType: entities.material,
@@ -20,5 +29,5 @@ export async function createMaterialEntry(entities: ParsedIntent) {
     },
   } as never);
 
-  return batch;
+  return batch as Batch;
 }

@@ -1,11 +1,9 @@
-from pydantic import BaseModel, Field
-from typing import Optional
-from datetime import datetime
+from pydantic import BaseModel
 
 
 class InsightResponse(BaseModel):
-    title: str
-    narrative: str
-    batch_id: Optional[str] = None
-    category: str = "general"
-    generated_at: datetime = Field(default_factory=datetime.utcnow)
+    batch_id: str
+    summary: str
+    anomalies: list[str] = []
+    recommendations: list[str] = []
+    risk_level: str = "low"

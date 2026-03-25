@@ -1,5 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { mockDashboardStats, mockBatches } from '@/infrastructure/mock';
+import { featherlessClient } from '@/infrastructure/ai/featherless/client';
+import { parseIntent } from '@/infrastructure/ai/prompts/intentPrompt';
+import { extractEntities } from '@/infrastructure/ai/prompts/entityPrompt';
+import { buildQueryFilters } from '@/infrastructure/ai/prompts/queryPrompt';
+import { getAIResponse } from '@/infrastructure/ai/provider';
+import { SYSTEM_PROMPT } from '@/infrastructure/ai/prompts';
+import { prisma } from '@/infrastructure/db/prisma';
+import { findVendorByName, createMaterialEntry } from '@/infrastructure/db/queries';
+import { runStatsQuery } from '@/infrastructure/db/queries/stats';
+import type { ParsedIntent } from '@/shared/types';
+
+// Anomaly check types and functions
+interface AnomalyResult {
+  flagged: boolean;
+  message: string;
+  severity: 'warning' | 'critical';
+}
+
+function generateBatchCode(): string {
+  const prefix = 'BATCH';
+  const timestamp = Date.now().toString(36).toUpperCase();
+  const random = Math.random().toString(36).substring(2, 5).toUpperCase();
+  return `${prefix}-${timestamp}-${random}`;
+}
+
+function checkAnomaly(stage: string, inputKg: number, outputKg: number): AnomalyResult | null {
+  const lossKg = inputKg - outputKg;
+  const lossPct = inputKg > 0 ? (lossKg / inputKg) * 100 : 0;
+  
+  const LOSS_WARN = 5;
+  const LOSS_CRIT = 15;
+  
+  if (lossPct >= LOSS_CRIT) {
+    return {
+      flagged: true,
+      message: `Critical loss detected at ${stage}: ${lossPct.toFixed(1)}% loss (${lossKg.toFixed(1)}kg)`,
+      severity: 'critical',
+    };
+  } else if (lossPct >= LOSS_WARN) {
+    return {
+      flagged: true,
+      message: `Warning: High loss at ${stage}: ${lossPct.toFixed(1)}% loss (${lossKg.toFixed(1)}kg)`,
+      severity: 'warning',
+    };
+  }
+  return null;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,7 +69,7 @@ export async function POST(req: NextRequest) {
       const entities: ParsedIntent = await extractEntities(featherlessClient, message, intentType);
 
       // Find or create vendor
-      let vendorName = entities.vendor;
+      const vendorName = entities.vendor;
       if (vendorName) {
         const existingVendor = await findVendorByName(vendorName);
         if (!existingVendor) {

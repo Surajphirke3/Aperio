@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { mockBatches } from '@/infrastructure/mock';
 
+const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:8000';
+
 export async function GET() {
   try {
     return NextResponse.json({ 

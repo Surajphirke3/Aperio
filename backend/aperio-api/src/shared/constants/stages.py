@@ -2,10 +2,8 @@ from enum import Enum
 
 
 class ProcessStage(str, Enum):
-    PURCHASE = "purchase"
+    COLLECTION = "collection"
     SORTING = "sorting"
-    WASHING = "washing"
-    SHREDDING = "shredding"
-    EXTRUSION = "extrusion"
-    PELLETIZING = "pelletizing"
+    PROCESSING = "processing"
+    OUTPUT = "output"
     DISPATCH = "dispatch"

@@ -81,6 +81,12 @@ const features = [
 
 const materialIcons = ['🥤', '🧴', '🛍️', '📦', '♻️'];
 
+// Pre-computed random positions for particles to avoid impure function calls during render
+const particlePositions = [...Array(20)].map(() => ({
+  left: `${Math.random() * 100}%`,
+  top: `${Math.random() * 100}%`,
+}));
+
 export default function LandingPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
@@ -89,12 +95,22 @@ export default function LandingPage() {
   const scale = useTransform(scrollYProgress, [0, 0.3], [1, 0.9]);
 
   useEffect(() => {
-    setMounted(true);
+    // Defer setMounted to avoid synchronous setState during render
+    const timeoutId = setTimeout(() => setMounted(true), 0);
+    
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
+    if (typeof window !== 'undefined') {
+      window.addEventListener('mousemove', handleMouseMove);
+    }
+    
+    return () => {
+      clearTimeout(timeoutId);
+      if (typeof window !== 'undefined') {
+        window.removeEventListener('mousemove', handleMouseMove);
+      }
+    };
   }, []);
 
   return (
@@ -116,8 +132,8 @@ export default function LandingPage() {
               animate="animate"
               className="absolute w-2 h-2 rounded-full bg-emerald-400/30"
               style={{
-                left: `${Math.random() * 100}%`,
-                top: `${Math.random() * 100}%`,
+                left: particlePositions[i].left,
+                top: particlePositions[i].top,
               }}
             />
           ))}
