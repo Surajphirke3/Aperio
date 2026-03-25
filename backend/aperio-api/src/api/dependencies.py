@@ -27,3 +27,9 @@ def get_insight_service(
 ) -> InsightService:
     ai_adapter = get_ai_adapter()
     return InsightService(ai_adapter=ai_adapter, batch_repo=batch_repo)
+
+
+def get_vendor_repository(
+    db: Session = Depends(get_db_session),
+) -> VendorRepository:
+    return VendorRepository(db)

@@ -3,76 +3,117 @@ import { mockDashboardStats, mockBatches } from '@/infrastructure/mock';
 
 export async function POST(req: NextRequest) {
   try {
-    const { message } = await req.json();
+    const body = await req.json();
+    const message: unknown = body.message;
+    const conversationId: string | undefined = body.conversationId;
+
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Message is required' }, { status: 400 });
     }
 
-    const lowerMsg = message.toLowerCase();
-    let reply = '';
-    let structuredData = undefined;
-    let action: 'stored' | 'queried' | 'error' = 'queried';
+    // Step 1: Classify intent
+    const intentResult = await parseIntent(featherlessClient, message);
+    const intentType = intentResult.type;
 
-    if (lowerMsg.includes('how much') || lowerMsg.includes('total') || lowerMsg.includes('quantity')) {
-      if (lowerMsg.includes('input') || lowerMsg.includes('received')) {
-        reply = `📊 Total input this period: ${mockDashboardStats.totalInput} kg`;
-      } else if (lowerMsg.includes('output') || lowerMsg.includes('dispatch')) {
-        reply = `📊 Total output/dispatched: ${mockDashboardStats.totalOutput} kg`;
-      } else if (lowerMsg.includes('loss')) {
-        reply = `📊 Total loss: ${mockDashboardStats.totalLoss} kg (${mockDashboardStats.lossPct.toFixed(1)}%)`;
-      } else {
-        reply = `📊 Total input: ${mockDashboardStats.totalInput} kg, Output: ${mockDashboardStats.totalOutput} kg, Loss: ${mockDashboardStats.totalLoss} kg`;
+    const isDataEntry = ['purchase', 'processing', 'dispatch'].includes(intentType);
+    const isQuery = intentType === 'query' || intentType === 'report';
+
+    // Step 2: Handle data_entry
+    if (isDataEntry) {
+      const entities: ParsedIntent = await extractEntities(featherlessClient, message, intentType);
+
+      // Find or create vendor
+      let vendorName = entities.vendor;
+      if (vendorName) {
+        const existingVendor = await findVendorByName(vendorName);
+        if (!existingVendor) {
+          await prisma.vendor.create({
+            data: {
+              name: vendorName,
+              materialTypes: entities.material ? [entities.material] : [],
+              totalSupplied_kg: entities.quantity_kg ?? 0,
+            },
+          });
+        } else {
+          await prisma.vendor.update({
+            where: { name: vendorName },
+            data: {
+              totalSupplied_kg: { increment: entities.quantity_kg ?? 0 },
+              lastDelivery: new Date(),
+              materialTypes: existingVendor.materialTypes.includes(entities.material)
+                ? existingVendor.materialTypes
+                : [...existingVendor.materialTypes, entities.material],
+            },
+          });
+        }
       }
-    } else if (lowerMsg.includes('batch')) {
-      reply = `📦 You have ${mockDashboardStats.batchCount} batches in the system.\n\n${mockBatches.map(b => `• ${b.id}: ${b.quantity_kg}kg ${b.materialType} from ${b.vendor}`).join('\n')}`;
-    } else if (lowerMsg.includes('vendor')) {
-      reply = `🏭 You have ${mockDashboardStats.vendorCount} active vendors.`;
-    } else if (lowerMsg.includes('material')) {
-      reply = `🧪 Material breakdown:\n${mockDashboardStats.materialBreakdown.map(m => `• ${m.material}: ${m.quantity_kg} kg`).join('\n')}`;
-    } else if (lowerMsg.includes('purchased') || lowerMsg.includes('received') || lowerMsg.includes('bought')) {
-      const match = message.match(/(\d+)\s*(kg|tons?)?\s*(\w+)/i);
-      if (match) {
-        const qty = parseInt(match[1]) || 0;
-        const material = match[3] || 'PET';
-        structuredData = {
-          intent: 'purchase',
-          material: material.toUpperCase(),
-          quantity_kg: match[2]?.toLowerCase().includes('ton') ? qty * 1000 : qty,
-          date: new Date().toISOString(),
-        };
-        action = 'stored';
-        reply = `✅ Logged: Purchased ${qty} ${match[2] || 'kg'} of ${material.toUpperCase()}`;
-      } else {
-        reply = 'I can help log that. Please provide: quantity (e.g., "300 kg") and material type (e.g., PET, HDPE)';
+
+      // Create batch + stage in DB
+      const batch = await createMaterialEntry(entities);
+      const batchCode = generateBatchCode();
+
+      // Check for anomalies
+      let anomaly: AnomalyResult | null = null;
+      if (entities.stage && entities.quantity_kg) {
+        const outputKg = entities.quantity_kg - (entities.loss_kg ?? 0);
+        anomaly = checkAnomaly(entities.stage, entities.quantity_kg, outputKg);
       }
-    } else if (lowerMsg.includes('dispatch') || lowerMsg.includes('sent')) {
-      const match = message.match(/(\d+)\s*(kg|tons?)?\s*(\w+)/i);
-      if (match) {
-        const qty = parseInt(match[1]) || 0;
-        const material = match[3] || 'PET';
-        structuredData = {
-          intent: 'dispatch',
-          material: material.toUpperCase(),
-          quantity_kg: match[2]?.toLowerCase().includes('ton') ? qty * 1000 : qty,
-          date: new Date().toISOString(),
-        };
-        action = 'stored';
-        reply = `✅ Logged: Dispatched ${qty} ${match[2] || 'kg'} of ${material.toUpperCase()}`;
-      } else {
-        reply = 'I can help log that dispatch. Please provide: quantity and material type';
-      }
-    } else {
-      reply = `🤖 I'm your recycling assistant. You can ask me things like:\n• "How much was received this month?"\n• "What is the total loss?"\n• "Show me batch details"\n• "Log: purchased 300 kg PET from Vendor A"`;
+
+      const responseMsg = anomaly
+        ? `\u26a0\ufe0f Logged with alert! Batch ${batchCode}: ${entities.quantity_kg}kg ${entities.material} from ${vendorName ?? 'unknown'}. ${anomaly.message}`
+        : `\u2705 Logged! Batch ${batchCode}: ${entities.quantity_kg}kg ${entities.material} from ${vendorName ?? 'unknown'}`;
+
+      return NextResponse.json({
+        success: true,
+        reply: responseMsg,
+        intent: 'data_entry',
+        entry: entities,
+        batchId: batch.id,
+        batchCode,
+        anomaly: anomaly ?? undefined,
+        conversationId: conversationId ?? batch.id,
+        action: 'stored' as const,
+        structuredData: entities,
+      });
     }
+
+    // Step 3: Handle query
+    if (isQuery) {
+      const filters = await buildQueryFilters(featherlessClient, message);
+      const stats = await runStatsQuery(filters);
+
+      // Get AI to format the answer naturally
+      const aiResponse = await getAIResponse([
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user', content: `Answer this question using this data: ${JSON.stringify(stats)}\n\nQuestion: ${message}` },
+      ]);
+
+      return NextResponse.json({
+        success: true,
+        reply: aiResponse.content,
+        intent: 'query',
+        data: stats,
+        conversationId: conversationId ?? crypto.randomUUID(),
+        action: 'queried' as const,
+      });
+    }
+
+    // Step 4: General conversation
+    const aiResponse = await getAIResponse([
+      { role: 'system', content: SYSTEM_PROMPT },
+      { role: 'user', content: message },
+    ]);
 
     return NextResponse.json({
       success: true,
-      reply,
-      structuredData,
-      action,
+      reply: aiResponse.content,
+      intent: 'general',
+      conversationId: conversationId ?? crypto.randomUUID(),
+      action: 'queried' as const,
     });
   } catch (error) {
     console.error('Chat API error:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    const errMsg = error instanceof Error ? error.message : 'Internal server error';
+    return NextResponse.json({ error: errMsg }, { status: 500 });
   }
 }

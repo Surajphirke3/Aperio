@@ -1,66 +1,75 @@
 'use client';
 
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from 'recharts';
+import {
+  PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer,
+} from 'recharts';
+import { MATERIAL_COLORS } from '../utils/chartColors';
 
 interface MaterialPieChartProps {
   data: { material: string; quantity_kg: number }[];
 }
 
-const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444', '#06b6d4'];
+const FALLBACK_COLORS = ['#2563eb', '#7c3aed', '#16a34a', '#d97706', '#dc2626', '#6b7280'];
 
-export function MaterialPieChart({ data }: MaterialPieChartProps) {
-  const total = data.reduce((sum, item) => sum + item.quantity_kg, 0);
-  
-  const chartData = data.map((item) => ({
-    name: item.material,
-    value: item.quantity_kg,
-    percentage: Math.round((item.quantity_kg / total) * 100),
-  }));
-
+function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: { material: string; quantity_kg: number; percent: number } }> }) {
+  if (!active || !payload?.[0]) return null;
+  const d = payload[0].payload;
   return (
-    <div className="rounded-xl border bg-white p-6 shadow-sm">
-      <h3 className="text-sm font-semibold text-gray-700 mb-4">Material Distribution</h3>
-      <div className="h-64">
-        <ResponsiveContainer width="100%" height="100%">
-          <PieChart>
-            <Pie
-              data={chartData}
-              cx="50%"
-              cy="50%"
-              innerRadius={50}
-              outerRadius={80}
-              paddingAngle={3}
-              dataKey="value"
-              label={({ name, payload }) => `${name}: ${payload.percentage}%`}
-              labelLine={false}
-            >
-              {chartData.map((_, index) => (
-                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-              ))}
-            </Pie>
-            <Tooltip
-              formatter={(value) => [`${Number(value)} kg`, '']}
-              contentStyle={{
-                backgroundColor: '#1f2937',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#fff',
-              }}
-            />
-          </PieChart>
-        </ResponsiveContainer>
-      </div>
-      <div className="flex flex-wrap gap-3 mt-4 justify-center">
-        {chartData.map((item, idx) => (
-          <div key={item.name} className="flex items-center gap-2 text-xs">
-            <div
-              className="w-3 h-3 rounded-full"
-              style={{ backgroundColor: COLORS[idx % COLORS.length] }}
-            />
-            <span className="text-gray-600">{item.name}</span>
-          </div>
-        ))}
-      </div>
+    <div className="bg-white border rounded-lg shadow-lg p-3 text-xs">
+      <p className="font-semibold text-gray-700">{d.material}</p>
+      <p>{d.quantity_kg.toLocaleString()} kg ({(d.percent * 100).toFixed(1)}%)</p>
     </div>
   );
 }
+
+export function MaterialPieChart({ data }: MaterialPieChartProps) {
+  if (!data.length) {
+    return (
+      <div className="rounded-xl border bg-white p-6">
+        <h3 className="text-sm font-semibold text-gray-700 mb-4">Material Distribution</h3>
+        <div className="h-64 flex items-center justify-center text-gray-400 text-sm">No data available</div>
+      </div>
+    );
+  }
+
+  const total = data.reduce((s, d) => s + d.quantity_kg, 0);
+  const chartData = data.map((d) => ({ ...d, percent: total > 0 ? d.quantity_kg / total : 0 }));
+
+  return (
+    <div className="rounded-xl border bg-white p-6">
+      <h3 className="text-sm font-semibold text-gray-700 mb-4">Material Distribution</h3>
+      <ResponsiveContainer width="100%" height={280}>
+        <PieChart>
+          <Pie
+            data={chartData}
+            dataKey="quantity_kg"
+            nameKey="material"
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={100}
+            paddingAngle={2}
+            label={((props: { material?: string; percent?: number }) =>
+              `${props.material ?? ''} ${((props.percent ?? 0) * 100).toFixed(0)}%`
+            ) as unknown as boolean}
+            labelLine={{ strokeWidth: 1 }}
+          >
+            {chartData.map((entry, index) => (
+              <Cell
+                key={entry.material}
+                fill={MATERIAL_COLORS[entry.material] ?? FALLBACK_COLORS[index % FALLBACK_COLORS.length]}
+              />
+            ))}
+          </Pie>
+          <Tooltip content={<CustomTooltip />} />
+          <Legend wrapperStyle={{ fontSize: 12 }} />
+          <text x="50%" y="50%" textAnchor="middle" dominantBaseline="central" className="fill-gray-600 text-sm font-semibold">
+            {total.toLocaleString()} kg
+          </text>
+        </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+export default MaterialPieChart;

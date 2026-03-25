@@ -12,6 +12,39 @@ interface SankeyDiagramProps {
   data: SankeyData;
 }
 
+interface SNodeExtra {
+  id: string;
+  name: string;
+  value: number;
+}
+
+interface SLinkExtra {
+  source: string;
+  target: string;
+  value: number;
+}
+
+type SNode = D3SankeyNode<SNodeExtra, SLinkExtra>;
+type SLink = D3SankeyLink<SNodeExtra, SLinkExtra>;
+
+const LOSS_COLOR = '#ef4444';
+const LOSS_LINK_COLOR = '#f9731680';
+const STAGE_COLORS = ['#22c55e', '#16a34a', '#14b8a6', '#0d9488', '#0891b2', '#0284c7', '#3b82f6'];
+
+function isLossNode(id: string): boolean {
+  return id.endsWith('_loss');
+}
+
+function nodeColor(id: string, index: number): string {
+  if (isLossNode(id)) return LOSS_COLOR;
+  return STAGE_COLORS[index % STAGE_COLORS.length];
+}
+
+function linkColor(sourceId: string, targetId: string): string {
+  if (isLossNode(targetId as string)) return LOSS_LINK_COLOR;
+  return '#22c55e40';
+}
+
 const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
 
 export function SankeyDiagram({ data }: SankeyDiagramProps) {
@@ -72,3 +105,5 @@ export function SankeyDiagram({ data }: SankeyDiagramProps) {
     </div>
   );
 }
+
+export default SankeyDiagram;
