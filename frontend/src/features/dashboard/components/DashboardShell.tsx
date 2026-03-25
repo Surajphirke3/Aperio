@@ -2,39 +2,35 @@
 
 import { useDashboardStats } from '../hooks/useDashboardStats';
 import { KPIGrid } from './KPIGrid';
-import { InsightPanel } from './InsightPanel';
-import { AnomalyAlert } from './AnomalyAlert';
-import { CompletenessScore } from './CompletenessScore';
-import { LoadingState } from '@/shared/components/LoadingState';
-import { SankeyDiagram } from '../charts/SankeyDiagram';
 import { MaterialPieChart } from '../charts/MaterialPieChart';
-import { BatchBarChart } from '../charts/BatchBarChart';
+import { LoadingSkeleton } from '@/shared/components/LoadingSkeleton';
+import { Card } from '@/shared/ui';
 
 export function DashboardShell() {
   const { stats, isLoading, isError } = useDashboardStats();
 
-  if (isLoading) return <LoadingState message="Loading dashboard..." />;
-  if (isError || !stats) return <div className="p-8 text-red-500">Failed to load dashboard</div>;
+  if (isLoading) return <div className="p-6"><LoadingSkeleton count={4} /></div>;
+  if (isError || !stats) return <div className="p-6 text-[var(--text-muted)] font-mono text-sm">Failed to load dashboard data.</div>;
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
-        <CompletenessScore score={stats.completenessScore} />
+    <div className="p-6 space-y-6">
+      <div>
+        <h1 className="font-display text-2xl text-[var(--text-primary)]">Dashboard</h1>
+        <p className="text-sm font-mono text-[var(--text-muted)]">Material traceability overview</p>
       </div>
-
-      {stats.anomalies.length > 0 && <AnomalyAlert anomalies={stats.anomalies} />}
 
       <KPIGrid stats={stats} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <SankeyDiagram data={stats.sankey} />
-        <MaterialPieChart data={stats.materialBreakdown} />
+        <Card className="p-4">
+          <h3 className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider mb-4">Material Distribution</h3>
+          <MaterialPieChart data={stats.by_material} />
+        </Card>
+        <Card className="p-4">
+          <h3 className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider mb-4">Stage Distribution</h3>
+          <MaterialPieChart data={stats.by_stage} />
+        </Card>
       </div>
-
-      <BatchBarChart data={stats.stageBreakdown} />
-
-      <InsightPanel />
     </div>
   );
 }

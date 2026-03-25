@@ -1,31 +1,20 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
-import { cn } from '../utils/cn';
+import { useState, type ReactNode } from 'react';
 
 interface TooltipProps {
   content: string;
   children: ReactNode;
-  className?: string;
 }
 
-export function Tooltip({ content, children, className }: TooltipProps) {
-  const [visible, setVisible] = useState(false);
+export function Tooltip({ content, children }: TooltipProps) {
+  const [show, setShow] = useState(false);
 
   return (
-    <div
-      className="relative inline-block"
-      onMouseEnter={() => setVisible(true)}
-      onMouseLeave={() => setVisible(false)}
-    >
+    <div className="relative inline-block" onMouseEnter={() => setShow(true)} onMouseLeave={() => setShow(false)}>
       {children}
-      {visible && (
-        <div
-          className={cn(
-            'absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-1.5 text-xs text-white bg-gray-900 rounded-lg whitespace-nowrap',
-            className,
-          )}
-        >
+      {show && (
+        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2 py-1 text-[10px] font-mono bg-[var(--bg-tertiary)] text-[var(--text-secondary)] border border-[var(--border)] rounded whitespace-nowrap z-50">
           {content}
         </div>
       )}

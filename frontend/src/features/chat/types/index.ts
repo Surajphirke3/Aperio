@@ -1,31 +1,30 @@
-// These types are ONLY for the chat feature UI layer.
-// Shared/global types live in src/shared/types/
+import { IntentType, ParsedEntry } from '@/shared/types';
 
-import type { ParsedIntent } from '@/shared/types';
-
-export type MessageRole = 'user' | 'assistant' | 'system';
+export type MessageRole = 'user' | 'assistant';
 
 export interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
   timestamp: Date;
-  structuredData?: ParsedIntent | null;  // null if query response
+  intent?: IntentType;
+  structuredData?: ParsedEntry | Record<string, unknown> | null;
   isError?: boolean;
+  isStreaming?: boolean;
 }
 
-export interface ChatState {
-  messages: ChatMessage[];
-  isLoading: boolean;
-  error: string | null;
+export interface ChatSession {
+  id: string;
+  title: string;
+  createdAt: Date;
+  messageCount: number;
+  lastMessage?: string;
 }
 
 export interface ChatResponse {
-  success: boolean;
+  session_id: string;
   reply: string;
-  structuredData?: ParsedIntent;
-  action: 'stored' | 'queried' | 'error';
+  intent: IntentType;
+  structured_data?: Record<string, unknown> | null;
+  success: boolean;
 }
-
-// Re-export from shared for convenience
-export type { ParsedIntent } from '@/shared/types';

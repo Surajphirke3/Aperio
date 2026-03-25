@@ -1,29 +1,15 @@
-'use client';
-
 import useSWR from 'swr';
-import { DashboardStats } from '../types';
-import { statsService } from '../services/statsService';
+import type { DashboardStats } from '@/shared/types';
+import { api } from '@/shared/utils/api';
 
-// SWR key — also acts as cache invalidation key
-const STATS_KEY = '/api/stats';
+const fetcher = () => api.get<DashboardStats>('/v1/stats');
 
 export function useDashboardStats() {
   const { data, error, isLoading, mutate } = useSWR<DashboardStats>(
-    STATS_KEY,
-    statsService.fetch,
-    {
-      refreshInterval: 0,        // Don't auto-refresh — we trigger manually
-      revalidateOnFocus: false,
-    }
+    '/v1/stats',
+    fetcher,
+    { refreshInterval: 30_000 }
   );
 
-  // Called by ChatPanel after successful data entry
-  const refresh = () => mutate();
-
-  return {
-    stats: data,
-    isLoading,
-    isError: !!error,
-    refresh,
-  };
+  return { stats: data, isLoading, isError: !!error, refresh: mutate };
 }

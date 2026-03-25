@@ -1,27 +1,23 @@
-import { HTMLAttributes, forwardRef } from 'react';
-import { cn } from '../utils/cn';
+import type { HTMLAttributes } from 'react';
+import { cn } from '@/shared/utils/cn';
 
 interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {
-  variant?: 'default' | 'success' | 'warning' | 'error' | 'info';
+  variant?: 'default' | 'success' | 'warning' | 'danger' | 'info';
 }
 
-export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(
-  ({ className, variant = 'default', ...props }, ref) => (
+export function Badge({ className, variant = 'default', ...props }: BadgeProps) {
+  return (
     <span
-      ref={ref}
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium',
-        {
-          'bg-gray-100 text-gray-800': variant === 'default',
-          'bg-green-100 text-green-800': variant === 'success',
-          'bg-yellow-100 text-yellow-800': variant === 'warning',
-          'bg-red-100 text-red-800': variant === 'error',
-          'bg-blue-100 text-blue-800': variant === 'info',
-        },
+        'inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase tracking-wider',
+        variant === 'default' && 'bg-[var(--bg-tertiary)] text-[var(--text-muted)]',
+        variant === 'success' && 'bg-[var(--accent-muted)] text-[var(--accent-primary)]',
+        variant === 'warning' && 'bg-amber-500/20 text-amber-400',
+        variant === 'danger' && 'bg-red-500/20 text-red-400',
+        variant === 'info' && 'bg-blue-500/20 text-blue-400',
         className,
       )}
       {...props}
     />
-  ),
-);
-Badge.displayName = 'Badge';
+  );
+}

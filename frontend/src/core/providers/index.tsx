@@ -1,13 +1,15 @@
 'use client';
 
-import { ReactNode } from 'react';
-import { SWRProvider } from './SWRProvider';
-import { ThemeProvider } from './ThemeProvider';
+import type { ReactNode } from 'react';
+import { AuthProvider } from './AuthProvider';
+import { QueryProvider } from './QueryProvider';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <ThemeProvider>
-      <SWRProvider>{children}</SWRProvider>
-    </ThemeProvider>
+    <QueryProvider>
+      <AuthProvider>
+        {children}
+      </AuthProvider>
+    </QueryProvider>
   );
 }

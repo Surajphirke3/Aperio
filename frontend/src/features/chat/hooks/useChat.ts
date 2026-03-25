@@ -1,61 +1,68 @@
-'use client';
-
-import { useState, useCallback } from 'react';
-import type { ChatMessage, ChatState } from '../types';
-import { sendChatMessage } from '../services/chatService';
+import { useCallback } from 'react';
+import { v4 as uuid } from 'uuid';
+import { useChatStore } from '../store/chatStore';
+import { chatService } from '../services/chatService';
+import type { ChatMessage } from '../types';
 
 export function useChat() {
-  const [state, setState] = useState<ChatState>({
-    messages: [],
-    isLoading: false,
-    error: null,
-  });
+  const store = useChatStore();
 
   const sendMessage = useCallback(async (content: string) => {
+    if (!content.trim() || store.isLoading) return;
+
+    const sessionId = store.activeSessionId ?? uuid();
+
     const userMessage: ChatMessage = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       role: 'user',
       content,
       timestamp: new Date(),
     };
+    store.addMessage(userMessage);
+    store.setLoading(true);
+    store.setError(null);
 
-    setState((prev) => ({
-      ...prev,
-      messages: [...prev.messages, userMessage],
-      isLoading: true,
-      error: null,
-    }));
+    store.addMessage({
+      id: uuid(),
+      role: 'assistant',
+      content: '',
+      timestamp: new Date(),
+      isStreaming: true,
+    });
 
     try {
-      const response = await sendChatMessage(content);
+      const response = await chatService.send({
+        message: content,
+        session_id: sessionId,
+      });
 
-      const assistantMessage: ChatMessage = {
-        id: crypto.randomUUID(),
-        role: 'assistant',
-        content: response.reply,
-        timestamp: new Date(),
-        structuredData: response.structuredData ?? null,
-      };
+      store.updateLastMessage(response.reply);
 
-      setState((prev) => ({
-        ...prev,
-        messages: [...prev.messages, assistantMessage],
-        isLoading: false,
-      }));
+      if (!store.activeSessionId) {
+        store.setActiveSession(response.session_id);
+        store.addSession({
+          id: response.session_id,
+          title: content.slice(0, 50),
+          createdAt: new Date(),
+          messageCount: 1,
+          lastMessage: content,
+        });
+      }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
-      setState((prev) => ({
-        ...prev,
-        isLoading: false,
-        error: errorMessage,
-      }));
+      store.updateLastMessage('Something went wrong. Please try again.');
+      store.setError(err instanceof Error ? err.message : 'Unknown error');
+    } finally {
+      store.setLoading(false);
     }
-  }, []);
+  }, [store]);
 
   return {
-    messages: state.messages,
-    isLoading: state.isLoading,
-    error: state.error,
+    messages: store.messages,
+    sessions: store.sessions,
+    activeSessionId: store.activeSessionId,
+    isLoading: store.isLoading,
+    error: store.error,
     sendMessage,
+    setActiveSession: store.setActiveSession,
   };
 }

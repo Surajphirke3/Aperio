@@ -1,30 +1,19 @@
-import type { AnomalyFlag } from '@/shared/types';
+import { AlertTriangle } from 'lucide-react';
 import { cn } from '@/shared/utils/cn';
+import type { AnomalyAlert as AnomalyAlertType } from '@/shared/types';
 
-interface AnomalyAlertProps {
-  anomalies: AnomalyFlag[];
-}
+interface Props { alert: AnomalyAlertType; }
 
-export function AnomalyAlert({ anomalies }: AnomalyAlertProps) {
-  const critical = anomalies.filter((a) => a.severity === 'critical');
-  const warnings = anomalies.filter((a) => a.severity === 'warning');
-
+export function AnomalyAlert({ alert }: Props) {
   return (
-    <div className="space-y-2">
-      {critical.map((a) => (
-        <div key={`${a.batch_id}-${a.stage}`} className={cn('rounded-lg border border-red-200 bg-red-50 px-4 py-3')}>
-          <span className="text-sm font-medium text-red-800">
-            Critical: Batch {a.batch_id} — {a.stage} stage loss {a.loss_pct.toFixed(1)}% (threshold: {a.threshold_pct}%)
-          </span>
-        </div>
-      ))}
-      {warnings.map((a) => (
-        <div key={`${a.batch_id}-${a.stage}`} className={cn('rounded-lg border border-yellow-200 bg-yellow-50 px-4 py-3')}>
-          <span className="text-sm font-medium text-yellow-800">
-            Warning: Batch {a.batch_id} — {a.stage} stage loss {a.loss_pct.toFixed(1)}% (threshold: {a.threshold_pct}%)
-          </span>
-        </div>
-      ))}
+    <div className={cn('flex items-start gap-3 px-4 py-3 rounded-lg border', alert.severity === 'critical' ? 'border-red-500/30 bg-red-500/10' : 'border-amber-500/30 bg-amber-500/10')}>
+      <AlertTriangle size={14} className={cn('shrink-0 mt-0.5', alert.severity === 'critical' ? 'text-red-400' : 'text-amber-400')} />
+      <div>
+        <p className="text-xs font-mono text-[var(--text-primary)]">
+          {alert.stage}: {alert.loss_pct.toFixed(1)}% loss (threshold: {alert.threshold_pct}%)
+        </p>
+        <p className="text-[10px] font-mono text-[var(--text-muted)]">Batch: {alert.batch_id}</p>
+      </div>
     </div>
   );
 }

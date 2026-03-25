@@ -1,45 +1,51 @@
 'use client';
 
+import { motion } from 'framer-motion';
 import type { ChatMessage } from '../types';
-import { StructuredOutput } from './StructuredOutput';
-import { Bot, User } from 'lucide-react';
+import { IntentBadge } from './IntentBadge';
+import { StructuredCard } from './StructuredCard';
+import { cn } from '@/shared/utils/cn';
 
-interface MessageBubbleProps {
+interface Props {
   message: ChatMessage;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message }: Props) {
   const isUser = message.role === 'user';
 
   return (
-    <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} gap-2`}>
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
+      className={cn('flex gap-3', isUser ? 'justify-end' : 'justify-start')}
+    >
       {!isUser && (
-        <div className="w-8 h-8 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
-          <Bot className="w-4 h-4 text-emerald-600" />
+        <div className="w-7 h-7 rounded-full bg-[var(--accent-muted)] flex items-center justify-center text-[var(--accent-primary)] text-xs font-mono shrink-0 mt-1">
+          AI
         </div>
       )}
-      <div
-        className={`max-w-[75%] rounded-2xl px-4 py-3 ${
-          isUser
-            ? 'bg-emerald-600 text-white'
-            : message.isError
-              ? 'bg-red-50 text-red-800 border border-red-100'
-              : 'bg-gray-50 text-gray-900 border border-gray-100'
-        }`}
-      >
-        <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
-        {message.structuredData && (
-          <StructuredOutput data={message.structuredData} />
-        )}
-        <span className="text-xs opacity-50 mt-2 block">
+
+      <div className={cn('max-w-[70%] space-y-2 flex flex-col', isUser ? 'items-end' : 'items-start')}>
+        <div
+          className={cn(
+            'px-4 py-3 rounded-2xl text-sm leading-relaxed',
+            isUser
+              ? 'bg-[var(--chat-user-bg)] text-[var(--text-primary)] rounded-tr-sm'
+              : 'bg-[var(--chat-assistant-bg)] text-[var(--text-secondary)] border border-[var(--border)] rounded-tl-sm',
+            message.isStreaming && 'animate-pulse'
+          )}
+        >
+          {message.content || (message.isStreaming ? '...' : '')}
+        </div>
+
+        {message.intent && <IntentBadge intent={message.intent} />}
+        {message.structuredData && <StructuredCard data={message.structuredData as Record<string, unknown>} />}
+
+        <span className="text-[10px] text-[var(--text-muted)] font-mono">
           {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
-      {isUser && (
-        <div className="w-8 h-8 rounded-full bg-emerald-600 flex items-center justify-center flex-shrink-0">
-          <User className="w-4 h-4 text-white" />
-        </div>
-      )}
-    </div>
+    </motion.div>
   );
 }

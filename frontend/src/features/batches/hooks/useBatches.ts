@@ -1,22 +1,10 @@
-'use client';
-
 import useSWR from 'swr';
-import type { Batch, BatchFilter } from '../types';
-import { batchService } from '../services/batchService';
+import type { BatchEntry } from '@/shared/types';
+import { api } from '@/shared/utils/api';
 
-export function useBatches(filters?: BatchFilter) {
-  const key = filters ? `/api/batches?${JSON.stringify(filters)}` : '/api/batches';
+const fetcher = () => api.get<{ batches: BatchEntry[]; count: number }>('/v1/batches');
 
-  const { data, error, isLoading, mutate } = useSWR<{ batches: Batch[]; total: number }>(
-    key,
-    () => batchService.list(filters),
-  );
-
-  return {
-    batches: data?.batches ?? [],
-    total: data?.total ?? 0,
-    isLoading,
-    isError: !!error,
-    refresh: () => mutate(),
-  };
+export function useBatches() {
+  const { data, error, isLoading, mutate } = useSWR('/v1/batches', fetcher);
+  return { batches: data?.batches ?? [], count: data?.count ?? 0, isLoading, isError: !!error, refresh: mutate };
 }

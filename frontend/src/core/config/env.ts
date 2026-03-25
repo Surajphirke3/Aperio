@@ -1,18 +1,37 @@
-function required(key: string): string {
-  const value = process.env[key];
-  if (!value) throw new Error(`Missing env variable: ${key}`);
-  return value;
+import { z } from 'zod';
+
+const schema = z.object({
+  NEXT_PUBLIC_API_URL: z.string().url().default('http://localhost:8000'),
+  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1),
+  NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1),
+});
+
+const parsed = schema.safeParse({
+  NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
+  NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+  NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+});
+
+if (!parsed.success) {
+  console.warn(`Missing env vars: ${JSON.stringify(parsed.error.flatten().fieldErrors)}`);
 }
 
-// Lazy getters — values are resolved on first access, not at import time.
-// This prevents crashes during build or if a client component transitively
-// imports a module that touches this file.
-export const env = {
-  get featherlessApiKey() { return required('FEATHERLESS_API_KEY'); },
-  get featherlessBaseUrl() { return process.env.FEATHERLESS_BASE_URL ?? 'https://api.featherless.ai/v1'; },
-  get featherlessModel() { return process.env.FEATHERLESS_MODEL ?? 'meta-llama/Meta-Llama-3.1-8B-Instruct'; },
-  get ollamaBaseUrl() { return process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434'; },
-  get ollamaModel() { return process.env.OLLAMA_MODEL ?? 'llama3'; },
-  get databaseUrl() { return required('DATABASE_URL'); },
-  get nodeEnv() { return process.env.NODE_ENV ?? 'development'; },
-};
+export const env = parsed.success
+  ? parsed.data
+  : {
+      NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:8000',
+      NEXT_PUBLIC_FIREBASE_API_KEY: process.env.NEXT_PUBLIC_FIREBASE_API_KEY ?? '',
+      NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN ?? '',
+      NEXT_PUBLIC_FIREBASE_PROJECT_ID: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? '',
+      NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET ?? '',
+      NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID ?? '',
+      NEXT_PUBLIC_FIREBASE_APP_ID: process.env.NEXT_PUBLIC_FIREBASE_APP_ID ?? '',
+    };

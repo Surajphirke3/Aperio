@@ -1,37 +1,20 @@
-// This is the shared contract between frontend and backend.
-// Change here = TypeScript errors everywhere = intentional.
+// This file is the contract between frontend and backend.
+// Types here mirror the Pydantic schemas in the Python API.
 
 export type MaterialType = 'PET' | 'HDPE' | 'PP' | 'LDPE' | 'PVC' | 'mixed';
 export type ProcessStage = 'collection' | 'sorting' | 'processing' | 'output' | 'dispatch';
 export type IntentType = 'purchase' | 'processing' | 'dispatch' | 'query' | 'report';
 
-export interface ParsedIntent {
+export interface ParsedEntry {
   intent: IntentType;
   material: MaterialType;
   quantity_kg: number;
+  date: string;
   vendor?: string;
-  date: string;           // ISO 8601
   stage?: ProcessStage;
   loss_kg?: number;
   batch_id?: string;
   notes?: string;
-}
-
-export interface SankeyNode {
-  id: string;
-  label: string;
-  value: number;
-}
-
-export interface SankeyLink {
-  source: string;
-  target: string;
-  value: number;
-}
-
-export interface SankeyData {
-  nodes: SankeyNode[];
-  links: SankeyLink[];
 }
 
 export interface ApiResponse<T> {
@@ -41,7 +24,27 @@ export interface ApiResponse<T> {
   message?: string;
 }
 
-export interface AnomalyFlag {
+export interface DashboardStats {
+  total_entries: number;
+  by_material: Record<string, number>;
+  by_stage: Record<string, number>;
+  total_dispatched_kg: number;
+}
+
+export interface BatchEntry {
+  id: string;
+  intent: IntentType;
+  material: MaterialType;
+  quantity_kg: number;
+  date: string;
+  vendor?: string;
+  stage?: ProcessStage;
+  loss_kg?: number;
+  created_at: string;
+  session_id: string;
+}
+
+export interface AnomalyAlert {
   batch_id: string;
   stage: ProcessStage;
   loss_pct: number;

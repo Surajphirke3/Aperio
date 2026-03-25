@@ -1,15 +1,5 @@
-export interface Vendor {
-  id: string;
+export interface VendorInfo {
   name: string;
-  materialTypes: string[];
-  totalSupplied_kg: number;
-  avgQualityScore: number;
-  lastDelivery: string;
-}
-
-export interface VendorScorecard {
-  vendor: Vendor;
-  qualityScore: number;
-  reliabilityScore: number;
-  overallScore: number;
+  total_kg: number;
+  entry_count: number;
 }

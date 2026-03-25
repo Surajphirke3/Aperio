@@ -1,26 +1,34 @@
 'use client';
 
-import { MATERIAL_OPTIONS } from '@/shared/constants/materials';
-import { STAGE_ORDER } from '@/shared/constants/stages';
+import type { BatchFiltersState } from '../types';
 
-export function BatchFilters() {
-  // TODO: Wire up to useBatches filter state
+interface Props {
+  filters: BatchFiltersState;
+  onChange: (filters: BatchFiltersState) => void;
+}
+
+const MATERIALS = ['PET', 'HDPE', 'PP', 'LDPE', 'PVC', 'mixed'];
+const STAGES = ['collection', 'sorting', 'processing', 'output', 'dispatch'];
+
+export function BatchFilters({ filters, onChange }: Props) {
   return (
-    <div className="flex flex-wrap gap-3">
-      <select className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+    <div className="flex gap-3 flex-wrap">
+      <select
+        value={filters.material ?? ''}
+        onChange={(e) => onChange({ ...filters, material: e.target.value || undefined })}
+        className="px-3 py-1.5 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border)] text-xs font-mono text-[var(--text-secondary)] outline-none"
+      >
         <option value="">All Materials</option>
-        {MATERIAL_OPTIONS.map((m) => (
-          <option key={m.value} value={m.value}>{m.label}</option>
-        ))}
+        {MATERIALS.map((m) => <option key={m} value={m}>{m}</option>)}
       </select>
-      <select className="rounded-lg border border-gray-300 px-3 py-2 text-sm">
+      <select
+        value={filters.stage ?? ''}
+        onChange={(e) => onChange({ ...filters, stage: e.target.value || undefined })}
+        className="px-3 py-1.5 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border)] text-xs font-mono text-[var(--text-secondary)] outline-none"
+      >
         <option value="">All Stages</option>
-        {STAGE_ORDER.map((s) => (
-          <option key={s} value={s}>{s}</option>
-        ))}
+        {STAGES.map((s) => <option key={s} value={s}>{s}</option>)}
       </select>
-      <input type="date" className="rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Start date" />
-      <input type="date" className="rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="End date" />
     </div>
   );
 }

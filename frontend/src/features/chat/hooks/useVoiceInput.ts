@@ -1,51 +1,35 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
-interface UseVoiceInputReturn {
-  isListening: boolean;
-  transcript: string;
-  startListening: () => void;
-  stopListening: () => void;
-  error: string | null;
-}
-
-export function useVoiceInput(): UseVoiceInputReturn {
+export function useVoiceInput() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
-  const [error, setError] = useState<string | null>(null);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
 
   const startListening = useCallback(() => {
-    if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
-      setError('Speech recognition is not supported in this browser');
-      return;
-    }
-
+    if (typeof window === 'undefined') return;
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) return;
+
     const recognition = new SpeechRecognition();
     recognition.continuous = false;
-    recognition.interimResults = false;
+    recognition.interimResults = true;
     recognition.lang = 'en-US';
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const result = event.results[0][0].transcript;
+      const result = Array.from(event.results)
+        .map((r) => r[0].transcript)
+        .join('');
       setTranscript(result);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
-      setError(`Speech recognition error: ${event.error}`);
-      setIsListening(false);
-    };
-
-    recognition.onend = () => {
-      setIsListening(false);
-    };
+    recognition.onend = () => setIsListening(false);
+    recognition.onerror = () => setIsListening(false);
 
     recognitionRef.current = recognition;
     recognition.start();
     setIsListening(true);
-    setError(null);
   }, []);
 
   const stopListening = useCallback(() => {
@@ -53,5 +37,5 @@ export function useVoiceInput(): UseVoiceInputReturn {
     setIsListening(false);
   }, []);
 
-  return { isListening, transcript, startListening, stopListening, error };
+  return { isListening, transcript, startListening, stopListening };
 }

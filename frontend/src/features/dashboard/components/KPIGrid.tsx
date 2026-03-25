@@ -1,22 +1,27 @@
 'use client';
 
-import type { DashboardStats } from '../types';
 import { KPICard } from './KPICard';
-import { formatKg, formatPercentage } from '@/shared/utils/numbers';
+import type { DashboardStats } from '@/shared/types';
+import type { KPIMetric } from '../types';
 
-interface KPIGridProps {
+interface Props {
   stats: DashboardStats;
 }
 
-export function KPIGrid({ stats }: KPIGridProps) {
+export function KPIGrid({ stats }: Props) {
+  const totalKg = Object.values(stats.by_material).reduce((a, b) => a + b, 0);
+  const metrics: KPIMetric[] = [
+    { label: 'Total Entries', value: stats.total_entries },
+    { label: 'Total Material', value: `${Math.round(totalKg).toLocaleString()}`, unit: 'kg' },
+    { label: 'Dispatched', value: `${Math.round(stats.total_dispatched_kg).toLocaleString()}`, unit: 'kg' },
+    { label: 'Material Types', value: Object.keys(stats.by_material).length },
+  ];
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-      <KPICard label="Total Input" value={formatKg(stats.totalInput)} />
-      <KPICard label="Total Output" value={formatKg(stats.totalOutput)} />
-      <KPICard label="Total Loss" value={formatKg(stats.totalLoss)} variant="warning" />
-      <KPICard label="Loss %" value={formatPercentage(stats.lossPct)} variant={stats.lossPct > 5 ? 'danger' : 'default'} />
-      <KPICard label="Batches" value={stats.batchCount} />
-      <KPICard label="Vendors" value={stats.vendorCount} variant="info" />
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {metrics.map((m) => (
+        <KPICard key={m.label} metric={m} />
+      ))}
     </div>
   );
 }

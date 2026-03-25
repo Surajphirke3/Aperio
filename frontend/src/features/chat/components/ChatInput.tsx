@@ -1,52 +1,80 @@
 'use client';
 
-import { useState, FormEvent, KeyboardEvent } from 'react';
-import { Send, Sparkles } from 'lucide-react';
+import { useState, useRef, type KeyboardEvent } from 'react';
+import { SendHorizonal, Mic, MicOff } from 'lucide-react';
+import { useVoiceInput } from '../hooks/useVoiceInput';
+import { cn } from '@/shared/utils/cn';
 
-interface ChatInputProps {
+interface Props {
   onSend: (message: string) => void;
   disabled?: boolean;
 }
 
-export function ChatInput({ onSend, disabled }: ChatInputProps) {
-  const [input, setInput] = useState('');
+export function ChatInput({ onSend, disabled }: Props) {
+  const [value, setValue] = useState('');
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { isListening, startListening, stopListening, transcript } = useVoiceInput();
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault();
-    const trimmed = input.trim();
+  if (transcript && transcript !== value) setValue(transcript);
+
+  const handleSend = () => {
+    const trimmed = value.trim();
     if (!trimmed || disabled) return;
     onSend(trimmed);
-    setInput('');
+    setValue('');
+    if (textareaRef.current) textareaRef.current.style.height = 'auto';
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      handleSubmit(e);
+      handleSend();
+    }
+  };
+
+  const handleInput = () => {
+    const ta = textareaRef.current;
+    if (ta) {
+      ta.style.height = 'auto';
+      ta.style.height = `${Math.min(ta.scrollHeight, 160)}px`;
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t p-4 bg-gray-50 flex gap-3">
-      <div className="flex-1 relative">
-        <textarea
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          placeholder="Ask about your recycling data or log a batch..."
-          disabled={disabled}
-          rows={1}
-          className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
-          style={{ minHeight: '48px', maxHeight: '120px' }}
-        />
+    <div className="flex items-end gap-2 bg-[var(--chat-input-bg)] border border-[var(--border)] rounded-xl p-2 focus-within:border-[var(--accent-primary)] transition-colors">
+      <textarea
+        ref={textareaRef}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        onKeyDown={handleKeyDown}
+        onInput={handleInput}
+        placeholder="Purchased 300kg of PET from Vendor A..."
+        disabled={disabled}
+        rows={1}
+        className="flex-1 bg-transparent resize-none text-sm text-[var(--text-primary)] placeholder:text-[var(--text-muted)] outline-none font-mono py-2 px-2 max-h-40 leading-relaxed"
+      />
+
+      <div className="flex gap-1 pb-1">
+        <button
+          onClick={isListening ? stopListening : startListening}
+          className={cn(
+            'p-2 rounded-lg transition-colors',
+            isListening
+              ? 'bg-red-500/20 text-red-400 animate-pulse'
+              : 'text-[var(--text-muted)] hover:text-[var(--accent-primary)] hover:bg-[var(--bg-tertiary)]'
+          )}
+        >
+          {isListening ? <MicOff size={16} /> : <Mic size={16} />}
+        </button>
+
+        <button
+          onClick={handleSend}
+          disabled={!value.trim() || disabled}
+          className="p-2 rounded-lg bg-[var(--accent-primary)] text-black disabled:opacity-30 disabled:cursor-not-allowed hover:bg-[var(--accent-secondary)] transition-colors"
+        >
+          <SendHorizonal size={16} />
+        </button>
       </div>
-      <button
-        type="submit"
-        disabled={disabled || !input.trim()}
-        className="rounded-xl bg-emerald-600 px-4 py-3 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-      >
-        <Send className="w-4 h-4" />
-      </button>
-    </form>
+    </div>
   );
 }

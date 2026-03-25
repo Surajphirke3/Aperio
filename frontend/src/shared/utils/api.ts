@@ -1,37 +1,53 @@
-import type { ApiResponse } from '../types';
+import { env } from '@/core/config/env';
 
-class ApiError extends Error {
-  constructor(
-    message: string,
-    public status: number,
-    public data?: unknown,
-  ) {
+const BASE_URL = env.NEXT_PUBLIC_API_URL;
+
+class APIError extends Error {
+  constructor(public status: number, message: string) {
     super(message);
-    this.name = 'ApiError';
+    this.name = 'APIError';
   }
 }
 
-export async function apiFetch<T>(
-  url: string,
-  options?: RequestInit,
-): Promise<ApiResponse<T>> {
-  const response = await fetch(url, {
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  if (typeof window === 'undefined') return {};
+  try {
+    const { auth } = await import('@/core/auth/firebase');
+    const user = auth.currentUser;
+    if (!user) return {};
+    const token = await user.getIdToken();
+    return { Authorization: `Bearer ${token}` };
+  } catch {
+    return {};
+  }
+}
+
+async function request<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const authHeaders = await getAuthHeaders();
+
+  const response = await fetch(`${BASE_URL}${path}`, {
+    ...options,
     headers: {
       'Content-Type': 'application/json',
-      ...options?.headers,
+      ...authHeaders,
+      ...(options.headers as Record<string, string>),
     },
-    ...options,
   });
 
-  const data = await response.json();
-
   if (!response.ok) {
-    throw new ApiError(
-      data?.error || response.statusText,
-      response.status,
-      data,
-    );
+    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    throw new APIError(response.status, error.detail ?? 'Request failed');
   }
 
-  return data as ApiResponse<T>;
+  return response.json();
 }
+
+export const api = {
+  get: <T>(path: string) => request<T>(path),
+  post: <T>(path: string, body: unknown) =>
+    request<T>(path, { method: 'POST', body: JSON.stringify(body) }),
+  delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+};

@@ -1,33 +1,18 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import type { Metadata } from 'next';
+import './globals.css';
+import { AppProviders } from '@/core/providers';
 
 export const metadata: Metadata = {
-  title: "Aperio — AI-Powered Recycling Intelligence",
-  description: "Transform plastic recycling operations with AI that understands natural language. Chat to log data, visualize material flow, and discover insights.",
+  title: 'Aperio — Material Traceability',
+  description: 'Intelligent recycled materials traceability system',
 };
 
-export default function RootLayout({
-  children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">{children}</body>
+    <html lang="en">
+      <body>
+        <AppProviders>{children}</AppProviders>
+      </body>
     </html>
   );
 }

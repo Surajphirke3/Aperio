@@ -1,18 +1,10 @@
-'use client';
-
 import useSWR from 'swr';
-import type { Vendor } from '../types';
-import { vendorService } from '../services/vendorService';
+import { api } from '@/shared/utils/api';
+import type { VendorInfo } from '../types';
+
+const fetcher = () => api.get<{ vendors: VendorInfo[]; count: number }>('/v1/vendors');
 
 export function useVendors() {
-  const { data, error, isLoading } = useSWR<Vendor[]>(
-    '/api/vendors',
-    vendorService.list,
-  );
-
-  return {
-    vendors: data ?? [],
-    isLoading,
-    isError: !!error,
-  };
+  const { data, error, isLoading, mutate } = useSWR('/v1/vendors', fetcher);
+  return { vendors: data?.vendors ?? [], count: data?.count ?? 0, isLoading, isError: !!error, refresh: mutate };
 }
