@@ -1,10 +1,18 @@
-from pydantic_settings import BaseSettings
+from pathlib import Path
+
 from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
     # Featherless AI
-    featherless_api_key: str = Field(..., description="Featherless API key")
+    featherless_api_key: str = Field(
+        default="your_key_here",
+        description="Featherless API key",
+    )
     primary_model: str = "Qwen/Qwen2.5-3B-Instruct"
     fallback_model: str = "Qwen/Qwen2.5-Coder-3B-Instruct"
     model_temperature: float = 0.1
@@ -12,7 +20,7 @@ class Settings(BaseSettings):
 
     # Firebase
     firebase_credentials_path: str = Field(default="firebase-credentials.json")
-    firebase_project_id: str = Field(...)
+    firebase_project_id: str = Field(default="local-dev-project")
 
     # Redis
     redis_url: str = Field(default="redis://localhost:6379")
@@ -28,9 +36,10 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000"]
     api_key_header: str = "X-API-Key"
 
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
-        protected_namespaces = ("settings_",)
+    model_config = SettingsConfigDict(
+        env_file=str(BASE_DIR / ".env"),
+        case_sensitive=False,
+        protected_namespaces=("settings_",),
+    )
 
 settings = Settings()

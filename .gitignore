@@ -1,1 +1,13 @@
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+.idea/
+.vscode/
+*.code-workspace
+
+*.log
+*.tmp
+*.temp
+
 docs/
