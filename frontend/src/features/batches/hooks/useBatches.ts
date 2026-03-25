@@ -1,3 +1,5 @@
+'use client';
+
 import useSWR from 'swr';
 import type { Batch, BatchFilter } from '../types';
 import { batchService } from '../services/batchService';

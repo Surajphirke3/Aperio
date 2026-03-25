@@ -1,6 +1,8 @@
 // These types are ONLY for the chat feature UI layer.
 // Shared/global types live in src/shared/types/
 
+import type { ParsedIntent } from '@/shared/types';
+
 export type MessageRole = 'user' | 'assistant' | 'system';
 
 export interface ChatMessage {

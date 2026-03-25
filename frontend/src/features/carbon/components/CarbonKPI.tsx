@@ -1,5 +1,3 @@
-'use client';
-
 interface CarbonKPIProps {
   label: string;
   value: number;

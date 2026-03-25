@@ -1,3 +1,5 @@
+'use client';
+
 import useSWR from 'swr';
 import { DashboardStats } from '../types';
 import { statsService } from '../services/statsService';

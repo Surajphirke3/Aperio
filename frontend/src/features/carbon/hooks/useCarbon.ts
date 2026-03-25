@@ -1,3 +1,5 @@
+'use client';
+
 import useSWR from 'swr';
 import type { CarbonSummary } from '../types';
 import { carbonService } from '../services/carbonService';
