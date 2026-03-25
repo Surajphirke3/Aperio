@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server';
-import { getDashboardStats } from '@/infrastructure/db/queries';
+import { mockDashboardStats } from '@/infrastructure/mock';
 
 export async function GET() {
   try {
-    const stats = await getDashboardStats();
-    return NextResponse.json({ data: stats });
+    return NextResponse.json({ data: mockDashboardStats });
   } catch (error) {
     console.error('Stats API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

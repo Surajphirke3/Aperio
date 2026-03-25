@@ -1,5 +1,8 @@
 import { prisma } from '../prisma';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRecord = any;
+
 export async function runStatsQuery(filters?: Record<string, unknown>) {
   const where: Record<string, unknown> = {};
   if (filters?.materialType) where.materialType = filters.materialType;
@@ -8,7 +11,7 @@ export async function runStatsQuery(filters?: Record<string, unknown>) {
   const batches = await prisma.batch.findMany({
     where,
     include: { stages: true },
-  });
+  } as AnyRecord) as AnyRecord[];
 
   let totalInput = 0;
   let totalOutput = 0;

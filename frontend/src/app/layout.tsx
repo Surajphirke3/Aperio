@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TraceFlow — Plastic Recycling Traceability",
-  description: "Track material flow, carbon footprint, and vendor performance across your recycling pipeline.",
+  title: "RecycLens — AI-Powered Recycling Intelligence",
+  description: "Transform plastic recycling operations with AI that understands natural language. Chat to log data, visualize material flow, and discover insights.",
 };
 
 export default function RootLayout({

@@ -10,7 +10,7 @@ interface BatchCardProps {
 
 export function BatchCard({ batch }: BatchCardProps) {
   return (
-    <Link href={`/batches/${batch.id}`} className="block rounded-xl border bg-white p-4 hover:shadow-md transition-shadow">
+    <Link href={`/dashboard/batches/${batch.id}`} className="block rounded-xl border bg-white p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between">
         <div>
           <p className="font-medium text-gray-900">Batch {batch.id}</p>
