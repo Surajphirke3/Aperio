@@ -1,7 +1,7 @@
 // Features call services, services call infrastructure.
 // Features NEVER import from infrastructure directly.
 
-import { ParsedIntent, ChatResponse } from '../types';
+import { ChatResponse } from '../types';
 
 export async function sendChatMessage(message: string): Promise<ChatResponse> {
   const response = await fetch('/api/chat', {

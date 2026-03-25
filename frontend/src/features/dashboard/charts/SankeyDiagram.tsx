@@ -5,8 +5,6 @@ import {
   ResponsiveContainer,
   Sankey,
   Tooltip,
-  Surface,
-  Rectangle,
 } from 'recharts';
 import type { SankeyData } from '@/shared/types';
 

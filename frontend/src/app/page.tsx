@@ -116,7 +116,9 @@ export default function LandingPage() {
               animate="animate"
               className="absolute w-2 h-2 rounded-full bg-emerald-400/30"
               style={{
+                // eslint-disable-next-line react-hooks/purity
                 left: `${Math.random() * 100}%`,
+                // eslint-disable-next-line react-hooks/purity
                 top: `${Math.random() * 100}%`,
               }}
             />
