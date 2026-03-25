@@ -1,11 +1,7 @@
-from src.infrastructure.db.firestore import FirestoreDB
+from src.infrastructure.db.mongo import vendors_col
 
 
 class VendorRepository:
-    """Vendor-specific queries over material entries."""
-
-    def __init__(self):
-        self.db = FirestoreDB()
-
-    async def get_all(self) -> list[dict]:
-        return await self.db.get_vendors()
+    async def list_all(self) -> list[dict]:
+        cursor = vendors_col().find().sort("name", 1)
+        return await cursor.to_list(length=100)

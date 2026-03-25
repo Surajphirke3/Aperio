@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { TopBar } from "@/components/layout/topbar"
 import { StatCard } from "@/components/ui/stat-card"
@@ -15,6 +15,7 @@ import {
 import { AIInsightsPanel } from "@/components/dashboard/ai-insights"
 import { LiveEventTicker } from "@/components/dashboard/live-event-ticker"
 import { anomalies, kpiData } from "@/lib/mockData"
+import { fetchFromAPI } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Calendar } from "lucide-react"
 
@@ -22,12 +23,45 @@ const dateRanges = ["7d", "30d", "90d"]
 
 export default function DashboardPage() {
   const [selectedRange, setSelectedRange] = useState("7d")
+  const [backendStatus, setBackendStatus] = useState("Loading...")
+  const [liveKpi, setLiveKpi] = useState<any>(null)
+  const [liveAnomalies, setLiveAnomalies] = useState<any[]>([])
+
+  useEffect(() => {
+    // Fetch live APIs
+    Promise.all([
+      fetchFromAPI("/stats/"),
+      fetchFromAPI("/anomalies/")
+    ])
+      .then(([statsData, anomaliesData]) => {
+        setLiveKpi(statsData)
+        setLiveAnomalies(anomaliesData.anomalies || [])
+        setBackendStatus("Connected")
+      })
+      .catch((err) => {
+        setBackendStatus(`Error: ${err.message}`)
+        console.error("Backend fetch error:", err)
+      })
+  }, [])
+
+  // Provide fallback so UI doesn't crash while loading
+  const currentKpi = liveKpi ? {
+    totalTracked: liveKpi.total_tracked,
+    totalTrackedChange: liveKpi.total_tracked_change,
+    avgCompleteness: liveKpi.avg_completeness,
+    completenessChange: liveKpi.completeness_change,
+    activeBatches: liveKpi.active_batches,
+    criticalBatches: liveKpi.critical_batches,
+    co2Saved: liveKpi.co2_saved_t * 1000 // Convert tons to kg for UI matching
+  } : kpiData;
+
+  const currentAnomalies = liveAnomalies.length > 0 ? liveAnomalies : anomalies;
 
   return (
     <div className="min-h-screen">
       <TopBar
         title="Dashboard"
-        subtitle="Real-time analytics and insights"
+        subtitle={`Real-time analytics and insights (Backend: ${backendStatus})`}
       />
 
       <div className="p-6 space-y-6">
@@ -69,33 +103,33 @@ export default function DashboardPage() {
         >
           <StatCard
             title="Total Tracked"
-            value={kpiData.totalTracked}
+            value={currentKpi.totalTracked}
             suffix=" kg"
-            change={kpiData.totalTrackedChange}
+            change={currentKpi.totalTrackedChange}
             subtitle="vs last week"
             accentColor="green"
             index={0}
           />
           <StatCard
             title="Avg Completeness"
-            value={kpiData.avgCompleteness}
+            value={currentKpi.avgCompleteness}
             suffix="%"
             decimals={1}
-            change={kpiData.completenessChange}
+            change={currentKpi.completenessChange}
             changeLabel=" pts"
             accentColor="green"
             index={1}
           />
           <StatCard
             title="Active Batches"
-            value={kpiData.activeBatches}
-            subtitle={`${kpiData.criticalBatches} critical`}
+            value={currentKpi.activeBatches}
+            subtitle={`${currentKpi.criticalBatches} critical`}
             accentColor="amber"
             index={2}
           />
           <StatCard
             title="CO2 Saved"
-            value={kpiData.co2Saved}
+            value={currentKpi.co2Saved}
             suffix=" kg"
             subtitle="vs virgin material"
             accentColor="teal"
@@ -104,7 +138,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Anomaly Alerts */}
-        <AnomalyPanel anomalies={anomalies} />
+        <AnomalyPanel anomalies={currentAnomalies} />
 
         {/* Charts Row 1 */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,9 +1,17 @@
 from pydantic import BaseModel
+from typing import Optional
+
+
+class InsightRequest(BaseModel):
+    days: int = 30
 
 
 class InsightResponse(BaseModel):
-    batch_id: str
-    summary: str
+    narrative: str
+    success: bool = True
+
+
+class BatchInsightResponse(BaseModel):
+    narrative: str
+    traceability_score: float = 75
     anomalies: list[str] = []
-    recommendations: list[str] = []
-    risk_level: str = "low"

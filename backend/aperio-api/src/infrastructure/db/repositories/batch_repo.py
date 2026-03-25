@@ -1,20 +1,42 @@
-from src.infrastructure.db.firestore import FirestoreDB
+from typing import Any
+
+from src.infrastructure.db.mongo import batches_col
 
 
 class BatchRepository:
-    """Thin wrapper over FirestoreDB for batch-specific operations."""
+    async def list(
+        self,
+        material: str | None = None,
+        stage: str | None = None,
+        status: str | None = None,
+        search: str | None = None,
+        limit: int = 50,
+    ) -> list[dict]:
+        query: dict = {}
+        if material:
+            query["material"] = {"$regex": material, "$options": "i"}
+        if stage:
+            query["stage"] = stage
+        if status:
+            query["status"] = status
+        if search:
+            query["$or"] = [
+                {"id": {"$regex": search, "$options": "i"}},
+                {"vendor": {"$regex": search, "$options": "i"}},
+            ]
 
-    def __init__(self):
-        self.db = FirestoreDB()
-
-    async def get_all(self, limit: int = 50) -> list[dict]:
-        return await self.db.get_batches(limit=limit)
+        cursor = batches_col().find(query).sort("created_at", -1).limit(limit)
+        return await cursor.to_list(length=limit)
 
     async def get_by_id(self, batch_id: str) -> dict | None:
-        return await self.db.get_batch_by_id(batch_id)
-
-    async def get_stats(self) -> dict:
-        return await self.db.get_dashboard_stats()
-
-    async def get_sankey(self) -> dict:
-        return await self.db.get_sankey_data()
+        from bson import ObjectId
+        try:
+            doc = await batches_col().find_one({"_id": ObjectId(batch_id)})
+            if doc:
+                doc["id"] = str(doc.pop("_id"))
+            return doc
+        except Exception:
+            doc = await batches_col().find_one({"id": batch_id})
+            if doc:
+                doc.pop("_id", None)
+            return doc

@@ -14,3 +14,24 @@ Extract ALL relevant fields from the user message. Return ONLY a JSON object wit
 }
 
 Return ONLY JSON. No explanation."""
+
+
+def build_entity_prompt(today_date: str) -> str:
+    return f"""You are an entity extractor for a recycled materials tracking system.
+
+Extract ALL relevant fields from the user message. Return ONLY a JSON object with these fields:
+{{
+  "intent": "purchase|processing|dispatch",
+  "material": "PET|HDPE|PP|LDPE|PVC|mixed",
+  "quantity_kg": <number>,
+  "date": "<ISO 8601 date, infer from relative terms like 'yesterday'>",
+  "vendor": "<vendor name or null>",
+  "stage": "collection|sorting|processing|output|dispatch or null",
+  "loss_kg": <number or null>,
+  "batch_id": "<batch ID or null>",
+  "notes": "<any additional notes or null>"
+}}
+
+Today's date is {today_date}. Use this to infer relative dates.
+
+Return ONLY JSON. No explanation."""

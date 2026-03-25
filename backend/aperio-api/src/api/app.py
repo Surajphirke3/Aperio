@@ -4,27 +4,28 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from src.config.settings import settings
 from src.config.logging import configure_logging
+from src.infrastructure.db.mongo import init_mongo, close_mongo
 from src.infrastructure.cache.redis_client import init_redis, close_redis
 from src.api.v1.router import v1_router
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup + shutdown lifecycle."""
     configure_logging()
+    await init_mongo()
     await init_redis()
     yield
+    await close_mongo()
     await close_redis()
 
 
 def create_app() -> FastAPI:
     app = FastAPI(
-        title="Aperio API",
+        title="TraceFlow API",
         version="1.0.0",
         description="Intelligent recycled materials traceability system",
         lifespan=lifespan,
     )
-
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.cors_origins,
@@ -32,12 +33,11 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-
     app.include_router(v1_router, prefix="/v1")
 
     @app.get("/health")
     async def health():
-        return {"status": "ok", "model": settings.primary_model}
+        return {"status": "ok", "model": settings.primary_model, "groq": "enabled"}
 
     return app
 
