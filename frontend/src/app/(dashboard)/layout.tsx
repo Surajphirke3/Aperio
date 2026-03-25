@@ -1,10 +1,10 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
-import { SWRProvider } from '@/core/providers/SWRProvider';
+import { AppProviders } from '@/core/providers';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <SWRProvider>
+    <AppProviders>
       <div className="flex min-h-screen">
         <aside className="w-64 border-r bg-gray-50 p-4">
           <nav className="space-y-2">
@@ -17,6 +17,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         </aside>
         <main className="flex-1 p-8">{children}</main>
       </div>
-    </SWRProvider>
+    </AppProviders>
   );
 }

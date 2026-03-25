@@ -4,12 +4,15 @@ function required(key: string): string {
   return value;
 }
 
+// Lazy getters — values are resolved on first access, not at import time.
+// This prevents crashes during build or if a client component transitively
+// imports a module that touches this file.
 export const env = {
-  featherlessApiKey: required('FEATHERLESS_API_KEY'),
-  featherlessBaseUrl: process.env.FEATHERLESS_BASE_URL ?? 'https://api.featherless.ai/v1',
-  featherlessModel: process.env.FEATHERLESS_MODEL ?? 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-  ollamaBaseUrl: process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434',
-  ollamaModel: process.env.OLLAMA_MODEL ?? 'llama3',
-  databaseUrl: required('DATABASE_URL'),
-  nodeEnv: process.env.NODE_ENV ?? 'development',
-} as const;
+  get featherlessApiKey() { return required('FEATHERLESS_API_KEY'); },
+  get featherlessBaseUrl() { return process.env.FEATHERLESS_BASE_URL ?? 'https://api.featherless.ai/v1'; },
+  get featherlessModel() { return process.env.FEATHERLESS_MODEL ?? 'meta-llama/Meta-Llama-3.1-8B-Instruct'; },
+  get ollamaBaseUrl() { return process.env.OLLAMA_BASE_URL ?? 'http://localhost:11434'; },
+  get ollamaModel() { return process.env.OLLAMA_MODEL ?? 'llama3'; },
+  get databaseUrl() { return required('DATABASE_URL'); },
+  get nodeEnv() { return process.env.NODE_ENV ?? 'development'; },
+};
