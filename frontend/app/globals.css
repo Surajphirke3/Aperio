@@ -1,0 +1,188 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* =========================================
+   PREMIUM SPACIOUS COLOR SYSTEM
+   Soft • Elegant • Modern SaaS Feel
+========================================= */
+
+:root {
+  /* Background hierarchy (spacious depth) */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+
+  /* Borders */
+  --border: #e2e8f0;
+
+  /* Premium accent palette */
+  --accent-primary: #6366f1;
+  /* Indigo premium */
+  --accent-secondary: #0ea5e9;
+  /* Soft sky */
+  --accent-success: #10b981;
+  --accent-warning: #f59e0b;
+  --accent-danger: #ef4444;
+
+  /* Text hierarchy */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  /* shadcn tokens */
+  --background: #f8fafc;
+  --foreground: #0f172a;
+
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+
+  --primary: #6366f1;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+
+  --accent: #eef2ff;
+  --accent-foreground: #3730a3;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --input: #e2e8f0;
+  --ring: #6366f1;
+
+  --radius: 0.75rem;
+
+  /* Charts */
+  --chart-1: #6366f1;
+  --chart-2: #0ea5e9;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #ef4444;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #6366f1;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f1f5f9;
+  --sidebar-accent-foreground: #0f172a;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #6366f1;
+}
+
+/* =========================================
+   DARK MODE → Premium Glass Dark
+========================================= */
+
+.dark {
+  --background: #0b1220;
+  --foreground: #e5e7eb;
+
+  --card: #111827;
+  --card-foreground: #e5e7eb;
+
+  --popover: #111827;
+  --popover-foreground: #e5e7eb;
+
+  --primary: #818cf8;
+  --primary-foreground: #020617;
+
+  --secondary: #1f2937;
+  --secondary-foreground: #e5e7eb;
+
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
+
+  --accent: #1e293b;
+  --accent-foreground: #c7d2fe;
+
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+
+  --border: #1f2937;
+  --input: #1f2937;
+  --ring: #818cf8;
+
+  --sidebar: #020617;
+  --sidebar-foreground: #e5e7eb;
+  --sidebar-primary: #818cf8;
+  --sidebar-primary-foreground: #020617;
+  --sidebar-accent: #111827;
+  --sidebar-accent-foreground: #e5e7eb;
+  --sidebar-border: #1f2937;
+  --sidebar-ring: #818cf8;
+}
+
+/* =========================================
+   THEME MAPPING
+========================================= */
+
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-lg: var(--radius);
+}
+
+/* =========================================
+   BASE
+========================================= */
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* =========================================
+   PREMIUM SCROLLBAR
+========================================= */
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #374151;
+}
