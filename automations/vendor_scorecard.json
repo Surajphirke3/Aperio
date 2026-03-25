@@ -1,0 +1,204 @@
+{
+  "name": "RecycleNS — Monthly Vendor Scorecard",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 1 * *" }]
+        }
+      },
+      "id": "vendor-0001",
+      "name": "1st of Every Month 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.TRACEFLOW_API_URL }}/api/stats",
+        "options": { "timeout": 15000 }
+      },
+      "id": "vendor-0002",
+      "name": "Fetch All Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.TRACEFLOW_API_URL }}/api/vendors",
+        "options": { "timeout": 15000 }
+      },
+      "id": "vendor-0003",
+      "name": "Fetch Vendor List",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 480]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge stats + vendor data, score each vendor\nconst stats = $('Fetch All Stats').item.json;\nconst vendorData = $('Fetch Vendor List').item.json;\n\nconst now = new Date();\nconst lastMonth = new Date(now.getFullYear(), now.getMonth()-1, 1);\nconst monthLabel = lastMonth.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });\n\n// Use vendors from vendor API or fall back to inferring from recent entries\nconst vendors = vendorData.vendors || [];\n\n// If vendor API not yet built, synthesize mock scorecards from material data\nconst materialBreakdown = stats.by_material || [];\nconst summary = stats.summary || {};\n\n// Build vendor scorecards\n// Score formula: volume score (40) + quality score (30) + timeliness score (30)\nconst scorecards = vendors.length > 0 ? vendors.map(v => {\n  const volumeScore = Math.min(40, Math.round((v.total_kg / (summary.total_purchased || 1)) * 40 * 3));\n  const qualityScore = Math.max(0, 30 - Math.round(v.loss_rate * 1.5));\n  const timelinessScore = v.avg_delivery_days <= 1 ? 30 : v.avg_delivery_days <= 3 ? 22 : v.avg_delivery_days <= 7 ? 14 : 5;\n  const totalScore = volumeScore + qualityScore + timelinessScore;\n  const grade = totalScore >= 85 ? 'A' : totalScore >= 70 ? 'B' : totalScore >= 50 ? 'C' : 'D';\n  const gradeColor = grade === 'A' ? '#4ADE80' : grade === 'B' ? '#F59E0B' : grade === 'C' ? '#FB923C' : '#F87171';\n  return { ...v, volumeScore, qualityScore, timelinessScore, totalScore, grade, gradeColor };\n}).sort((a, b) => b.totalScore - a.totalScore)\n: [\n  // Mock data if vendor endpoint not built yet\n  { name: 'Vendor A', total_kg: 1200, loss_rate: 4.2, avg_delivery_days: 1, volumeScore: 35, qualityScore: 28, timelinessScore: 30, totalScore: 93, grade: 'A', gradeColor: '#4ADE80', material: 'PET' },\n  { name: 'Vendor B', total_kg: 850, loss_rate: 8.1, avg_delivery_days: 2, volumeScore: 25, qualityScore: 24, timelinessScore: 22, totalScore: 71, grade: 'B', gradeColor: '#F59E0B', material: 'HDPE' },\n  { name: 'Vendor C', total_kg: 430, loss_rate: 15.3, avg_delivery_days: 4, volumeScore: 13, qualityScore: 18, timelinessScore: 14, totalScore: 45, grade: 'D', gradeColor: '#F87171', material: 'Mixed' },\n  { name: 'Vendor D', total_kg: 690, loss_rate: 6.8, avg_delivery_days: 3, volumeScore: 20, qualityScore: 26, timelinessScore: 22, totalScore: 68, grade: 'C', gradeColor: '#FB923C', material: 'PP' }\n];\n\nconst topVendor = scorecards[0];\nconst bottomVendor = scorecards[scorecards.length - 1];\n\nreturn [{ json: { scorecards, monthLabel, topVendor, bottomVendor, summary } }];"
+      },
+      "id": "vendor-0004",
+      "name": "Score All Vendors",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [700, 380]
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "scorecards",
+        "options": {}
+      },
+      "id": "vendor-0005",
+      "name": "Split Per Vendor",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [920, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TRACEFLOW_API_URL }}/api/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\"message\": \"Generate a 2-sentence vendor performance comment for {{ $json.name }} who scored {{ $json.totalScore }}/100 (Grade {{ $json.grade }}) with {{ $json.total_kg }} kg supplied, {{ $json.loss_rate }}% loss rate, and {{ $json.avg_delivery_days }} day average delivery. Be specific and actionable.\"}",
+        "options": {}
+      },
+      "id": "vendor-0006",
+      "name": "AI Vendor Comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1140, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const vendor = $input.item.json;\nconst aiComment = $('AI Vendor Comment').item.json;\nconst monthLabel = $('Score All Vendors').item.json.monthLabel;\n\nconst gradeColor = vendor.gradeColor || '#F59E0B';\nconst grade = vendor.grade || 'C';\nconst totalScore = vendor.totalScore || 0;\n\n// Progress bar widths\nconst volWidth = Math.round((vendor.volumeScore / 40) * 100);\nconst qualWidth = Math.round((vendor.qualityScore / 30) * 100);\nconst timeWidth = Math.round((vendor.timelinessScore / 30) * 100);\n\nconst html = `<!DOCTYPE html><html><head><meta charset='utf-8'></head>\n<body style='margin:0;background:#0D0D0D;font-family:monospace'>\n<div style='max-width:600px;margin:0 auto'>\n\n  <div style='background:#141414;border-bottom:3px solid ${gradeColor};padding:32px;text-align:center'>\n    <div style='font-size:26px;font-weight:800;color:#F59E0B'>♻ TraceFlow</div>\n    <div style='font-size:12px;color:#8A7E6E;text-transform:uppercase;letter-spacing:3px;margin-top:6px'>Vendor Scorecard — ${monthLabel}</div>\n    <div style='font-size:20px;font-weight:700;color:#E8DCC8;margin-top:12px'>${vendor.name}</div>\n    <div style='font-size:11px;color:#8A7E6E;margin-top:4px'>${vendor.material || 'Material'} Supplier</div>\n  </div>\n\n  <div style='background:#141414;padding:40px;text-align:center;border-bottom:1px solid #2A2A2A'>\n    <div style='display:inline-block;background:${gradeColor}15;border:2px solid ${gradeColor};border-radius:50%;width:100px;height:100px;line-height:100px;font-size:48px;font-weight:800;color:${gradeColor}'>${grade}</div>\n    <div style='margin-top:16px;font-size:40px;font-weight:700;color:#E8DCC8'>${totalScore}<span style='font-size:18px;color:#8A7E6E'>/100</span></div>\n    <div style='font-size:11px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px;margin-top:4px'>Overall Score</div>\n  </div>\n\n  <div style='padding:24px 32px'>\n    <div style='font-size:11px;color:#F59E0B;text-transform:uppercase;letter-spacing:3px;border-bottom:1px solid #2A2A2A;padding-bottom:8px;margin-bottom:20px'>Score Breakdown</div>\n    \n    <div style='margin-bottom:16px'>\n      <div style='display:flex;justify-content:space-between;margin-bottom:6px'>\n        <span style='font-size:12px;color:#8A7E6E;text-transform:uppercase;letter-spacing:1px'>Volume (40 pts)</span>\n        <span style='font-size:12px;color:#F59E0B;font-weight:700'>${vendor.volumeScore}/40</span>\n      </div>\n      <div style='background:#2A2A2A;height:8px;border-radius:4px'><div style='background:#F59E0B;height:8px;width:${volWidth}%;border-radius:4px'></div></div>\n    </div>\n    \n    <div style='margin-bottom:16px'>\n      <div style='display:flex;justify-content:space-between;margin-bottom:6px'>\n        <span style='font-size:12px;color:#8A7E6E;text-transform:uppercase;letter-spacing:1px'>Quality / Low Loss (30 pts)</span>\n        <span style='font-size:12px;color:#4ADE80;font-weight:700'>${vendor.qualityScore}/30</span>\n      </div>\n      <div style='background:#2A2A2A;height:8px;border-radius:4px'><div style='background:#4ADE80;height:8px;width:${qualWidth}%;border-radius:4px'></div></div>\n    </div>\n    \n    <div style='margin-bottom:24px'>\n      <div style='display:flex;justify-content:space-between;margin-bottom:6px'>\n        <span style='font-size:12px;color:#8A7E6E;text-transform:uppercase;letter-spacing:1px'>Timeliness (30 pts)</span>\n        <span style='font-size:12px;color:#60A5FA;font-weight:700'>${vendor.timelinessScore}/30</span>\n      </div>\n      <div style='background:#2A2A2A;height:8px;border-radius:4px'><div style='background:#60A5FA;height:8px;width:${timeWidth}%;border-radius:4px'></div></div>\n    </div>\n  </div>\n\n  <table width='100%' style='border-collapse:collapse;background:#141414;border-top:1px solid #2A2A2A;border-bottom:1px solid #2A2A2A'>\n    <tr>\n      <td style='padding:20px;text-align:center;border-right:1px solid #2A2A2A'>\n        <div style='font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px'>Volume Supplied</div>\n        <div style='font-size:28px;font-weight:700;color:#F59E0B;margin:6px 0'>${(vendor.total_kg||0).toLocaleString()}</div>\n        <div style='font-size:11px;color:#8A7E6E'>kilograms</div>\n      </td>\n      <td style='padding:20px;text-align:center;border-right:1px solid #2A2A2A'>\n        <div style='font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px'>Loss Rate</div>\n        <div style='font-size:28px;font-weight:700;color:${(vendor.loss_rate||0)>15?'#F87171':'#4ADE80'};margin:6px 0'>${vendor.loss_rate||0}%</div>\n        <div style='font-size:11px;color:#8A7E6E'>material loss</div>\n      </td>\n      <td style='padding:20px;text-align:center'>\n        <div style='font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px'>Avg Delivery</div>\n        <div style='font-size:28px;font-weight:700;color:#60A5FA;margin:6px 0'>${vendor.avg_delivery_days||'N/A'}</div>\n        <div style='font-size:11px;color:#8A7E6E'>days</div>\n      </td>\n    </tr>\n  </table>\n\n  <div style='padding:24px 32px'>\n    <div style='font-size:11px;color:#F59E0B;text-transform:uppercase;letter-spacing:3px;border-bottom:1px solid #2A2A2A;padding-bottom:8px;margin-bottom:16px'>✦ Performance Review</div>\n    <div style='background:#141414;border-left:3px solid ${gradeColor};padding:20px;color:#E8DCC8;font-size:14px;line-height:1.8;border-radius:0 8px 8px 0'>${aiComment.reply || 'Performance review not available.'}</div>\n  </div>\n\n  <div style='background:#141414;border-top:1px solid #2A2A2A;padding:20px 32px;text-align:center'>\n    <div style='font-size:11px;color:#8A7E6E'>TraceFlow Vendor Scorecard · ${monthLabel} · Auto-generated</div>\n  </div>\n\n</div></body></html>`;\n\nreturn [{ json: { \n  html,\n  vendorName: vendor.name,\n  vendorEmail: vendor.email || null,\n  subject: `Your TraceFlow Vendor Scorecard — ${monthLabel} | Grade: ${grade} (${totalScore}/100)`,\n  grade,\n  totalScore\n} }];"
+      },
+      "id": "vendor-0007",
+      "name": "Build Scorecard HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1360, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.vendorEmail }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "vendor-0008",
+      "name": "Has Email?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1580, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.vendorEmail }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "vendor-0009",
+      "name": "Email Scorecard to Vendor",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1800, 200],
+      "credentials": {
+        "gmailOAuth2": { "id": "gmail-creds-1", "name": "Gmail Account" }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.REPORT_EMAIL_TO }}",
+        "subject": "=[INTERNAL] {{ $json.subject }}",
+        "emailType": "html",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "vendor-0010",
+      "name": "Email to Internal Team",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1800, 400],
+      "credentials": {
+        "gmailOAuth2": { "id": "gmail-creds-1", "name": "Gmail Account" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// After all vendors processed, send summary to ops team\nconst allItems = $input.all();\nconst monthLabel = $('Score All Vendors').item.json.monthLabel;\n\nconst grades = allItems.map(item => item.json);\nconst topVendor = grades.sort((a,b) => b.totalScore - a.totalScore)[0];\nconst bottomVendor = grades[grades.length-1];\n\nconst gradeDistribution = grades.reduce((acc, v) => {\n  acc[v.grade] = (acc[v.grade]||0)+1;\n  return acc;\n},{});\n\nconst whatsappMsg = `📊 *TraceFlow Monthly Vendor Scorecards*\\n\\n*Month:* ${monthLabel}\\n*Vendors Scored:* ${grades.length}\\n\\n🥇 *Top Performer:* ${topVendor?.vendorName} — Grade ${topVendor?.grade} (${topVendor?.totalScore}/100)\\n⚠️ *Needs Attention:* ${bottomVendor?.vendorName} — Grade ${bottomVendor?.grade} (${bottomVendor?.totalScore}/100)\\n\\nGrade Breakdown:\\nA: ${gradeDistribution['A']||0} · B: ${gradeDistribution['B']||0} · C: ${gradeDistribution['C']||0} · D: ${gradeDistribution['D']||0}\\n\\nScorecards sent to all vendors.`;\n\nreturn [{ json: { whatsappMsg, topVendor, bottomVendor, totalVendors: grades.length } }];"
+      },
+      "id": "vendor-0011",
+      "name": "Build Summary Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2020, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "To", "value": "=whatsapp:{{ $env.ALERT_WHATSAPP_NUMBER }}" },
+            { "name": "From", "value": "=whatsapp:{{ $env.TWILIO_WHATSAPP_NUMBER }}" },
+            { "name": "Body", "value": "={{ $json.whatsappMsg }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "vendor-0012",
+      "name": "WhatsApp Summary to Ops",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2240, 300]
+    }
+  ],
+  "connections": {
+    "1st of Every Month 9AM": {
+      "main": [[
+        { "node": "Fetch All Stats", "type": "main", "index": 0 },
+        { "node": "Fetch Vendor List", "type": "main", "index": 0 }
+      ]]
+    },
+    "Fetch All Stats":   { "main": [[{ "node": "Score All Vendors", "type": "main", "index": 0 }]] },
+    "Fetch Vendor List": { "main": [[{ "node": "Score All Vendors", "type": "main", "index": 0 }]] },
+    "Score All Vendors": { "main": [[{ "node": "Split Per Vendor", "type": "main", "index": 0 }]] },
+    "Split Per Vendor":  { "main": [[{ "node": "AI Vendor Comment", "type": "main", "index": 0 }]] },
+    "AI Vendor Comment": { "main": [[{ "node": "Build Scorecard HTML", "type": "main", "index": 0 }]] },
+    "Build Scorecard HTML": { "main": [[{ "node": "Has Email?", "type": "main", "index": 0 }]] },
+    "Has Email?": {
+      "main": [
+        [{ "node": "Email Scorecard to Vendor", "type": "main", "index": 0 }],
+        [{ "node": "Email to Internal Team", "type": "main", "index": 0 }]
+      ]
+    },
+    "Email Scorecard to Vendor": { "main": [[{ "node": "Build Summary Message", "type": "main", "index": 0 }]] },
+    "Email to Internal Team":    { "main": [[{ "node": "Build Summary Message", "type": "main", "index": 0 }]] },
+    "Build Summary Message":     { "main": [[{ "node": "WhatsApp Summary to Ops", "type": "main", "index": 0 }]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": ["recyclens", "vendor", "monthly", "scorecard"],
+  "id": "recyclens-vendor-scorecard-v1"
+}

@@ -1,0 +1,302 @@
+{
+  "name": "Aperio \u2014 Anomaly Detection & WhatsApp Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 * * * *"
+            }
+          ]
+        }
+      },
+      "id": "anomaly-0001",
+      "name": "Every Hour",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        240,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.TRACEFLOW_API_URL }}/api/stats",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "id": "anomaly-0002",
+      "name": "Fetch Live Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stats = $input.item.json;\nconst s = stats.summary || {};\nconst lossRate = s.loss_rate || 0;\nconst totalPurchased = s.total_purchased || 0;\nconst totalDispatched = s.total_dispatched || 0;\nconst timeline = stats.timeline || [];\nconst anomalies = [];\nlet score = 0;\n\nif (lossRate > 25) { anomalies.push({type:'LOSS_CRITICAL',severity:'HIGH',message:`Loss rate is ${lossRate}% \u2014 far above 10% threshold`}); score+=40; }\nelse if (lossRate > 15) { anomalies.push({type:'LOSS_HIGH',severity:'MEDIUM',message:`Loss rate is ${lossRate}% \u2014 above threshold`}); score+=20; }\n\nconst last2Days = timeline.slice(-2);\nconst recentActivity = last2Days.reduce((sum,d) => sum+(d.purchased||0)+(d.dispatched||0),0);\nif (s.total_entries > 10 && recentActivity === 0) { anomalies.push({type:'NO_RECENT_ACTIVITY',severity:'MEDIUM',message:'No entries in last 48 hours \u2014 data may be stale'}); score+=25; }\n\nif (totalPurchased > 1000) {\n  const ratio = totalDispatched/totalPurchased;\n  if (ratio < 0.5) { anomalies.push({type:'DISPATCH_BACKLOG',severity:'MEDIUM',message:`Only ${Math.round(ratio*100)}% of purchased material dispatched`}); score+=20; }\n}\n\nconst today = timeline[timeline.length-1] || {};\nconst todayLossPct = today.purchased > 0 ? (today.loss/today.purchased*100) : 0;\nif (todayLossPct > 30) { anomalies.push({type:'TODAY_LOSS_SPIKE',severity:'HIGH',message:`Today loss is ${todayLossPct.toFixed(1)}% of inflow`}); score+=35; }\n\nconst hasAlert = score >= 20;\nconst alertLevel = score >= 60 ? 'CRITICAL' : score >= 30 ? 'WARNING' : 'INFO';\nreturn [{ json: { hasAlert, alertLevel, score, anomalies, stats: s } }];"
+      },
+      "id": "anomaly-0003",
+      "name": "Detect Anomalies",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        680,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hasAlert }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "anomaly-0004",
+      "name": "Has Anomaly?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        900,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const data = $input.item.json;\nconst anomalies = data.anomalies || [];\nconst level = data.alertLevel;\nconst s = data.stats || {};\nconst emoji = level==='CRITICAL'?'\ud83d\udd34':level==='WARNING'?'\ud83d\udfe1':'\ud83d\udd35';\nconst now = new Date().toLocaleString('en-IN',{timeZone:'Asia/Kolkata'});\nconst anomalyLines = anomalies.map(a => {\n  const sev = a.severity==='HIGH'?'\u2757':'\u26a0\ufe0f';\n  return `${sev} *${a.type.replace(/_/g,' ')}*\n   ${a.message}`;\n}).join('\n\n');\nconst whatsappMessage = `${emoji} *TraceFlow Anomaly Alert*\n\n*Level:* ${level}\n*Time:* ${now} IST\n\n*Detected:*\n${anomalyLines}\n\n*Loss Rate:* ${s.loss_rate||0}%\n*Total Entries:* ${s.total_entries||0}`;\nconst emailSubject = `${emoji} TraceFlow ALERT \u2014 ${level} | ${anomalies.length} anomaly detected`;\nconst htmlEmail = `<div style='font-family:monospace;background:#0D0D0D;color:#E8DCC8;padding:32px'><h2 style='color:#F59E0B'>${emoji} ${level} ANOMALY ALERT</h2>${anomalies.map(a=>`<div style='border-left:3px solid #F87171;padding:12px;margin:8px 0;background:#141414'><b style='color:#F87171'>${a.type}</b><br>${a.message}</div>`).join('')}<p>Loss Rate: <b style='color:#F59E0B'>${s.loss_rate||0}%</b></p></div>`;\nreturn [{ json: { whatsappMessage, htmlEmail, emailSubject, alertLevel: level, anomalyCount: anomalies.length } }];"
+      },
+      "id": "anomaly-0005",
+      "name": "Build Alert Messages",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "=whatsapp:{{ $env.ALERT_WHATSAPP_NUMBER }}"
+            },
+            {
+              "name": "From",
+              "value": "=whatsapp:{{ $env.TWILIO_WHATSAPP_NUMBER }}"
+            },
+            {
+              "name": "Body",
+              "value": "={{ $json.whatsappMessage }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "anomaly-0006",
+      "name": "Send WhatsApp Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1340,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.ALERT_EMAIL_TO }}",
+        "subject": "={{ $json.emailSubject }}",
+        "emailType": "html",
+        "html": "={{ $json.htmlEmail }}",
+        "options": {}
+      },
+      "id": "anomaly-0007",
+      "name": "Send Alert Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1340,
+        300
+      ],
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "gmail-creds-1",
+          "name": "Gmail Account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $('Detect Anomalies').item.json.alertLevel }}",
+              "rightValue": "CRITICAL",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "anomaly-0008",
+      "name": "Is Critical?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1340,
+        460
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "=whatsapp:{{ $env.MANAGER_WHATSAPP_NUMBER }}"
+            },
+            {
+              "name": "From",
+              "value": "=whatsapp:{{ $env.TWILIO_WHATSAPP_NUMBER }}"
+            },
+            {
+              "name": "Body",
+              "value": "=\ud83d\udd34 *CRITICAL \u2014 TraceFlow*\n\nImmediate attention required.\nLoss rate: {{ $('Detect Anomalies').item.json.stats.loss_rate }}%\n\nCheck dashboard now."
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "anomaly-0009",
+      "name": "Escalate to Manager",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1560,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Every Hour": {
+      "main": [
+        [
+          {
+            "node": "Fetch Live Stats",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Live Stats": {
+      "main": [
+        [
+          {
+            "node": "Detect Anomalies",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Detect Anomalies": {
+      "main": [
+        [
+          {
+            "node": "Has Anomaly?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Has Anomaly?": {
+      "main": [
+        [
+          {
+            "node": "Build Alert Messages",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "Build Alert Messages": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Alert",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Send Alert Email",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Is Critical?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Critical?": {
+      "main": [
+        [
+          {
+            "node": "Escalate to Manager",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": [
+    "Aperio",
+    "anomaly",
+    "whatsapp"
+  ],
+  "id": "Aperio-anomaly-alert-v1"
+}

@@ -1,0 +1,138 @@
+{
+  "name": "RecycleNS — Daily Operations Summary",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * 1-6" }]
+        }
+      },
+      "id": "node-0001",
+      "name": "Every Day 8AM Mon-Sat",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.TRACEFLOW_API_URL }}/api/stats",
+        "options": { "timeout": 15000 }
+      },
+      "id": "node-0002",
+      "name": "Fetch Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TRACEFLOW_API_URL }}/api/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"message\": \"Give a 3-sentence daily operations summary covering today's purchases, dispatches, and any loss anomalies\"}",
+        "options": {}
+      },
+      "id": "node-0003",
+      "name": "AI Daily Insight",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stats = $('Fetch Stats').item.json;\nconst ai = $('AI Daily Insight').item.json;\nconst s = stats.summary || {};\nconst today = new Date().toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });\nconst lossRate = s.loss_rate || 0;\nconst lossColor = lossRate > 20 ? '#F87171' : lossRate > 10 ? '#FB923C' : '#4ADE80';\nconst lossStatus = lossRate > 20 ? 'CRITICAL' : lossRate > 10 ? 'MODERATE' : 'HEALTHY';\nconst todayEntry = (stats.timeline || []).find(t => t.date === new Date().toISOString().split('T')[0]) || {};\nconst matRows = (stats.by_material || []).map(m => `<tr><td style=\"padding:10px;color:#E8DCC8;font-family:monospace\">${m.label}</td><td style=\"padding:10px;color:#F59E0B;font-family:monospace;text-align:right;font-weight:700\">${(m.quantity||0).toLocaleString()} kg</td></tr>`).join('');\nconst html = `<!DOCTYPE html><html><head><meta charset=\"utf-8\"></head><body style=\"margin:0;background:#0D0D0D;font-family:monospace\">\n<div style=\"max-width:640px;margin:0 auto\">\n  <div style=\"background:#141414;border-bottom:3px solid #F59E0B;padding:32px;text-align:center\">\n    <div style=\"font-size:28px;font-weight:800;color:#F59E0B\">♻ TraceFlow</div>\n    <div style=\"font-size:12px;color:#8A7E6E;text-transform:uppercase;letter-spacing:3px;margin-top:8px\">Daily Summary — ${today}</div>\n  </div>\n  <table width=\"100%\" style=\"border-collapse:collapse;background:#2A2A2A;gap:2px\">\n    <tr>\n      <td width=\"50%\" style=\"background:#141414;padding:24px;text-align:center\">\n        <div style=\"font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px\">Total Purchased</div>\n        <div style=\"font-size:32px;font-weight:700;color:#F59E0B;margin:8px 0\">${(s.total_purchased||0).toLocaleString()}</div>\n        <div style=\"font-size:11px;color:#8A7E6E\">kilograms all time</div>\n      </td>\n      <td width=\"50%\" style=\"background:#141414;padding:24px;text-align:center\">\n        <div style=\"font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px\">Total Dispatched</div>\n        <div style=\"font-size:32px;font-weight:700;color:#4ADE80;margin:8px 0\">${(s.total_dispatched||0).toLocaleString()}</div>\n        <div style=\"font-size:11px;color:#8A7E6E\">kilograms all time</div>\n      </td>\n    </tr>\n    <tr>\n      <td style=\"background:#141414;padding:24px;text-align:center\">\n        <div style=\"font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px\">Today Inflow</div>\n        <div style=\"font-size:32px;font-weight:700;color:#60A5FA;margin:8px 0\">${(todayEntry.purchased||0).toLocaleString()}</div>\n        <div style=\"font-size:11px;color:#8A7E6E\">kilograms today</div>\n      </td>\n      <td style=\"background:#141414;padding:24px;text-align:center\">\n        <div style=\"font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px\">Loss Rate</div>\n        <div style=\"font-size:32px;font-weight:700;color:${lossColor};margin:8px 0\">${lossRate}%</div>\n        <div style=\"font-size:11px;color:${lossColor}\">${lossStatus}</div>\n      </td>\n    </tr>\n  </table>\n  <div style=\"padding:24px 32px\">\n    <div style=\"font-size:11px;color:#F59E0B;text-transform:uppercase;letter-spacing:3px;border-bottom:1px solid #2A2A2A;padding-bottom:8px;margin-bottom:16px\">✦ AI Insight</div>\n    <div style=\"background:#141414;border-left:3px solid #F59E0B;border-radius:0 8px 8px 0;padding:20px;color:#E8DCC8;font-size:14px;line-height:1.8\">${ai.reply || stats.insight || 'No insight available.'}</div>\n  </div>\n  <div style=\"padding:0 32px 24px\">\n    <div style=\"font-size:11px;color:#F59E0B;text-transform:uppercase;letter-spacing:3px;border-bottom:1px solid #2A2A2A;padding-bottom:8px;margin-bottom:8px\">Material Breakdown</div>\n    <table width=\"100%\" style=\"border-collapse:collapse\">${matRows}</table>\n  </div>\n  <div style=\"background:#141414;border-top:1px solid #2A2A2A;padding:20px 32px;text-align:center\">\n    <div style=\"font-size:11px;color:#8A7E6E\">TraceFlow · Auto-generated ${new Date().toISOString()}</div>\n  </div>\n</div></body></html>`;\nreturn [{ json: { subject: `TraceFlow Daily — ${today} | Loss: ${lossRate}% [${lossStatus}]`, html, lossRate, lossStatus } }];"
+      },
+      "id": "node-0004",
+      "name": "Format Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [900, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.REPORT_EMAIL_TO }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "node-0005",
+      "name": "Send Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1120, 300],
+      "credentials": {
+        "gmailOAuth2": { "id": "gmail-creds-1", "name": "Gmail Account" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "leftValue": "={{ $('Format Email').item.json.lossRate }}",
+              "rightValue": 10,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-0006",
+      "name": "Loss Above 10%?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 500]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "To", "value": "=whatsapp:{{ $env.ALERT_WHATSAPP_NUMBER }}" },
+            { "name": "From", "value": "=whatsapp:{{ $env.TWILIO_WHATSAPP_NUMBER }}" },
+            { "name": "Body", "value": "=⚠️ *TraceFlow Daily Alert*\n\nLoss rate is *{{ $('Format Email').item.json.lossRate }}%* — {{ $('Format Email').item.json.lossStatus }}\n\nCheck your dashboard for details." }
+          ]
+        },
+        "options": {}
+      },
+      "id": "node-0007",
+      "name": "WhatsApp Loss Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1340, 500]
+    }
+  ],
+  "connections": {
+    "Every Day 8AM Mon-Sat": { "main": [[{ "node": "Fetch Stats", "type": "main", "index": 0 }]] },
+    "Fetch Stats": { "main": [[{ "node": "AI Daily Insight", "type": "main", "index": 0 }]] },
+    "AI Daily Insight": { "main": [[{ "node": "Format Email", "type": "main", "index": 0 }]] },
+    "Format Email": {
+      "main": [[
+        { "node": "Send Email", "type": "main", "index": 0 },
+        { "node": "Loss Above 10%?", "type": "main", "index": 0 }
+      ]]
+    },
+    "Loss Above 10%?": {
+      "main": [
+        [{ "node": "WhatsApp Loss Alert", "type": "main", "index": 0 }],
+        []
+      ]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": ["recyclens", "daily", "email"],
+  "id": "recyclens-daily-summary-v1"
+}

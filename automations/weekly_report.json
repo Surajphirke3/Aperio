@@ -1,0 +1,142 @@
+{
+  "name": "RecycleNS — Weekly Operations Report",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 9 * * 1" }]
+        }
+      },
+      "id": "weekly-0001",
+      "name": "Every Monday 9AM",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.TRACEFLOW_API_URL }}/api/stats",
+        "options": { "timeout": 15000 }
+      },
+      "id": "weekly-0002",
+      "name": "Fetch Full Stats",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TRACEFLOW_API_URL }}/api/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"message\": \"Generate a detailed weekly operations report covering material flow efficiency, loss analysis, dispatch performance, and 3 specific recommendations for improvement this week\"}",
+        "options": {}
+      },
+      "id": "weekly-0003",
+      "name": "AI Weekly Report",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.TRACEFLOW_API_URL }}/api/chat",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\"message\": \"What were the top 3 loss events this week and how much material was lost in total?\"}",
+        "options": {}
+      },
+      "id": "weekly-0004",
+      "name": "AI Loss Analysis",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 480]
+    },
+    {
+      "parameters": {
+        "jsCode": "const stats = $('Fetch Full Stats').item.json;\nconst weeklyReport = $('AI Weekly Report').item.json;\nconst lossAnalysis = $('AI Loss Analysis').item.json;\nconst s = stats.summary || {};\n\n// Week date range\nconst now = new Date();\nconst weekStart = new Date(now);\nweekStart.setDate(now.getDate() - 7);\nconst weekLabel = `${weekStart.toLocaleDateString('en-IN', {day:'numeric',month:'short'})} – ${now.toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'})}`;\n\n// Week slice from timeline\nconst timeline = stats.timeline || [];\nconst weekTimeline = timeline.slice(-7);\nconst weekPurchased = weekTimeline.reduce((s,d) => s+(d.purchased||0), 0);\nconst weekDispatched = weekTimeline.reduce((s,d) => s+(d.dispatched||0), 0);\nconst weekLoss = weekTimeline.reduce((s,d) => s+(d.loss||0), 0);\nconst weekLossRate = weekPurchased > 0 ? ((weekLoss/weekPurchased)*100).toFixed(1) : '0.0';\n\nconst lossColor = parseFloat(weekLossRate) > 20 ? '#F87171' : parseFloat(weekLossRate) > 10 ? '#FB923C' : '#4ADE80';\nconst trend = weekDispatched > weekPurchased*0.8 ? '📈 Strong' : weekDispatched > weekPurchased*0.5 ? '📊 Moderate' : '📉 Weak';\n\n// Bar chart rows for timeline\nconst maxVal = Math.max(...weekTimeline.map(d => Math.max(d.purchased||0, d.dispatched||0, 1)));\nconst timelineRows = weekTimeline.map(d => {\n  const pPct = Math.round(((d.purchased||0)/maxVal)*100);\n  const dPct = Math.round(((d.dispatched||0)/maxVal)*100);\n  const label = d.date ? d.date.slice(5) : '';\n  return `<tr>\n    <td style='padding:6px 8px;font-size:11px;color:#8A7E6E;white-space:nowrap'>${label}</td>\n    <td style='padding:6px 4px'><div style='background:#F59E0B;height:10px;width:${pPct}%;min-width:2px;border-radius:2px'></div></td>\n    <td style='padding:6px 4px'><div style='background:#4ADE80;height:10px;width:${dPct}%;min-width:2px;border-radius:2px'></div></td>\n    <td style='padding:6px 8px;font-size:11px;color:#F59E0B;white-space:nowrap'>${(d.purchased||0).toLocaleString()} kg</td>\n    <td style='padding:6px 8px;font-size:11px;color:#4ADE80;white-space:nowrap'>${(d.dispatched||0).toLocaleString()} kg</td>\n  </tr>`;\n}).join('');\n\nconst materialRows = (stats.by_material||[]).map(m => {\n  const pct = s.total_purchased > 0 ? ((m.quantity/s.total_purchased)*100).toFixed(1) : 0;\n  return `<tr>\n    <td style='padding:10px 8px;color:#E8DCC8;font-size:13px'>${m.label}</td>\n    <td style='padding:10px 8px'>\n      <div style='background:#2A2A2A;height:8px;border-radius:4px;overflow:hidden'>\n        <div style='background:#F59E0B;height:8px;width:${pct}%;border-radius:4px'></div>\n      </div>\n    </td>\n    <td style='padding:10px 8px;color:#F59E0B;font-size:13px;font-weight:700;text-align:right'>${(m.quantity||0).toLocaleString()} kg</td>\n    <td style='padding:10px 8px;color:#8A7E6E;font-size:11px;text-align:right'>${pct}%</td>\n  </tr>`;\n}).join('');\n\nconst html = `<!DOCTYPE html><html><head><meta charset='utf-8'></head>\n<body style='margin:0;padding:0;background:#0D0D0D;font-family:monospace'>\n<div style='max-width:680px;margin:0 auto'>\n\n  <!-- Header -->\n  <div style='background:#141414;border-bottom:3px solid #F59E0B;padding:40px 32px;text-align:center'>\n    <div style='font-size:30px;font-weight:800;color:#F59E0B;letter-spacing:-1px'>♻ TraceFlow</div>\n    <div style='font-size:13px;color:#8A7E6E;text-transform:uppercase;letter-spacing:4px;margin-top:6px'>Weekly Operations Report</div>\n    <div style='font-size:12px;color:#3A3328;margin-top:4px'>${weekLabel}</div>\n  </div>\n\n  <!-- Week KPIs -->\n  <div style='display:grid;background:#2A2A2A;gap:1px'>\n    <table width='100%' style='border-collapse:collapse;background:#2A2A2A'><tr>\n      <td style='background:#141414;padding:24px;text-align:center'>\n        <div style='font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px'>This Week — Purchased</div>\n        <div style='font-size:36px;font-weight:700;color:#F59E0B;margin:8px 0'>${weekPurchased.toLocaleString()}</div>\n        <div style='font-size:11px;color:#8A7E6E'>kilograms</div>\n      </td>\n      <td style='background:#141414;padding:24px;text-align:center'>\n        <div style='font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px'>This Week — Dispatched</div>\n        <div style='font-size:36px;font-weight:700;color:#4ADE80;margin:8px 0'>${weekDispatched.toLocaleString()}</div>\n        <div style='font-size:11px;color:#8A7E6E'>${trend} dispatch</div>\n      </td>\n      <td style='background:#141414;padding:24px;text-align:center'>\n        <div style='font-size:10px;color:#8A7E6E;text-transform:uppercase;letter-spacing:2px'>This Week — Loss</div>\n        <div style='font-size:36px;font-weight:700;color:${lossColor};margin:8px 0'>${weekLossRate}%</div>\n        <div style='font-size:11px;color:#8A7E6E'>${weekLoss.toLocaleString()} kg lost</div>\n      </td>\n    </tr></table>\n  </div>\n\n  <!-- AI Report -->\n  <div style='padding:28px 32px'>\n    <div style='font-size:11px;color:#F59E0B;text-transform:uppercase;letter-spacing:3px;border-bottom:1px solid #2A2A2A;padding-bottom:8px;margin-bottom:16px'>✦ Weekly AI Analysis</div>\n    <div style='background:#141414;border-left:3px solid #F59E0B;padding:20px;color:#E8DCC8;font-size:14px;line-height:1.8;border-radius:0 8px 8px 0'>${weeklyReport.reply || 'Report unavailable.'}</div>\n  </div>\n\n  <!-- Loss Analysis -->\n  <div style='padding:0 32px 28px'>\n    <div style='font-size:11px;color:#FB923C;text-transform:uppercase;letter-spacing:3px;border-bottom:1px solid #2A2A2A;padding-bottom:8px;margin-bottom:16px'>⚠ Loss Analysis</div>\n    <div style='background:#141414;border-left:3px solid #FB923C;padding:20px;color:#E8DCC8;font-size:14px;line-height:1.8;border-radius:0 8px 8px 0'>${lossAnalysis.reply || 'Loss data unavailable.'}</div>\n  </div>\n\n  <!-- 7-Day Chart -->\n  <div style='padding:0 32px 28px'>\n    <div style='font-size:11px;color:#F59E0B;text-transform:uppercase;letter-spacing:3px;border-bottom:1px solid #2A2A2A;padding-bottom:8px;margin-bottom:16px'>7-Day Flow Chart</div>\n    <div style='background:#141414;border-radius:8px;padding:16px'>\n      <table width='100%' style='border-collapse:collapse'>\n        <tr>\n          <th style='font-size:10px;color:#8A7E6E;text-align:left;padding:4px 8px'>Date</th>\n          <th style='font-size:10px;color:#F59E0B;text-align:left;padding:4px 8px' colspan='2'>Purchased</th>\n          <th style='font-size:10px;color:#4ADE80;text-align:left;padding:4px 8px' colspan='2'>Dispatched</th>\n        </tr>\n        ${timelineRows}\n      </table>\n      <div style='margin-top:12px;font-size:10px;color:#8A7E6E'>🟡 Purchased &nbsp;&nbsp; 🟢 Dispatched</div>\n    </div>\n  </div>\n\n  <!-- Material Breakdown -->\n  <div style='padding:0 32px 28px'>\n    <div style='font-size:11px;color:#F59E0B;text-transform:uppercase;letter-spacing:3px;border-bottom:1px solid #2A2A2A;padding-bottom:8px;margin-bottom:8px'>Material Breakdown (All Time)</div>\n    <table width='100%' style='border-collapse:collapse;background:#141414;border-radius:8px'>\n      <tr style='background:#1C1C1C'>\n        <th style='padding:10px 8px;font-size:10px;color:#8A7E6E;text-align:left;text-transform:uppercase;letter-spacing:1px'>Material</th>\n        <th style='padding:10px 8px;font-size:10px;color:#8A7E6E;text-align:left;text-transform:uppercase;letter-spacing:1px'>Share</th>\n        <th style='padding:10px 8px;font-size:10px;color:#8A7E6E;text-align:right;text-transform:uppercase;letter-spacing:1px'>Volume</th>\n        <th style='padding:10px 8px;font-size:10px;color:#8A7E6E;text-align:right;text-transform:uppercase;letter-spacing:1px'>%</th>\n      </tr>\n      ${materialRows}\n    </table>\n  </div>\n\n  <!-- Footer -->\n  <div style='background:#141414;border-top:1px solid #2A2A2A;padding:20px 32px;text-align:center'>\n    <div style='font-size:11px;color:#8A7E6E'>TraceFlow Weekly Report · Auto-generated ${new Date().toISOString()}</div>\n  </div>\n\n</div></body></html>`;\n\nconst subject = `TraceFlow Weekly Report — ${weekLabel} | Dispatched: ${weekDispatched.toLocaleString()} kg | Loss: ${weekLossRate}%`;\n\nreturn [{ json: { html, subject, weekPurchased, weekDispatched, weekLoss, weekLossRate } }];"
+      },
+      "id": "weekly-0005",
+      "name": "Build Weekly Report",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [920, 380]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $env.REPORT_EMAIL_TO }}",
+        "subject": "={{ $json.subject }}",
+        "emailType": "html",
+        "html": "={{ $json.html }}",
+        "options": {}
+      },
+      "id": "weekly-0006",
+      "name": "Send Weekly Email",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [1140, 300],
+      "credentials": {
+        "gmailOAuth2": { "id": "gmail-creds-1", "name": "Gmail Account" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $env.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "To", "value": "=whatsapp:{{ $env.ALERT_WHATSAPP_NUMBER }}" },
+            { "name": "From", "value": "=whatsapp:{{ $env.TWILIO_WHATSAPP_NUMBER }}" },
+            { "name": "Body", "value": "=📊 *TraceFlow Weekly Summary*\n\n*Week:* {{ $json.weekLabel }}\n*Purchased:* {{ $json.weekPurchased }} kg\n*Dispatched:* {{ $json.weekDispatched }} kg\n*Loss Rate:* {{ $json.weekLossRate }}%\n\nFull report sent to your email." }
+          ]
+        },
+        "options": {}
+      },
+      "id": "weekly-0007",
+      "name": "WhatsApp Weekly Summary",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1140, 500]
+    }
+  ],
+  "connections": {
+    "Every Monday 9AM": {
+      "main": [[
+        { "node": "Fetch Full Stats", "type": "main", "index": 0 }
+      ]]
+    },
+    "Fetch Full Stats": {
+      "main": [[
+        { "node": "AI Weekly Report", "type": "main", "index": 0 },
+        { "node": "AI Loss Analysis", "type": "main", "index": 0 }
+      ]]
+    },
+    "AI Weekly Report": { "main": [[{ "node": "Build Weekly Report", "type": "main", "index": 0 }]] },
+    "AI Loss Analysis": { "main": [[{ "node": "Build Weekly Report", "type": "main", "index": 0 }]] },
+    "Build Weekly Report": {
+      "main": [[
+        { "node": "Send Weekly Email", "type": "main", "index": 0 },
+        { "node": "WhatsApp Weekly Summary", "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1", "saveManualExecutions": true },
+  "tags": ["recyclens", "weekly", "report"],
+  "id": "recyclens-weekly-report-v1"
+}
