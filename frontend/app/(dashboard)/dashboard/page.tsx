@@ -14,36 +14,50 @@ import {
 } from "@/components/dashboard/charts"
 import { AIInsightsPanel } from "@/components/dashboard/ai-insights"
 import { LiveEventTicker } from "@/components/dashboard/live-event-ticker"
+import { LifecycleWorkflow } from "@/components/dashboard/lifecycle-workflow"
+import { DigitalReport } from "@/components/dashboard/digital-report"
+import { CompliancePanel } from "@/components/dashboard/compliance-panel"
 import { anomalies, kpiData } from "@/lib/mockData"
+import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, Calendar } from "lucide-react"
+import { RefreshCw, Calendar, MessageCircle } from "lucide-react"
+import { useRouter } from "next/navigation"
 
 const dateRanges = ["7d", "30d", "90d"]
 
+const roleSubtitles = {
+  customer: "Your recycling overview at a glance",
+  regulator: "Full analytics, compliance, and audit data",
+  partner: "Key performance metrics and insights",
+}
+
 export default function DashboardPage() {
   const [selectedRange, setSelectedRange] = useState("7d")
+  const { user } = useAuth()
+  const router = useRouter()
+  const role = user?.role || "customer"
 
   return (
     <div className="min-h-screen">
       <TopBar
         title="Dashboard"
-        subtitle="Real-time analytics and insights"
+        subtitle={roleSubtitles[role]}
       />
 
       <div className="p-6 space-y-6">
         {/* Controls Row */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Calendar className="w-4 h-4 text-tf-text-secondary" />
-            <div className="flex bg-tf-bg-secondary rounded-lg p-1">
+            <Calendar className="w-4 h-4 text-muted-foreground" />
+            <div className="flex bg-card rounded-lg p-1 border border-border">
               {dateRanges.map((range) => (
                 <button
                   key={range}
                   onClick={() => setSelectedRange(range)}
                   className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     selectedRange === range
-                      ? "bg-tf-accent-green text-tf-bg-primary"
-                      : "text-tf-text-secondary hover:text-tf-text-primary"
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {range}
@@ -51,21 +65,37 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            className="border-tf-border text-tf-text-secondary hover:text-tf-text-primary"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border text-muted-foreground hover:text-foreground"
+              onClick={() => router.push("/chat")}
+            >
+              <MessageCircle className="w-4 h-4 mr-2" />
+              AI Chat
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-border text-muted-foreground hover:text-foreground"
+            >
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
 
-        {/* KPI Row */}
+        {/* Lifecycle Workflow (all roles) */}
+        <LifecycleWorkflow />
+
+        {/* KPI Row — scaled by role */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+          className={`grid grid-cols-1 md:grid-cols-2 ${
+            role === "customer" ? "lg:grid-cols-3" : "lg:grid-cols-4"
+          } gap-4`}
         >
           <StatCard
             title="Total Tracked"
@@ -76,16 +106,18 @@ export default function DashboardPage() {
             accentColor="green"
             index={0}
           />
-          <StatCard
-            title="Avg Completeness"
-            value={kpiData.avgCompleteness}
-            suffix="%"
-            decimals={1}
-            change={kpiData.completenessChange}
-            changeLabel=" pts"
-            accentColor="green"
-            index={1}
-          />
+          {role !== "customer" && (
+            <StatCard
+              title="Avg Completeness"
+              value={kpiData.avgCompleteness}
+              suffix="%"
+              decimals={1}
+              change={kpiData.completenessChange}
+              changeLabel=" pts"
+              accentColor="green"
+              index={1}
+            />
+          )}
           <StatCard
             title="Active Batches"
             value={kpiData.activeBatches}
@@ -103,28 +135,39 @@ export default function DashboardPage() {
           />
         </motion.div>
 
-        {/* Anomaly Alerts */}
-        <AnomalyPanel anomalies={anomalies} />
+        {/* Anomaly Alerts — regulator gets full, partner filtered, customer hidden */}
+        {role === "regulator" && <AnomalyPanel anomalies={anomalies} />}
+        {role === "partner" && (
+          <AnomalyPanel anomalies={anomalies.filter((a) => a.severity === "critical")} />
+        )}
 
-        {/* Charts Row 1 */}
+        {/* Charts Row 1 — all roles get Sankey + Weekly */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <MaterialFlowSankey />
           <WeeklyLineChart />
         </div>
 
-        {/* Charts Row 2 */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Charts Row 2 — Material Pie for all; Stage Bar + Completeness only for regulator & partner */}
+        <div className={`grid grid-cols-1 ${
+          role === "customer" ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3"
+        } gap-6`}>
           <MaterialPieChart />
-          <BatchStageBarChart />
-          <CompletenessGauge />
+          {role !== "customer" && <BatchStageBarChart />}
+          {role === "regulator" && <CompletenessGauge />}
         </div>
 
+        {/* Compliance Panel — regulator only */}
+        {role === "regulator" && <CompliancePanel />}
+
+        {/* Digital Report — all roles (content scales per role) */}
+        <DigitalReport role={role} />
+
         {/* Bottom Row: AI Insights + Live Feed */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2">
+        <div className={`grid grid-cols-1 ${role === "regulator" ? "lg:grid-cols-3" : "lg:grid-cols-2"} gap-6`}>
+          <div className={role === "regulator" ? "lg:col-span-2" : "lg:col-span-1"}>
             <AIInsightsPanel />
           </div>
-          <LiveEventTicker />
+          {role === "regulator" && <LiveEventTicker />}
         </div>
       </div>
     </div>
