@@ -1,23 +1,31 @@
+import logging
 import firebase_admin
 from firebase_admin import credentials, firestore
-from google.cloud.firestore_v1.async_client import AsyncClient
 from src.config.settings import settings
 from datetime import datetime
 
+logger = logging.getLogger(__name__)
 
-def _init_firebase() -> AsyncClient:
-    if not firebase_admin._apps:
-        cred = credentials.Certificate(settings.firebase_credentials_path)
-        firebase_admin.initialize_app(cred)
-    return firestore.AsyncClient(project=settings.firebase_project_id)
+_db = None
+_init_attempted = False
 
 
-_db: AsyncClient | None = None
+def _init_firebase():
+    global _init_attempted
+    _init_attempted = True
+    try:
+        if not firebase_admin._apps:
+            cred = credentials.Certificate(settings.firebase_credentials_path)
+            firebase_admin.initialize_app(cred)
+        return firestore.AsyncClient(project=settings.firebase_project_id)
+    except Exception as e:
+        logger.warning(f"Firebase init failed: {e}. Running in degraded mode.")
+        return None
 
 
-def get_firestore() -> AsyncClient:
+def get_firestore():
     global _db
-    if _db is None:
+    if _db is None and not _init_attempted:
         _db = _init_firebase()
     return _db
 
