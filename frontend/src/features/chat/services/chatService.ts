@@ -1,5 +1,5 @@
 import { api } from '@/shared/utils/api';
-import { ChatResponse } from '../types';
+import type { ChatResponse, SessionHistoryResponse } from '../types';
 
 interface SendMessagePayload {
   message: string;
@@ -12,12 +12,12 @@ export const chatService = {
   },
 
   getHistory: async (sessionId: string) => {
-    return api.get<{ messages: unknown[]; count: number }>(
+    return api.get<SessionHistoryResponse>(
       `/v1/chat/sessions/${sessionId}/history`
     );
   },
 
   clearSession: async (sessionId: string) => {
-    return api.delete(`/v1/chat/sessions/${sessionId}`);
+    return api.delete<{ message: string; session_id: string }>(`/v1/chat/sessions/${sessionId}`);
   },
 };

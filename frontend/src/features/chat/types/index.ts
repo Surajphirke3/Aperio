@@ -25,6 +25,19 @@ export interface ChatResponse {
   session_id: string;
   reply: string;
   intent: IntentType;
-  structured_data?: Record<string, unknown> | null;
+  structured_data?: ParsedEntry | Record<string, unknown> | null;
   success: boolean;
+}
+
+export interface ChatHistoryMessage {
+  role: MessageRole;
+  content: string;
+  timestamp: string;
+  intent?: IntentType | null;
+}
+
+export interface SessionHistoryResponse {
+  session_id: string;
+  messages: ChatHistoryMessage[];
+  count: number;
 }

@@ -23,7 +23,7 @@ class InsightService:
 
         return {
             "batch_id": batch_id,
-            "summary": insight.get("summary", "No summary generated."),
+            "narrative": insight.get("narrative") or insight.get("summary", "No narrative generated."),
             "anomalies": insight.get("anomalies", []),
             "recommendations": insight.get("recommendations", []),
             "risk_level": insight.get("risk_level", "low"),

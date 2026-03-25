@@ -2,22 +2,38 @@
 
 import { useEffect, useRef } from 'react';
 import { useChat } from '../hooks/useChat';
+import { useSessions } from '../hooks/useSessions';
+import { useChatStore } from '../store/chatStore';
 import { MessageList } from './MessageList';
 import { ChatInput } from './ChatInput';
 import { SessionSidebar } from './SessionSidebar';
 import { TypingIndicator } from './TypingIndicator';
 
 export function ChatPanel() {
-  const { messages, isLoading, sendMessage, sessions, setActiveSession, activeSessionId } = useChat();
+  const { messages, isLoading, sendMessage, activeSessionId, error } = useChat();
+  const { sessions, switchSession, deleteSession } = useSessions();
+  const { clearMessages, setActiveSession, setError } = useChatStore();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  const handleNewChat = () => {
+    clearMessages();
+    setActiveSession(null);
+    setError(null);
+  };
+
   return (
     <div className="flex h-full bg-[var(--bg-primary)]">
-      <SessionSidebar sessions={sessions} onSelect={setActiveSession} activeSessionId={activeSessionId} />
+      <SessionSidebar
+        sessions={sessions}
+        onSelect={(sessionId) => void switchSession(sessionId)}
+        onNewChat={handleNewChat}
+        onDelete={(sessionId) => void deleteSession(sessionId)}
+        activeSessionId={activeSessionId}
+      />
 
       <div className="flex flex-col flex-1 min-w-0">
         <div className="flex items-center gap-3 px-6 py-4 border-b border-[var(--border)]">
@@ -26,6 +42,11 @@ export function ChatPanel() {
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {error && (
+            <div className="rounded-xl border border-[var(--status-danger)]/40 bg-[var(--status-danger)]/10 px-4 py-3 text-sm font-mono text-[var(--status-danger)]">
+              {error}
+            </div>
+          )}
           {messages.length === 0 && <EmptyChat onSuggestion={sendMessage} />}
           <MessageList messages={messages} />
           {isLoading && <TypingIndicator />}

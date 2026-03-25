@@ -42,12 +42,16 @@ export interface BatchEntry {
   loss_kg?: number;
   created_at: string;
   session_id: string;
+  batch_id?: string;
+  notes?: string;
+  anomalies?: BatchAnomaly[];
 }
 
-export interface AnomalyAlert {
+export interface BatchAnomaly {
   batch_id: string;
   stage: ProcessStage;
-  loss_pct: number;
-  threshold_pct: number;
-  severity: 'warning' | 'critical';
+  metric: string;
+  value: number;
+  threshold: number;
+  message: string;
 }

@@ -55,9 +55,10 @@ async def store_entry(state: ChatState) -> dict:
     """Node 3a: write extracted entity data to Firestore."""
     from src.infrastructure.db.firestore import FirestoreDB
     db = FirestoreDB()
-    data = state["extracted_data"]
+    data = dict(state["extracted_data"] or {})
     data["session_id"] = state["session_id"]
     result = await db.create_entry(data)
+    data["batch_id"] = result["id"]
     return {"db_result": {"action": "stored", "id": result["id"], "data": data}}
 
 
@@ -65,7 +66,10 @@ async def run_stats_query(state: ChatState) -> dict:
     """Node 3b: run aggregation query against Firestore."""
     from src.infrastructure.db.firestore import FirestoreDB
     db = FirestoreDB()
-    filters = state["extracted_data"]
+    filters = dict(state["extracted_data"] or {})
+    if filters.get("reference") == "first_vendor":
+        vendor = _resolve_first_vendor(state["history"])
+        return {"db_result": {"action": "queried", "result": {"vendor": vendor, "count": 1 if vendor else 0}}}
     result = await db.query_stats(filters)
     return {"db_result": {"action": "queried", "result": result}}
 
@@ -96,5 +100,35 @@ def _format_history(messages: list[dict]) -> str:
 def _format_query_result(result: dict) -> str:
     if not result:
         return "No data found for that query."
+    if result.get("vendor"):
+        return f"The first vendor you mentioned was {result['vendor']}."
     lines = [f"- {k}: {v}" for k, v in result.items()]
     return "Here's what I found:\n" + "\n".join(lines)
+
+
+def _resolve_first_vendor(history: list[dict]) -> str | None:
+    for message in history:
+        if message.get("role") != "user":
+            continue
+        content = message.get("content", "")
+        lowered = content.lower()
+        if " from " not in lowered and "vendor " not in lowered:
+            continue
+        tokens = content.replace(",", "").split()
+        if "from" in tokens:
+            start = tokens.index("from") + 1
+        elif "Vendor" in tokens:
+            start = tokens.index("Vendor") + 1
+        elif "vendor" in tokens:
+            start = tokens.index("vendor") + 1
+        else:
+            continue
+        vendor_tokens: list[str] = []
+        stop_words = {"today", "yesterday", "last", "at", "on", "during"}
+        for token in tokens[start:]:
+            if token.lower() in stop_words:
+                break
+            vendor_tokens.append(token)
+        if vendor_tokens:
+            return " ".join(vendor_tokens)
+    return None

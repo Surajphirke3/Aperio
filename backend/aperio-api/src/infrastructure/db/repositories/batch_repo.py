@@ -15,3 +15,6 @@ class BatchRepository:
 
     async def get_stats(self) -> dict:
         return await self.db.get_dashboard_stats()
+
+    async def get_sankey(self) -> dict:
+        return await self.db.get_sankey_data()

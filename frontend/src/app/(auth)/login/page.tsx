@@ -1,21 +1,30 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { isFirebaseConfigured } from '@/core/auth/firebase';
 import { useAuthContext } from '@/core/providers/AuthProvider';
 import { Button } from '@/shared/ui';
 
 export default function LoginPage() {
-  const { signInWithEmail, signInWithGoogle } = useAuthContext();
+  const { signInWithEmail, signInWithGoogle, user, loading } = useAuthContext();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const nextPath = searchParams.get('next') || '/chat';
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace(nextPath);
+    }
+  }, [loading, nextPath, router, user]);
 
   const handleEmail = async () => {
     try {
       await signInWithEmail(email, password);
-      router.push('/chat');
+      router.push(nextPath);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed');
     }
@@ -24,7 +33,7 @@ export default function LoginPage() {
   const handleGoogle = async () => {
     try {
       await signInWithGoogle();
-      router.push('/chat');
+      router.push(nextPath);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed');
     }
@@ -36,6 +45,12 @@ export default function LoginPage() {
         <h1 className="font-display text-3xl text-[var(--accent-primary)]">aperio</h1>
         <p className="text-sm font-mono text-[var(--text-muted)] mt-1">Material Traceability</p>
       </div>
+
+      {!isFirebaseConfigured && (
+        <p className="text-xs font-mono text-[var(--text-muted)] text-center">
+          Dev auth mode is active. Any email and password will sign in locally.
+        </p>
+      )}
 
       <div className="space-y-3">
         <input

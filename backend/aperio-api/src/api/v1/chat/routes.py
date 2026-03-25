@@ -1,12 +1,12 @@
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import StreamingResponse
 import uuid
 
-from .schemas import ChatRequest, ChatResponse, SessionListResponse
+from fastapi import APIRouter, Depends, HTTPException
+
+from .schemas import ChatRequest, ChatResponse
+from src.api.dependencies import verify_token
 from src.domain.chat.graph import chat_graph
 from src.domain.chat.memory import ChatMemory
 from src.domain.chat.similarity import get_similar_context
-from src.api.dependencies import verify_token
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
@@ -54,12 +54,14 @@ async def send_message(
         final_state["reply"],
         intent=str(final_state.get("intent")),
     )
+    db_result = final_state.get("db_result") or {}
+    structured_data = db_result.get("data") if db_result.get("action") == "stored" else db_result.get("result")
 
     return ChatResponse(
         session_id=session_id,
         reply=final_state["reply"],
         intent=str(final_state.get("intent", "unknown")),
-        structured_data=final_state.get("db_result"),
+        structured_data=structured_data,
         success=True,
     )
 

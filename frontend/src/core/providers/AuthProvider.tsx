@@ -1,11 +1,11 @@
 'use client';
 
 import { createContext, useContext, type ReactNode } from 'react';
+import type { AuthUser } from '@/core/auth/firebase';
 import { useAuth } from '@/core/auth/useAuth';
-import type { User } from 'firebase/auth';
 
 interface AuthContextValue {
-  user: User | null;
+  user: AuthUser | null;
   loading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<unknown>;
   signInWithGoogle: () => Promise<unknown>;

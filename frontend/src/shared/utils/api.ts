@@ -1,8 +1,9 @@
 import { env } from '@/core/config/env';
 
 const BASE_URL = env.NEXT_PUBLIC_API_URL;
+const REQUEST_TIMEOUT_MS = 15_000;
 
-class APIError extends Error {
+export class APIError extends Error {
   constructor(public status: number, message: string) {
     super(message);
     this.name = 'APIError';
@@ -12,10 +13,9 @@ class APIError extends Error {
 async function getAuthHeaders(): Promise<Record<string, string>> {
   if (typeof window === 'undefined') return {};
   try {
-    const { auth } = await import('@/core/auth/firebase');
-    const user = auth.currentUser;
-    if (!user) return {};
-    const token = await user.getIdToken();
+    const { getAccessToken } = await import('@/core/auth/firebase');
+    const token = await getAccessToken();
+    if (!token) return {};
     return { Authorization: `Bearer ${token}` };
   } catch {
     return {};
@@ -27,22 +27,37 @@ async function request<T>(
   options: RequestInit = {},
 ): Promise<T> {
   const authHeaders = await getAuthHeaders();
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
 
-  const response = await fetch(`${BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...authHeaders,
-      ...(options.headers as Record<string, string>),
-    },
-  });
+  try {
+    const response = await fetch(`${BASE_URL}${path}`, {
+      ...options,
+      signal: options.signal ?? controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+        ...(options.headers as Record<string, string>),
+      },
+    });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: response.statusText }));
-    throw new APIError(response.status, error.detail ?? 'Request failed');
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: response.statusText }));
+      throw new APIError(response.status, error.detail ?? 'Request failed');
+    }
+
+    return response.json();
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new APIError(408, 'The request timed out. Please try again.');
+    }
+    if (error instanceof TypeError) {
+      throw new APIError(503, 'Unable to reach the server. Please try again.');
+    }
+    throw error;
+  } finally {
+    window.clearTimeout(timeout);
   }
-
-  return response.json();
 }
 
 export const api = {

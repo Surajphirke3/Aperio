@@ -16,6 +16,9 @@ class BatchService:
     async def get_dashboard_stats(self) -> dict:
         return await self.repo.get_stats()
 
+    async def get_sankey_data(self) -> dict:
+        return await self.repo.get_sankey()
+
     def detect_anomalies(self, batch: dict) -> list[dict]:
         """Simple anomaly detection based on loss thresholds."""
         anomalies = []

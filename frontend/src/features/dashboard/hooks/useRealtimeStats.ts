@@ -9,6 +9,7 @@ export function useRealtimeStats() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
 
   useEffect(() => {
+    if (!db) return;
     const unsubscribe = onSnapshot(collection(db, 'material_entries'), (snapshot) => {
       const entries = snapshot.docs.map((d) => d.data());
       const byMaterial: Record<string, number> = {};

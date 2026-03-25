@@ -15,8 +15,7 @@ async def get_batches(
     user_id: str = Depends(verify_token),
 ):
     service = _get_service()
-    batches = await service.get_batches(limit=limit)
-    return {"batches": batches, "count": len(batches)}
+    return await service.get_batches(limit=limit)
 
 
 @router.get("/{batch_id}")

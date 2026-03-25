@@ -14,5 +14,4 @@ async def get_vendors(
     user_id: str = Depends(verify_token),
 ):
     service = _get_service()
-    vendors = await service.get_vendors()
-    return {"vendors": vendors, "count": len(vendors)}
+    return await service.get_vendors()
