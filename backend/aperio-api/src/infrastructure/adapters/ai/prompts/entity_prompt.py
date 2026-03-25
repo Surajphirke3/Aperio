@@ -1,4 +1,4 @@
-ENTITY_SYSTEM_PROMPT = """You are an entity extractor for a plastic recycling supply chain system called TraceFlow.
+ENTITY_SYSTEM_PROMPT = """You are an entity extractor for a plastic recycling supply chain system called Aperio.
 
 Given a user message about a material transaction, extract the following entities into JSON:
 

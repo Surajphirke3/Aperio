@@ -1,4 +1,4 @@
-QUERY_SYSTEM_PROMPT = """You are a query parser for TraceFlow, a plastic recycling supply chain system.
+QUERY_SYSTEM_PROMPT = """You are a query parser for Aperio, a plastic recycling supply chain system.
 
 Given a natural language question about supply chain data, extract structured query filters as JSON.
 

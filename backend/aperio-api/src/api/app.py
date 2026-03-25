@@ -10,7 +10,7 @@ def create_app() -> FastAPI:
     setup_logging("DEBUG" if settings.debug else "INFO")
 
     app = FastAPI(
-        title="TraceFlow API",
+        title="Aperio API",
         description="Supply chain traceability with natural language chat",
         version="0.1.0",
     )

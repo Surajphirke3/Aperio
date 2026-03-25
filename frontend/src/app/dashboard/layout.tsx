@@ -8,7 +8,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <Link href="/" className="flex items-center gap-2 mb-6">
           <span className="text-2xl">♻️</span>
           <span className="text-lg font-bold bg-gradient-to-r from-emerald-600 to-teal-500 bg-clip-text text-transparent">
-            RecycLens
+            Aperio
           </span>
         </Link>
         <nav className="space-y-2">

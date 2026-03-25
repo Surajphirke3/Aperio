@@ -1,5 +1,5 @@
 # architecture-nextjs.md — Enterprise Architecture Reference
-## TraceFlow — Next.js 16 Project Structure
+## Aperio — Next.js 16 Project Structure
 ### For immediate team use
 
 ---
@@ -41,7 +41,7 @@ RULE: Arrows only go DOWN. features/ never imports from pages/.
 ## Complete Folder Structure
 
 ```
-traceflow/
+aperio/
 │
 ├── src/
 │   │

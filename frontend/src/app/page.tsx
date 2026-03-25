@@ -83,11 +83,13 @@ const materialIcons = ['🥤', '🧴', '🛍️', '📦', '♻️'];
 
 export default function LandingPage() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+  const [mounted, setMounted] = useState(false);
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.3], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.3], [1, 0.9]);
 
   useEffect(() => {
+    setMounted(true);
     const handleMouseMove = (e: MouseEvent) => {
       setMousePosition({ x: e.clientX, y: e.clientY });
     };
@@ -104,21 +106,23 @@ export default function LandingPage() {
       </div>
 
       {/* Floating particles */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
-            key={i}
-            custom={i}
-            variants={particleVariants}
-            animate="animate"
-            className="absolute w-2 h-2 rounded-full bg-emerald-400/30"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-          />
-        ))}
-      </div>
+      {mounted && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(20)].map((_, i) => (
+            <motion.div
+              key={i}
+              custom={i}
+              variants={particleVariants}
+              animate="animate"
+              className="absolute w-2 h-2 rounded-full bg-emerald-400/30"
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+            />
+          ))}
+        </div>
+      )}
 
       {/* Mouse follower glow */}
       <motion.div
@@ -140,7 +144,7 @@ export default function LandingPage() {
           >
             <span className="text-3xl">♻️</span>
             <span className="text-2xl font-bold bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent">
-              RecycLens
+              Aperio
             </span>
           </motion.div>
           
@@ -443,7 +447,7 @@ export default function LandingPage() {
             Ready to Transform Your Operations?
           </h2>
           <p className="text-xl text-gray-300 mb-8">
-            Join 120+ recycling plants using RecycLens to save time, reduce errors, and track every kg
+            Join 120+ recycling plants using Aperio to save time, reduce errors, and track every kg
           </p>
           <Link href="/dashboard">
             <motion.button
@@ -462,7 +466,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <span className="text-2xl">♻️</span>
-            <span className="font-bold text-white">RecycLens</span>
+            <span className="font-bold text-white">Aperio</span>
           </div>
           <p className="text-gray-500 text-sm">
             Built with 💚 for a sustainable future

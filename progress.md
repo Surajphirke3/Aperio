@@ -26,13 +26,13 @@
   - [frontend/README.md](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/frontend/README.md)
   - [frontend/folderstrucutre.md](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/frontend/folderstrucutre.md)
   - [backend/folderstrucutre.md](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/folderstrucutre.md)
-  - [backend/traceflow-api/README.md](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/README.md)
+  - [backend/aperio-api/README.md](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/README.md)
 - Supporting package/config sources reviewed:
   - [frontend/package.json](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/frontend/package.json)
   - [frontend/env.example](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/frontend/env.example)
   - [frontend/prisma/schema.prisma](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/frontend/prisma/schema.prisma)
-  - [backend/traceflow-api/pyproject.toml](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/pyproject.toml)
-  - [backend/traceflow-api/.env.example](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/.env.example)
+  - [backend/aperio-api/pyproject.toml](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/pyproject.toml)
+  - [backend/aperio-api/.env.example](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/.env.example)
 
 ## Documentation Findings
 
@@ -119,7 +119,7 @@
 
 - [src/app/layout.tsx](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/frontend/src/app/layout.tsx)
   - Root layout.
-  - Sets site metadata for TraceFlow.
+  - Sets site metadata for Aperio.
   - Loads Geist fonts.
   - Wraps page body but does not inject AppProviders globally.
 - [src/app/globals.css](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/frontend/src/app/globals.css)
@@ -546,7 +546,7 @@
 
 ### Backend dependencies and tooling
 
-- Runtime packages from [pyproject.toml](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/pyproject.toml):
+- Runtime packages from [pyproject.toml](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/pyproject.toml):
   - `fastapi`
   - `uvicorn`
   - `sqlalchemy`
@@ -557,7 +557,7 @@
   - `pytest`
   - `pytest-asyncio`
   - `pytest-cov`
-- Backend startup flow documented in [README.md](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/README.md):
+- Backend startup flow documented in [README.md](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/README.md):
   - install dependencies
   - configure env
   - run migrations
@@ -567,23 +567,23 @@
 
 ### Backend application shell
 
-- [src/api/app.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/app.py)
+- [src/api/app.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/app.py)
   - FastAPI app factory.
   - Registers CORS.
   - Includes `/v1` router.
   - Exposes `GET /health`.
-- [src/api/dependencies.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/dependencies.py)
+- [src/api/dependencies.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/dependencies.py)
   - Dependency injection for DB session, batch repository, chat service, and insight service.
-- [src/api/v1/router.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/router.py)
+- [src/api/v1/router.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/router.py)
   - Aggregates chat, batches, stats, vendors, insights, and carbon routers.
 
 ### Backend endpoint inventory
 
-- [src/api/app.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/app.py)
+- [src/api/app.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/app.py)
   - `GET /health`
   - Status: implemented and functional.
   - Returns `{ status, environment }`.
-- [src/api/v1/chat/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/chat/routes.py)
+- [src/api/v1/chat/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/chat/routes.py)
   - `POST /v1/chat/`
   - Status: implemented.
   - Behavior:
@@ -593,193 +593,193 @@
     - maps `UnrecognizedIntentError` to 422
     - maps `ValueError` to 400
   - Current limitation: repository calls inside ChatService are stub-backed.
-- [src/api/v1/batches/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/batches/routes.py)
+- [src/api/v1/batches/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/batches/routes.py)
   - `GET /v1/batches/`
   - Status: implemented route, ineffective repository.
   - Current behavior: returns repository list and count.
   - Current repository result: empty list stub.
-- [src/api/v1/batches/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/batches/routes.py)
+- [src/api/v1/batches/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/batches/routes.py)
   - `GET /v1/batches/{batch_id}`
   - Status: implemented route, ineffective repository.
   - Current repository result: placeholder object with only ID.
-- [src/api/v1/insights/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/insights/routes.py)
+- [src/api/v1/insights/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/insights/routes.py)
   - `POST /v1/insights/{batch_id}`
   - Status: implemented.
   - Behavior: calls `InsightService.generate_batch_insight`.
   - Current limitation: result quality depends on stub repository data and AI availability.
-- [src/api/v1/carbon/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/carbon/routes.py)
+- [src/api/v1/carbon/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/carbon/routes.py)
   - `GET /v1/carbon/`
   - Query params: `material`, `quantity_kg`
   - Status: fully implemented and self-contained.
-- [src/api/v1/stats/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/stats/routes.py)
+- [src/api/v1/stats/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/stats/routes.py)
   - `GET /v1/stats/dashboard`
   - Status: 501 not implemented.
-- [src/api/v1/stats/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/stats/routes.py)
+- [src/api/v1/stats/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/stats/routes.py)
   - `GET /v1/stats/sankey`
   - Status: 501 not implemented.
-- [src/api/v1/vendors/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/vendors/routes.py)
+- [src/api/v1/vendors/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/vendors/routes.py)
   - `GET /v1/vendors/`
   - Status: 501 not implemented.
-- [src/api/v1/vendors/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/vendors/routes.py)
+- [src/api/v1/vendors/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/vendors/routes.py)
   - `GET /v1/vendors/{vendor_id}`
   - Status: 501 not implemented.
-- [src/api/v1/vendors/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/vendors/routes.py)
+- [src/api/v1/vendors/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/vendors/routes.py)
   - `GET /v1/vendors/{vendor_id}/scorecard`
   - Status: 501 not implemented.
 
 ### Backend API schema inventory
 
-- [src/api/v1/chat/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/chat/schemas.py)
+- [src/api/v1/chat/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/chat/schemas.py)
   - `ChatRequest`
   - `ChatResponse`
-- [src/api/v1/batches/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/batches/schemas.py)
+- [src/api/v1/batches/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/batches/schemas.py)
   - `BatchResponse`
   - `BatchListResponse`
-- [src/api/v1/stats/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/stats/schemas.py)
+- [src/api/v1/stats/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/stats/schemas.py)
   - `DashboardStatsResponse`
   - `SankeyNode`
   - `SankeyLink`
   - `SankeyResponse`
-- [src/api/v1/vendors/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/vendors/schemas.py)
+- [src/api/v1/vendors/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/vendors/schemas.py)
   - `VendorResponse`
   - `ScorecardResponse`
-- [src/api/v1/insights/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/insights/schemas.py)
+- [src/api/v1/insights/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/insights/schemas.py)
   - `InsightResponse`
-- [src/api/v1/carbon/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/carbon/schemas.py)
+- [src/api/v1/carbon/schemas.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/carbon/schemas.py)
   - `CarbonStatsResponse`
 
 ### Backend domain inventory: chat
 
-- [src/domain/chat/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/chat/models.py)
+- [src/domain/chat/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/chat/models.py)
   - Intent and material enums.
   - `ParsedEntry`.
   - `QueryFilter`.
-- [src/domain/chat/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/chat/services.py)
+- [src/domain/chat/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/chat/services.py)
   - Core chat orchestration.
   - Classifies intent with AI.
   - Parses entry/query responses.
   - Generates batch IDs when missing.
   - Sends data to repository methods.
-- [src/domain/chat/intent_classifier.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/chat/intent_classifier.py)
+- [src/domain/chat/intent_classifier.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/chat/intent_classifier.py)
   - Keyword-based fallback classifier.
-- [src/domain/chat/entity_extractor.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/chat/entity_extractor.py)
+- [src/domain/chat/entity_extractor.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/chat/entity_extractor.py)
   - Regex extractors for quantity and material.
   - Completeness validation helper.
-- [src/domain/chat/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/chat/exceptions.py)
+- [src/domain/chat/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/chat/exceptions.py)
   - Chat domain exception hierarchy.
 
 ### Backend domain inventory: batches
 
-- [src/domain/batches/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/batches/models.py)
+- [src/domain/batches/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/batches/models.py)
   - `BatchStage` enum.
   - `BatchLifecycle`.
   - `Batch`.
   - Derived properties for loss and current quantity.
-- [src/domain/batches/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/batches/services.py)
+- [src/domain/batches/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/batches/services.py)
   - Batch creation and stage advancement service.
-- [src/domain/batches/anomaly_detector.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/batches/anomaly_detector.py)
+- [src/domain/batches/anomaly_detector.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/batches/anomaly_detector.py)
   - Stage-level and batch-level anomaly detection.
-- [src/domain/batches/completeness_scorer.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/batches/completeness_scorer.py)
+- [src/domain/batches/completeness_scorer.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/batches/completeness_scorer.py)
   - Completeness scoring logic.
-- [src/domain/batches/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/batches/exceptions.py)
+- [src/domain/batches/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/batches/exceptions.py)
   - Batch domain exception types.
 
 ### Backend domain inventory: insights
 
-- [src/domain/insights/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/insights/models.py)
+- [src/domain/insights/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/insights/models.py)
   - `AnomalyAlert`
   - `BatchSummary`
   - `Insight`
-- [src/domain/insights/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/insights/services.py)
+- [src/domain/insights/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/insights/services.py)
   - AI narrative generation and summary generation for a batch.
-- [src/domain/insights/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/insights/exceptions.py)
+- [src/domain/insights/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/insights/exceptions.py)
   - Insight domain exception support.
 
 ### Backend domain inventory: vendors
 
-- [src/domain/vendors/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/vendors/models.py)
+- [src/domain/vendors/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/vendors/models.py)
   - `Vendor`
   - `VendorScorecard`
-- [src/domain/vendors/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/vendors/services.py)
+- [src/domain/vendors/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/vendors/services.py)
   - Vendor scorecard calculation logic.
-- [src/domain/vendors/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/vendors/exceptions.py)
+- [src/domain/vendors/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/vendors/exceptions.py)
   - Vendor domain exceptions.
 
 ### Backend domain inventory: carbon
 
-- [src/domain/carbon/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/carbon/models.py)
+- [src/domain/carbon/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/carbon/models.py)
   - `MaterialFactor`
   - `CarbonCalculation`
-- [src/domain/carbon/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/carbon/services.py)
+- [src/domain/carbon/services.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/carbon/services.py)
   - Recycled-vs-virgin carbon calculation service.
-- [src/domain/carbon/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/domain/carbon/exceptions.py)
+- [src/domain/carbon/exceptions.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/domain/carbon/exceptions.py)
   - Carbon domain exceptions.
 
 ### Backend infrastructure inventory: database and repositories
 
 - Database connection and ORM:
-  - [src/infrastructure/database/connection.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/database/connection.py) — SQLAlchemy engine/session management.
-  - [src/infrastructure/database/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/database/models.py) — ORM models for `batches`, `batch_lifecycle`, `entries`, `vendors`.
-  - [src/infrastructure/database/migrations/versions/.gitkeep](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/database/migrations/versions/.gitkeep) — migration folder placeholder only.
+  - [src/infrastructure/database/connection.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/database/connection.py) — SQLAlchemy engine/session management.
+  - [src/infrastructure/database/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/database/models.py) — ORM models for `batches`, `batch_lifecycle`, `entries`, `vendors`.
+  - [src/infrastructure/database/migrations/versions/.gitkeep](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/database/migrations/versions/.gitkeep) — migration folder placeholder only.
 - Repository layer:
-  - [src/infrastructure/repositories/batch_repository.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/repositories/batch_repository.py)
+  - [src/infrastructure/repositories/batch_repository.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/repositories/batch_repository.py)
     - Declares create/get/list/query methods.
     - Current status: stubbed.
-  - [src/infrastructure/repositories/entry_repository.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/repositories/entry_repository.py)
+  - [src/infrastructure/repositories/entry_repository.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/repositories/entry_repository.py)
     - Declares create/get/list/delete methods.
     - Current status: stubbed.
-  - [src/infrastructure/repositories/vendor_repository.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/repositories/vendor_repository.py)
+  - [src/infrastructure/repositories/vendor_repository.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/repositories/vendor_repository.py)
     - Declares vendor access and scorecard methods.
     - Current status: stubbed.
-  - [src/infrastructure/repositories/stats_repository.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/repositories/stats_repository.py)
+  - [src/infrastructure/repositories/stats_repository.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/repositories/stats_repository.py)
     - Declares stats aggregation methods.
     - Current status: stubbed.
 
 ### Backend infrastructure inventory: external integrations
 
 - AI abstraction:
-  - [src/infrastructure/adapters/ai/base.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/adapters/ai/base.py) — AI adapter contract and AIResponse.
-  - [src/infrastructure/adapters/ai/factory.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/adapters/ai/factory.py) — provider selection.
-  - [src/infrastructure/adapters/ai/featherless.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/adapters/ai/featherless.py) — cloud AI adapter with fallback model.
-  - [src/infrastructure/adapters/ai/ollama.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/adapters/ai/ollama.py) — local AI adapter.
+  - [src/infrastructure/adapters/ai/base.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/adapters/ai/base.py) — AI adapter contract and AIResponse.
+  - [src/infrastructure/adapters/ai/factory.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/adapters/ai/factory.py) — provider selection.
+  - [src/infrastructure/adapters/ai/featherless.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/adapters/ai/featherless.py) — cloud AI adapter with fallback model.
+  - [src/infrastructure/adapters/ai/ollama.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/adapters/ai/ollama.py) — local AI adapter.
 - AI prompt files:
-  - [src/infrastructure/adapters/ai/prompts/intent_prompt.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/adapters/ai/prompts/intent_prompt.py)
-  - [src/infrastructure/adapters/ai/prompts/entity_prompt.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/adapters/ai/prompts/entity_prompt.py)
-  - [src/infrastructure/adapters/ai/prompts/insight_prompt.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/adapters/ai/prompts/insight_prompt.py)
-  - [src/infrastructure/adapters/ai/prompts/query_prompt.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/adapters/ai/prompts/query_prompt.py)
+  - [src/infrastructure/adapters/ai/prompts/intent_prompt.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/adapters/ai/prompts/intent_prompt.py)
+  - [src/infrastructure/adapters/ai/prompts/entity_prompt.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/adapters/ai/prompts/entity_prompt.py)
+  - [src/infrastructure/adapters/ai/prompts/insight_prompt.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/adapters/ai/prompts/insight_prompt.py)
+  - [src/infrastructure/adapters/ai/prompts/query_prompt.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/adapters/ai/prompts/query_prompt.py)
 - Dataset integration:
-  - [src/infrastructure/adapters/kaggle/transformer.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/adapters/kaggle/transformer.py)
+  - [src/infrastructure/adapters/kaggle/transformer.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/adapters/kaggle/transformer.py)
     - Data-transform support for Kaggle-sourced input.
 
 ### Backend config, shared utilities, and contracts
 
-- [src/config/settings.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/config/settings.py)
+- [src/config/settings.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/config/settings.py)
   - Validated env/config settings.
   - Supports AI provider selection, DB URL, debug mode, and CORS origins.
-- [src/config/logging.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/config/logging.py)
+- [src/config/logging.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/config/logging.py)
   - Logging setup helper.
-- [src/shared/types/protocols.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/shared/types/protocols.py)
+- [src/shared/types/protocols.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/shared/types/protocols.py)
   - Protocols for AI adapter and repositories.
-- [src/shared/constants/materials.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/shared/constants/materials.py)
+- [src/shared/constants/materials.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/shared/constants/materials.py)
   - Material enum.
-- [src/shared/constants/stages.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/shared/constants/stages.py)
+- [src/shared/constants/stages.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/shared/constants/stages.py)
   - Process stage enum.
-- [src/shared/constants/thresholds.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/shared/constants/thresholds.py)
+- [src/shared/constants/thresholds.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/shared/constants/thresholds.py)
   - Anomaly thresholds.
-- [src/shared/utils/dates.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/shared/utils/dates.py)
+- [src/shared/utils/dates.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/shared/utils/dates.py)
   - Relative date parsing.
-- [src/shared/utils/json_parser.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/shared/utils/json_parser.py)
+- [src/shared/utils/json_parser.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/shared/utils/json_parser.py)
   - JSON extraction from LLM output.
-- [src/shared/utils/validators.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/shared/utils/validators.py)
+- [src/shared/utils/validators.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/shared/utils/validators.py)
   - Positive number validation, string validation, enum validation, input sanitization.
 
 ### Backend authentication and authorization status
 
 - Current implementation status: none
 - Observed security controls:
-  - CORS is configured in [src/api/app.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/app.py).
-  - Chat input is sanitized in [src/shared/utils/validators.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/shared/utils/validators.py) and applied in [src/api/v1/chat/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/api/v1/chat/routes.py).
-  - AI access is environment-configured in [src/config/settings.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/config/settings.py).
+  - CORS is configured in [src/api/app.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/app.py).
+  - Chat input is sanitized in [src/shared/utils/validators.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/shared/utils/validators.py) and applied in [src/api/v1/chat/routes.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/api/v1/chat/routes.py).
+  - AI access is environment-configured in [src/config/settings.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/config/settings.py).
 - Missing:
   - user authentication
   - role-based authorization
@@ -789,7 +789,7 @@
 
 ### Backend database schema and relationships
 
-- ORM models from [src/infrastructure/database/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/src/infrastructure/database/models.py):
+- ORM models from [src/infrastructure/database/models.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/src/infrastructure/database/models.py):
   - `BatchORM`
   - `BatchLifecycleORM`
   - `EntryORM`
@@ -807,28 +807,28 @@
 
 ### Backend project-level support files
 
-- [README.md](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/README.md) — backend setup and run instructions.
-- [.env.example](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/.env.example) — environment template.
-- [alembic.ini](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/alembic.ini) — Alembic config.
-- [pyproject.toml](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/pyproject.toml) — dependencies and pytest config.
-- [scripts/seed_db.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/scripts/seed_db.py) — DB seed script.
-- [scripts/test_prompts.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/scripts/test_prompts.py) — prompt testing helper.
-- [tests/fixtures/conftest.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/fixtures/conftest.py) — pytest fixtures.
-- [tests/fixtures/batch_fixtures.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/fixtures/batch_fixtures.py) — sample batch fixtures.
-- [tests/fixtures/sample_inputs.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/fixtures/sample_inputs.py) — natural-language sample inputs.
+- [README.md](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/README.md) — backend setup and run instructions.
+- [.env.example](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/.env.example) — environment template.
+- [alembic.ini](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/alembic.ini) — Alembic config.
+- [pyproject.toml](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/pyproject.toml) — dependencies and pytest config.
+- [scripts/seed_db.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/scripts/seed_db.py) — DB seed script.
+- [scripts/test_prompts.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/scripts/test_prompts.py) — prompt testing helper.
+- [tests/fixtures/conftest.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/fixtures/conftest.py) — pytest fixtures.
+- [tests/fixtures/batch_fixtures.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/fixtures/batch_fixtures.py) — sample batch fixtures.
+- [tests/fixtures/sample_inputs.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/fixtures/sample_inputs.py) — natural-language sample inputs.
 - Unit tests:
-  - [tests/unit/domain/batches/test_anomaly_detector.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/unit/domain/batches/test_anomaly_detector.py)
-  - [tests/unit/domain/batches/test_completeness_scorer.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/unit/domain/batches/test_completeness_scorer.py)
-  - [tests/unit/domain/carbon/test_carbon_service.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/unit/domain/carbon/test_carbon_service.py)
-  - [tests/unit/domain/chat/test_chat_service.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/unit/domain/chat/test_chat_service.py)
-  - [tests/unit/domain/chat/test_entity_extractor.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/unit/domain/chat/test_entity_extractor.py)
-  - [tests/unit/domain/chat/test_intent_classifier.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/unit/domain/chat/test_intent_classifier.py)
-  - [tests/unit/shared/test_date_utils.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/unit/shared/test_date_utils.py)
-  - [tests/unit/shared/test_json_parser.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/unit/shared/test_json_parser.py)
+  - [tests/unit/domain/batches/test_anomaly_detector.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/unit/domain/batches/test_anomaly_detector.py)
+  - [tests/unit/domain/batches/test_completeness_scorer.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/unit/domain/batches/test_completeness_scorer.py)
+  - [tests/unit/domain/carbon/test_carbon_service.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/unit/domain/carbon/test_carbon_service.py)
+  - [tests/unit/domain/chat/test_chat_service.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/unit/domain/chat/test_chat_service.py)
+  - [tests/unit/domain/chat/test_entity_extractor.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/unit/domain/chat/test_entity_extractor.py)
+  - [tests/unit/domain/chat/test_intent_classifier.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/unit/domain/chat/test_intent_classifier.py)
+  - [tests/unit/shared/test_date_utils.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/unit/shared/test_date_utils.py)
+  - [tests/unit/shared/test_json_parser.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/unit/shared/test_json_parser.py)
 - Integration tests:
-  - [tests/integration/test_ai_adapters.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/integration/test_ai_adapters.py)
-  - [tests/integration/test_chat_flow.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/integration/test_chat_flow.py)
-  - [tests/integration/test_stats_aggregation.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/traceflow-api/tests/integration/test_stats_aggregation.py)
+  - [tests/integration/test_ai_adapters.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/integration/test_ai_adapters.py)
+  - [tests/integration/test_chat_flow.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/integration/test_chat_flow.py)
+  - [tests/integration/test_stats_aggregation.py](file:///c:/Users/Suraj/OneDrive/Desktop/hackniche/backend/aperio-api/tests/integration/test_stats_aggregation.py)
 
 ### Backend package marker files
 
