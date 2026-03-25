@@ -21,11 +21,24 @@ export async function POST(req: NextRequest) {
       { role: 'user', content: buildUserPrompt(message) },
     ]);
 
+    // Parse structured data if AI returned JSON
+    let structuredData = undefined;
+    let action: 'stored' | 'queried' | 'error' = 'queried';
+    try {
+      const parsed = JSON.parse(aiResponse.content);
+      if (parsed && typeof parsed === 'object' && 'intent' in parsed) {
+        structuredData = parsed;
+        action = parsed.intent === 'query' ? 'queried' : 'stored';
+      }
+    } catch {
+      // Not JSON — that's fine, it's a plain text response
+    }
+
     return NextResponse.json({
-      data: {
-        reply: aiResponse.content,
-        model: aiResponse.model,
-      },
+      success: true,
+      reply: aiResponse.content,
+      structuredData,
+      action,
     });
   } catch (error) {
     console.error('Chat API error:', error);

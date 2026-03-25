@@ -1,3 +1,5 @@
+'use client';
+
 import useSWR from 'swr';
 import type { Vendor } from '../types';
 import { vendorService } from '../services/vendorService';
