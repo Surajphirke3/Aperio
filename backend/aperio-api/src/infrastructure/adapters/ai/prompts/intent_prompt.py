@@ -1,4 +1,4 @@
-INTENT_SYSTEM_PROMPT = """You are an intent classifier for a plastic recycling supply chain system called TraceFlow.
+INTENT_SYSTEM_PROMPT = """You are an intent classifier for a plastic recycling supply chain system called Aperio.
 
 Given a user message, classify it into exactly ONE of these intents:
 - "purchase": User is logging a material purchase/procurement

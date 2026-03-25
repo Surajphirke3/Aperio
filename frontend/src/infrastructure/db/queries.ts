@@ -1,5 +1,8 @@
 import { prisma } from './prisma';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyBatch = any;
+
 export async function getBatches(filters?: {
   materialType?: string;
   stage?: string;
@@ -45,8 +48,8 @@ export async function getVendors() {
 
 export async function getDashboardStats() {
   const [batches, vendorCount] = await Promise.all([
-    prisma.batch.findMany({ include: { stages: true } }),
-    prisma.vendor.count(),
+    prisma.batch.findMany({ include: { stages: true } }) as Promise<AnyBatch[]>,
+    prisma.vendor.count() as Promise<number>,
   ]);
 
   let totalInput = 0;

@@ -1,11 +1,29 @@
-import { PrismaClient } from '@prisma/client';
+// Mock Prisma client for demo purposes
+// In production, replace with actual PrismaClient
 
-const globalForPrisma = globalThis as unknown as { prisma: PrismaClient };
+interface MockQueryOptions {
+  where?: Record<string, unknown>;
+  skip?: number;
+  take?: number;
+  orderBy?: Record<string, string>;
+  include?: Record<string, boolean>;
+}
 
-export const prisma =
-  globalForPrisma.prisma ||
-  new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['query'] : [],
-  });
+const createMockModel = <T>() => {
+  return {
+    findMany: async (_options?: MockQueryOptions): Promise<T[]> => [],
+    findUnique: async (_options?: MockQueryOptions): Promise<T | null> => null,
+    count: async (_options?: { where?: Record<string, unknown> }): Promise<number> => 0,
+    create: async (_options?: { data: T }): Promise<T> => ({} as T),
+    createMany: async (_options?: { data: T[] }): Promise<{ count: number }> => ({ count: 0 }),
+    update: async (_options?: { where: Record<string, unknown>; data: Partial<T> }): Promise<T> => ({} as T),
+    delete: async (_options?: { where: Record<string, unknown> }): Promise<void> => {},
+    deleteMany: async (_options?: { where?: Record<string, unknown> }): Promise<{ count: number }> => ({ count: 0 }),
+  };
+};
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+export const prisma = {
+  batch: createMockModel<unknown>(),
+  batchStage: createMockModel<unknown>(),
+  vendor: createMockModel<unknown>(),
+};

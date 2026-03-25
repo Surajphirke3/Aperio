@@ -1,5 +1,8 @@
 import { prisma } from '../prisma';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRecord = any;
+
 export async function findBatches(filters?: {
   materialType?: string;
   vendor?: string;
@@ -20,7 +23,7 @@ export async function findBatches(filters?: {
       take: limit,
       orderBy: { createdAt: 'desc' },
       include: { stages: true },
-    }),
+    } as AnyRecord),
     prisma.batch.count({ where }),
   ]);
 
@@ -31,7 +34,7 @@ export async function findBatchById(id: string) {
   return prisma.batch.findUnique({
     where: { id },
     include: { stages: true },
-  });
+  } as AnyRecord) as AnyRecord;
 }
 
 export async function createBatch(data: {
@@ -39,5 +42,5 @@ export async function createBatch(data: {
   quantity_kg: number;
   vendor?: string;
 }) {
-  return prisma.batch.create({ data });
+  return prisma.batch.create({ data } as AnyRecord);
 }

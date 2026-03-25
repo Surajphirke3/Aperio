@@ -18,8 +18,7 @@ export async function createMaterialEntry(entities: ParsedIntent) {
           }
         : undefined,
     },
-    include: { stages: true },
-  });
+  } as never);
 
   return batch;
 }

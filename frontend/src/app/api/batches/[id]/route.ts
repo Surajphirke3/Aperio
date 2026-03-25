@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getBatchById } from '@/infrastructure/db/queries';
+import { mockBatches } from '@/infrastructure/mock';
 
 export async function GET(
   _req: NextRequest,
@@ -7,7 +7,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    const batch = await getBatchById(id);
+    const batch = mockBatches.find(b => b.id === id);
     if (!batch) {
       return NextResponse.json({ error: 'Batch not found' }, { status: 404 });
     }

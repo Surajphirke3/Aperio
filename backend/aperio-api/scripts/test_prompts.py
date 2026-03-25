@@ -30,7 +30,7 @@ async def test_with_service():
     adapter = get_ai_adapter()
 
     print("=" * 60)
-    print("TraceFlow — Prompt Testing")
+    print("Aperio — Prompt Testing")
     print("=" * 60)
 
     # Check health
@@ -64,7 +64,7 @@ async def test_standalone():
     from src.infrastructure.adapters.ai.prompts.query_prompt import QUERY_SYSTEM_PROMPT
 
     print("=" * 60)
-    print("TraceFlow — Prompt Preview (No AI)")
+    print("Aperio — Prompt Preview (No AI)")
     print("=" * 60)
 
     prompts = {

@@ -1,4 +1,4 @@
-export const APP_NAME = 'TraceFlow';
+export const APP_NAME = 'Aperio';
 export const APP_VERSION = '1.0.0';
 export const DEFAULT_PAGE_SIZE = 20;
 export const MAX_CHAT_MESSAGE_LENGTH = 2000;
