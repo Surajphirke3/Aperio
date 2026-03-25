@@ -6,6 +6,9 @@ import { InsightPanel } from './InsightPanel';
 import { AnomalyAlert } from './AnomalyAlert';
 import { CompletenessScore } from './CompletenessScore';
 import { LoadingState } from '@/shared/components/LoadingState';
+import { SankeyDiagram } from '../charts/SankeyDiagram';
+import { MaterialPieChart } from '../charts/MaterialPieChart';
+import { BatchBarChart } from '../charts/BatchBarChart';
 
 export function DashboardShell() {
   const { stats, isLoading, isError } = useDashboardStats();
@@ -23,6 +26,14 @@ export function DashboardShell() {
       {stats.anomalies.length > 0 && <AnomalyAlert anomalies={stats.anomalies} />}
 
       <KPIGrid stats={stats} />
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <SankeyDiagram data={stats.sankey} />
+        <MaterialPieChart data={stats.materialBreakdown} />
+      </div>
+
+      <BatchBarChart data={stats.stageBreakdown} />
+
       <InsightPanel />
     </div>
   );

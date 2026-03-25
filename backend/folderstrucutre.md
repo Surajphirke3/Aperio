@@ -1,5 +1,5 @@
 # architecture-python.md — Enterprise Architecture Reference
-## TraceFlow — Python Backend Project Structure
+## Aperio — Python Backend Project Structure
 ### For immediate team use
 
 ---
@@ -40,7 +40,7 @@ RULE: domain/ has ZERO imports from infrastructure/, api/, or config/.
 ## Complete Folder Structure
 
 ```
-traceflow-api/
+aperio-api/
 │
 ├── src/
 │   │
@@ -229,7 +229,7 @@ class Settings(BaseSettings):
     fallback_model: str = Field(default="Qwen/Qwen2.5-3B-Instruct")
 
     # Database
-    database_url: str = Field(default="sqlite:///./traceflow.db")
+    database_url: str = Field(default="sqlite:///./aperio.db")
 
     # App
     environment: str = Field(default="development")

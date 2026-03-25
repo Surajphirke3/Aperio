@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, FormEvent, KeyboardEvent } from 'react';
+import { Send, Sparkles } from 'lucide-react';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -26,22 +27,25 @@ export function ChatInput({ onSend, disabled }: ChatInputProps) {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t p-4 flex gap-2">
-      <textarea
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder="Type a message..."
-        disabled={disabled}
-        rows={1}
-        className="flex-1 resize-none rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-      />
+    <form onSubmit={handleSubmit} className="border-t p-4 bg-gray-50 flex gap-3">
+      <div className="flex-1 relative">
+        <textarea
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder="Ask about your recycling data or log a batch..."
+          disabled={disabled}
+          rows={1}
+          className="w-full resize-none rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent disabled:opacity-50"
+          style={{ minHeight: '48px', maxHeight: '120px' }}
+        />
+      </div>
       <button
         type="submit"
         disabled={disabled || !input.trim()}
-        className="rounded-lg bg-blue-600 px-4 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+        className="rounded-xl bg-emerald-600 px-4 py-3 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
       >
-        Send
+        <Send className="w-4 h-4" />
       </button>
     </form>
   );

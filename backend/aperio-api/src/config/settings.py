@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     fallback_model: str = Field(default="Qwen/Qwen2.5-3B-Instruct")
 
     # Database
-    database_url: str = Field(default="sqlite:///./traceflow.db")
+    database_url: str = Field(default="sqlite:///./aperio.db")
 
     # App
     environment: str = Field(default="development")

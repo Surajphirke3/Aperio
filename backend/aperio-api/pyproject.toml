@@ -1,7 +1,7 @@
 [project]
-name = "traceflow-api"
+name = "aperio-api"
 version = "0.1.0"
-description = "TraceFlow — Python Backend for supply chain traceability"
+description = "Aperio — Python Backend for supply chain traceability"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.104.0",

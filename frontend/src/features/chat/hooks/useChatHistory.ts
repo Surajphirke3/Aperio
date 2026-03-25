@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import type { ChatMessage } from '../types';
 
-const STORAGE_KEY = 'traceflow-chat-history';
+const STORAGE_KEY = 'aperio-chat-history';
 const MAX_MESSAGES = 100;
 
 export function useChatHistory() {

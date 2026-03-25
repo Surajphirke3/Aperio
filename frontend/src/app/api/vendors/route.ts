@@ -1,33 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import { mockVendors } from '@/infrastructure/mock';
 
 const BACKEND_URL = process.env.BACKEND_URL ?? 'http://localhost:8000';
 
 export async function GET(req: NextRequest) {
   try {
-    const url = new URL(req.url);
-    const vendorId = url.searchParams.get('id');
-    const scorecard = url.searchParams.get('scorecard') === 'true';
-
-    let targetUrl = `${BACKEND_URL}/api/v1/vendors`;
-    if (vendorId) {
-      targetUrl += `/${vendorId}`;
-      if (scorecard) {
-        targetUrl += '/scorecard';
-      }
-    }
-
-    const response = await fetch(targetUrl, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Backend error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    return NextResponse.json({ data });
+    return NextResponse.json({ data: mockVendors });
   } catch (error) {
     console.error('Vendors API error:', error);
     return NextResponse.json({ error: 'Failed to fetch vendors from backend' }, { status: 500 });

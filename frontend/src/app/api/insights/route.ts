@@ -1,33 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getAIResponse } from '@/infrastructure/ai/provider';
+import { NextResponse } from 'next/server';
+import { mockInsights } from '@/infrastructure/mock';
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    const url = new URL(req.url);
-    const batchId = url.searchParams.get('batchId');
-    if (!batchId) {
-      return NextResponse.json({ error: 'batchId is required' }, { status: 400 });
-    }
-
-    const aiResponse = await getAIResponse([
-      {
-        role: 'system',
-        content: 'You are an AI that provides insights on plastic recycling batch data. Return JSON with "summary" and "recommendations" fields.',
-      },
-      {
-        role: 'user',
-        content: `Provide insights for batch ${batchId}. Include a brief summary and actionable recommendations.`,
-      },
-    ]);
-
-    let parsed;
-    try {
-      parsed = JSON.parse(aiResponse.content);
-    } catch {
-      parsed = { summary: aiResponse.content, recommendations: [] };
-    }
-
-    return NextResponse.json({ data: parsed });
+    return NextResponse.json({ data: mockInsights });
   } catch (error) {
     console.error('Insights API error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

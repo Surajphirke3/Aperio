@@ -1,60 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { checkRateLimit } from '@/core/middleware/rateLimit';
-import { featherlessClient } from '@/infrastructure/ai/featherless/client';
-import { parseIntent } from '@/infrastructure/ai/prompts/intentPrompt';
-import { extractEntities } from '@/infrastructure/ai/prompts/entityPrompt';
-import { buildQueryFilters } from '@/infrastructure/ai/prompts/queryPrompt';
-import { getAIResponse } from '@/infrastructure/ai/provider';
-import { SYSTEM_PROMPT } from '@/infrastructure/ai/prompts';
-import { createMaterialEntry } from '@/infrastructure/db/queries/entries';
-import { findVendorByName } from '@/infrastructure/db/queries/vendors';
-import { runStatsQuery } from '@/infrastructure/db/queries/stats';
-import { prisma } from '@/infrastructure/db/prisma';
-import type { ParsedIntent, ProcessStage } from '@/shared/types';
-
-interface AnomalyResult {
-  stage: string;
-  lossPct: number;
-  threshold: number;
-  severity: 'warning' | 'critical';
-  message: string;
-}
-
-const ANOMALY_THRESHOLDS: Record<string, { warn: number; critical: number }> = {
-  sorting: { warn: 12, critical: 20 },
-  washing: { warn: 8, critical: 15 },
-  shredding: { warn: 5, critical: 10 },
-  melting: { warn: 18, critical: 25 },
-  pelletizing: { warn: 8, critical: 12 },
-};
-
-function checkAnomaly(stage: string, inputKg: number, outputKg: number): AnomalyResult | null {
-  const lossPct = inputKg > 0 ? ((inputKg - outputKg) / inputKg) * 100 : 0;
-  const thresholds = ANOMALY_THRESHOLDS[stage];
-  if (!thresholds) return null;
-
-  if (lossPct >= thresholds.critical) {
-    return { stage, lossPct, threshold: thresholds.critical, severity: 'critical', message: `CRITICAL: ${stage} loss ${lossPct.toFixed(1)}% exceeds ${thresholds.critical}% threshold` };
-  }
-  if (lossPct >= thresholds.warn) {
-    return { stage, lossPct, threshold: thresholds.warn, severity: 'warning', message: `WARNING: ${stage} loss ${lossPct.toFixed(1)}% exceeds ${thresholds.warn}% threshold` };
-  }
-  return null;
-}
-
-function generateBatchCode(): string {
-  const year = new Date().getFullYear();
-  const rand = String(Math.floor(Math.random() * 900) + 100);
-  return `B-${year}-${rand}`;
-}
+import { mockDashboardStats, mockBatches } from '@/infrastructure/mock';
 
 export async function POST(req: NextRequest) {
-  const ip = req.headers.get('x-forwarded-for') ?? 'unknown';
-  const { allowed } = checkRateLimit(ip);
-  if (!allowed) {
-    return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 });
-  }
-
   try {
     const body = await req.json();
     const message: unknown = body.message;

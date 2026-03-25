@@ -1,5 +1,8 @@
 import { prisma } from '../prisma';
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyRecord = any;
+
 async function seed() {
   console.log('Seeding database...');
 
@@ -15,7 +18,7 @@ async function seed() {
       { name: 'GreenRecycle Co.', materialTypes: ['PP', 'LDPE'], totalSupplied_kg: 35000, avgQualityScore: 78 },
       { name: 'CleanStream Ltd.', materialTypes: ['PET', 'mixed'], totalSupplied_kg: 42000, avgQualityScore: 92 },
     ],
-  });
+  } as AnyRecord);
 
   // Create sample batches
   const batch1 = await prisma.batch.create({
@@ -32,7 +35,7 @@ async function seed() {
         ],
       },
     },
-  });
+  } as AnyRecord) as AnyRecord;
 
   console.log(`Created batch: ${batch1.id}`);
   console.log('Seeding complete.');
@@ -44,5 +47,5 @@ seed()
     process.exit(1);
   })
   .finally(async () => {
-    await prisma.$disconnect();
+    await (prisma as AnyRecord).$disconnect();
   });
