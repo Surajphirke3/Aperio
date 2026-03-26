@@ -1,18 +1,28 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from src.config.settings import settings
-from src.config.logging import setup_logging
+from src.config.logging import configure_logging
+from src.infrastructure.cache.redis_client import init_redis, close_redis
 from src.api.v1.router import v1_router
 
 
-def create_app() -> FastAPI:
-    """FastAPI application factory."""
-    setup_logging("DEBUG" if settings.debug else "INFO")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup + shutdown lifecycle."""
+    configure_logging()
+    await init_redis()
+    yield
+    await close_redis()
 
+
+def create_app() -> FastAPI:
     app = FastAPI(
         title="Aperio API",
-        description="Supply chain traceability with natural language chat",
-        version="0.1.0",
+        version="1.0.0",
+        description="Intelligent recycled materials traceability system",
+        lifespan=lifespan,
     )
 
     app.add_middleware(
@@ -27,7 +37,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health")
     async def health():
-        return {"status": "ok", "environment": settings.environment}
+        return {"status": "ok", "model": settings.primary_model}
 
     return app
 

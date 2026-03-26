@@ -1,7 +1,6 @@
-from dataclasses import dataclass, field
 from enum import Enum
-from datetime import date
-from typing import Optional
+from typing import TypedDict, Optional
+from pydantic import BaseModel
 
 
 class IntentType(str, Enum):
@@ -12,43 +11,43 @@ class IntentType(str, Enum):
     REPORT = "report"
 
 
-class MaterialType(str, Enum):
-    PET = "PET"
-    HDPE = "HDPE"
-    PP = "PP"
-    LDPE = "LDPE"
-    PVC = "PVC"
-    MIXED = "mixed"
+class ChatState(TypedDict):
+    """Full state passed between LangGraph nodes."""
+    session_id: str
+    user_message: str
+    history: list[dict]
+    similar_context: list[dict]
+    intent: Optional[IntentType]
+    extracted_data: Optional[dict]
+    db_result: Optional[dict]
+    reply: Optional[str]
+    error: Optional[str]
 
 
-@dataclass
-class ParsedEntry:
-    """Represents a successfully parsed data entry from NL input."""
-    intent: IntentType
-    material: MaterialType
-    quantity_kg: float
-    date: date
-    vendor: Optional[str] = None
-    stage: Optional[str] = None
-    loss_kg: Optional[float] = None
-    batch_id: Optional[str] = None
-    notes: Optional[str] = None
-    raw_input: str = ""
-
-    @property
-    def loss_pct(self) -> Optional[float]:
-        if self.loss_kg and self.quantity_kg:
-            return (self.loss_kg / self.quantity_kg) * 100
-        return None
+class ParsedEntry(BaseModel):
+    intent: str
+    material: str | None = None
+    quantity_kg: float | None = None
+    date: str | None = None
+    vendor: str | None = None
+    stage: str | None = None
+    loss_kg: float | None = None
+    batch_id: str | None = None
+    notes: str | None = None
 
 
-@dataclass
-class QueryFilter:
-    """Represents a structured query filter extracted from NL question."""
-    metric: str                              # "dispatched", "processed", "loss"
-    date_range_start: Optional[date] = None
-    date_range_end: Optional[date] = None
-    stage: Optional[str] = None
-    material: Optional[MaterialType] = None
-    vendor: Optional[str] = None
-    batch_id: Optional[str] = None
+class QueryFilter(BaseModel):
+    metric: str | None = None
+    material: str | None = None
+    vendor: str | None = None
+    date_from: str | None = None
+    date_to: str | None = None
+    aggregation: str | None = None
+    group_by: str | None = None
+
+
+class Message(BaseModel):
+    role: str
+    content: str
+    intent: str | None = None
+    timestamp: str | None = None

@@ -1,48 +1,30 @@
-from .models import Insight, BatchSummary
-from src.shared.types.protocols import AIAdapterProtocol, BatchRepositoryProtocol
-from src.domain.batches.exceptions import BatchNotFoundError
-from src.infrastructure.adapters.ai.prompts.insight_prompt import INSIGHT_SYSTEM_PROMPT
+import json
+from src.infrastructure.ai.adapter import FeatherlessAdapter
+from src.infrastructure.ai.prompts.insight import INSIGHT_SYSTEM_PROMPT
+from src.infrastructure.db.firestore import FirestoreDB
+from src.shared.utils.json_parser import extract_json
 
 
 class InsightService:
-    """Insight generation orchestration."""
+    """AI-driven batch narrative generation."""
 
-    def __init__(
-        self,
-        ai_adapter: AIAdapterProtocol,
-        batch_repo: BatchRepositoryProtocol,
-    ):
-        self.ai = ai_adapter
-        self.batch_repo = batch_repo
+    def __init__(self):
+        self.adapter = FeatherlessAdapter()
+        self.db = FirestoreDB()
 
-    async def generate_batch_insight(self, batch_id: str) -> Insight:
-        """Generate an AI narrative insight for a specific batch."""
-        batch = await self.batch_repo.get_batch(batch_id)
-        if batch is None:
-            raise BatchNotFoundError(f"Batch {batch_id} not found")
+    async def generate_insight(self, batch_id: str) -> dict:
+        batch = await self.db.get_batch_by_id(batch_id)
+        if not batch:
+            raise ValueError(f"Batch not found: {batch_id}")
 
-        prompt = f"Generate insight for batch: {batch}"
-        response = await self.ai.complete(prompt, INSIGHT_SYSTEM_PROMPT)
+        prompt = f"Analyze this batch lifecycle data:\n{json.dumps(batch, indent=2)}"
+        response = await self.adapter.complete(prompt, INSIGHT_SYSTEM_PROMPT)
+        insight = extract_json(response.content)
 
-        return Insight(
-            title=f"Insight for Batch {batch_id}",
-            narrative=response.content,
-            batch_id=batch_id,
-            category="batch_analysis",
-        )
-
-    async def generate_summary(self, batch_id: str) -> BatchSummary:
-        """Generate a statistical summary for a batch."""
-        batch = await self.batch_repo.get_batch(batch_id)
-        if batch is None:
-            raise BatchNotFoundError(f"Batch {batch_id} not found")
-        # Build summary from batch data (batch is a dict from repository)
-        return BatchSummary(
-            batch_id=batch_id,
-            material=batch.get("material", "unknown"),
-            vendor=batch.get("vendor", "unknown"),
-            initial_kg=batch.get("initial_quantity_kg", 0),
-            final_kg=batch.get("current_quantity_kg", 0),
-            total_loss_pct=batch.get("total_loss_pct", 0),
-            stages_completed=len(batch.get("lifecycle", [])),
-        )
+        return {
+            "batch_id": batch_id,
+            "narrative": insight.get("narrative") or insight.get("summary", "No narrative generated."),
+            "anomalies": insight.get("anomalies", []),
+            "recommendations": insight.get("recommendations", []),
+            "risk_level": insight.get("risk_level", "low"),
+        }

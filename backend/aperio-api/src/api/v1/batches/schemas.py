@@ -1,18 +1,19 @@
 from pydantic import BaseModel
-from typing import Optional, Any
-from datetime import date
+from typing import Optional
 
 
 class BatchResponse(BaseModel):
     id: str
     material: Optional[str] = None
+    quantity_kg: Optional[float] = None
+    intent: Optional[str] = None
     vendor: Optional[str] = None
-    initial_quantity_kg: Optional[float] = None
-    current_stage: Optional[str] = None
-    created_at: Optional[date] = None
-    lifecycle: Optional[list[Any]] = None
+    stage: Optional[str] = None
+    loss_kg: Optional[float] = None
+    date: Optional[str] = None
+    created_at: Optional[str] = None
 
 
 class BatchListResponse(BaseModel):
-    batches: list[Any]
-    total: int
+    batches: list[dict]
+    count: int

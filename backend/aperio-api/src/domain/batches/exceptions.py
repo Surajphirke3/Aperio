@@ -1,18 +1,14 @@
-class BatchDomainError(Exception):
-    """Base exception for batch domain errors."""
-    pass
+class BatchNotFoundError(Exception):
+    def __init__(self, batch_id: str):
+        self.batch_id = batch_id
+        super().__init__(f"Batch not found: {batch_id}")
 
 
-class BatchNotFoundError(BatchDomainError):
-    """Raised when a batch cannot be found."""
-    pass
+class BatchValidationError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)
 
 
-class InvalidStageTransitionError(BatchDomainError):
-    """Raised when an invalid stage transition is attempted."""
-    pass
-
-
-class DuplicateBatchError(BatchDomainError):
-    """Raised when a batch with the same ID already exists."""
-    pass
+class AnomalyDetectionError(Exception):
+    def __init__(self, message: str):
+        super().__init__(message)

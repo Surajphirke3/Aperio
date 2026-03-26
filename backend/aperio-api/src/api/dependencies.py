@@ -1,35 +1,30 @@
-from fastapi import Depends
-from sqlalchemy.orm import Session
-
-from src.infrastructure.database.connection import get_db_session
-from src.infrastructure.adapters.ai.factory import get_ai_adapter
-from src.infrastructure.repositories.batch_repository import BatchRepository
-from src.infrastructure.repositories.vendor_repository import VendorRepository
-from src.domain.chat.services import ChatService
-from src.domain.insights.services import InsightService
+from fastapi import Header, HTTPException
+from src.config.settings import settings
 
 
-def get_batch_repository(
-    db: Session = Depends(get_db_session),
-) -> BatchRepository:
-    return BatchRepository(db)
+async def verify_token(authorization: str = Header(default=None)) -> str:
+    """Verify Firebase Auth JWT token.
+    
+    In development mode, accepts any non-empty authorization header.
+    In production, this should validate Firebase JWT tokens.
+    """
+    if settings.environment == "development":
+        # Development mode: accept any auth or return anonymous
+        if not authorization:
+            return "anonymous"
+        return authorization
 
+    if not authorization:
+        raise HTTPException(status_code=401, detail="Authorization header required")
 
-def get_chat_service(
-    batch_repo: BatchRepository = Depends(get_batch_repository),
-) -> ChatService:
-    ai_adapter = get_ai_adapter()
-    return ChatService(ai_adapter=ai_adapter, batch_repo=batch_repo)
-
-
-def get_insight_service(
-    batch_repo: BatchRepository = Depends(get_batch_repository),
-) -> InsightService:
-    ai_adapter = get_ai_adapter()
-    return InsightService(ai_adapter=ai_adapter, batch_repo=batch_repo)
-
-
-def get_vendor_repository(
-    db: Session = Depends(get_db_session),
-) -> VendorRepository:
-    return VendorRepository(db)
+    try:
+        # In production: verify Firebase JWT
+        # from firebase_admin import auth
+        # decoded = auth.verify_id_token(authorization.replace("Bearer ", ""))
+        # return decoded["uid"]
+        token = authorization.replace("Bearer ", "")
+        if not token:
+            raise ValueError("Empty token")
+        return token
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Invalid token: {str(e)}")

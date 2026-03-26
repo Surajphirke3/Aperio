@@ -1,34 +1,38 @@
 import json
 import re
-from typing import Any
 
 
-def extract_json(raw: str) -> dict[str, Any]:
+def extract_json(text: str) -> dict:
+    """Robust JSON extraction from LLM output.
+    
+    Handles common LLM output patterns:
+    1. Pure JSON string
+    2. JSON wrapped in markdown code blocks
+    3. JSON embedded in natural language text
     """
-    Robustly extract JSON from LLM output.
-    Handles: plain JSON, JSON in markdown code blocks, JSON with trailing text.
-    """
-    # Strategy 1: Direct parse
+    text = text.strip()
+
+    # Try direct parse first
     try:
-        return json.loads(raw.strip())
+        return json.loads(text)
     except json.JSONDecodeError:
         pass
 
-    # Strategy 2: Extract from markdown code block
-    code_block = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", raw)
-    if code_block:
+    # Try extracting from markdown code blocks
+    code_block_match = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL)
+    if code_block_match:
         try:
-            return json.loads(code_block.group(1))
+            return json.loads(code_block_match.group(1).strip())
         except json.JSONDecodeError:
             pass
 
-    # Strategy 3: Find first {...} block
-    brace_match = re.search(r"\{[\s\S]*\}", raw)
+    # Try finding JSON object in text
+    brace_match = re.search(r"\{.*\}", text, re.DOTALL)
     if brace_match:
         try:
             return json.loads(brace_match.group(0))
         except json.JSONDecodeError:
             pass
 
-    # Fallback: return empty dict — caller handles missing fields
+    # Last resort: return empty dict
     return {}

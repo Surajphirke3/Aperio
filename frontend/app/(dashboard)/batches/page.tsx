@@ -1,0 +1,112 @@
+"use client"
+
+import { useState, useMemo } from "react"
+import Link from "next/link"
+import { motion, AnimatePresence } from "framer-motion"
+import { TopBar } from "@/components/layout/topbar"
+import { BatchCard } from "@/components/batches/batch-card"
+import { BatchFilters } from "@/components/batches/batch-filters"
+import { Button } from "@/components/ui/button"
+import { MessageSquare } from "lucide-react"
+import { batches } from "@/lib/mockData"
+
+export default function BatchesPage() {
+  const [filters, setFilters] = useState({
+    material: "all",
+    stage: "all",
+    status: "all",
+    dateRange: "7d",
+    search: "",
+  })
+
+  const handleFilterChange = (key: string, value: string) => {
+    setFilters((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const filteredBatches = useMemo(() => {
+    return batches.filter((batch) => {
+      // Material filter
+      if (filters.material !== "all") {
+        const materialLower = batch.material.toLowerCase()
+        if (!materialLower.includes(filters.material)) return false
+      }
+
+      // Status filter
+      if (filters.status !== "all") {
+        if (batch.status !== filters.status) return false
+      }
+
+      // Search filter
+      if (filters.search) {
+        const searchLower = filters.search.toLowerCase()
+        const matchesId = batch.id.toLowerCase().includes(searchLower)
+        const matchesVendor = batch.vendor.toLowerCase().includes(searchLower)
+        if (!matchesId && !matchesVendor) return false
+      }
+
+      return true
+    })
+  }, [filters])
+
+  return (
+    <div className="min-h-screen">
+      <TopBar
+        title="Material Batches"
+        subtitle="Track every batch from collection to dispatch"
+      />
+
+      <div className="p-6 space-y-6">
+        {/* Header Actions */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-tf-text-secondary">
+              Showing{" "}
+              <span className="text-tf-text-primary font-mono">
+                {filteredBatches.length}
+              </span>{" "}
+              of{" "}
+              <span className="text-tf-text-primary font-mono">
+                {batches.length}
+              </span>{" "}
+              batches
+            </p>
+          </div>
+          <Link href="/chat">
+            <Button className="bg-tf-accent-green hover:bg-tf-accent-green-dim text-tf-bg-primary">
+              <MessageSquare className="w-4 h-4 mr-2" />
+              New Entry via Chat
+            </Button>
+          </Link>
+        </div>
+
+        {/* Filters */}
+        <BatchFilters filters={filters} onFilterChange={handleFilterChange} />
+
+        {/* Batch Grid */}
+        <motion.div layout className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <AnimatePresence mode="popLayout">
+            {filteredBatches.map((batch, index) => (
+              <BatchCard key={batch.id} batch={batch} index={index} />
+            ))}
+          </AnimatePresence>
+        </motion.div>
+
+        {/* Empty State */}
+        {filteredBatches.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-16"
+          >
+            <p className="text-tf-text-secondary text-lg">
+              No batches match your filters
+            </p>
+            <p className="text-tf-text-muted mt-2">
+              Try adjusting your search criteria
+            </p>
+          </motion.div>
+        )}
+      </div>
+    </div>
+  )
+}
