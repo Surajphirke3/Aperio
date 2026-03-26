@@ -1,0 +1,16 @@
+torch>=2.0.0
+transformers>=4.40.0
+peft>=0.10.0
+accelerate>=0.29.0
+bitsandbytes>=0.43.0
+datasets>=2.18.0
+pandas>=2.0.0
+fastapi>=0.110.0
+uvicorn>=0.29.0
+requests>=2.31.0
+pydantic>=2.6.0
+pynvml
+sentencepiece
+protobuf
+scipy
+openai

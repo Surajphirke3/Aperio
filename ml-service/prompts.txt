@@ -1,0 +1,5 @@
+Explain what is Python
+How to use FastAPI?
+What are the benefits of LoRA?
+Tell me about Qwen models.
+What is the difference between RAG and fine-tuning?

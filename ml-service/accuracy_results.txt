@@ -1,0 +1,87 @@
+﻿--- ΓÖ╗∩╕Å RECYCLENS AI ACCURACY AUDIT ---
+≡ƒôê Auditing 38 specialized scenario facts...
+Test 1/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 101?
+  Expected: Transaction 101 was a PR at WH-COLLECT. The status was APPROVED and the quantity was 1000kg. Remarks: SCN-100:Inward.
+  Got: Transaction 101 was a PR at WH-COLLECT. The status was APPROVED and the quantity was 1000kg. Remarks: SCN-100:Inward.
+Test 2/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 102?
+  Expected: Transaction 102 was a SEG at WH-COLLECT. The status was APPROVED and the quantity was 980kg. Remarks: SCN-100:Sort.
+  Got: Transaction 102 was a SEG at WH-COLLECT. The status was APPROVED and the quantity was 980kg. Remarks: SCN-100:Sort.
+Test 3/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 103?
+  Expected: Transaction 103 was a MB at WH-COLLECT. The status was APPROVED and the quantity was 980kg. Remarks: SCN-100:Bale.
+  Got: Transaction 103 was a MB at WH-COLLECT. The status was APPROVED and the quantity was 980kg. Remarks: SCN-100:Bale.
+Test 4/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 104?
+  Expected: Transaction 104 was a WT at WH-COLLECT. The status was APPROVED and the quantity was 980kg. Remarks: SCN-100:Ship.
+  Got: Transaction 104 was a WT at WH-COLLECT. The status was APPROVED and the quantity was 980kg. Remarks: SCN-100:Ship.
+Test 5/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 105?
+  Expected: Transaction 105 was a WTR at WH-WASH. The status was APPROVED and the quantity was 980kg. Remarks: SCN-100:Recv.
+  Got: Transaction 105 was a WTR at WH-WASH. The status was APPROVED and the quantity was 980kg. Remarks: SCN-100:Recv.
+Test 6/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 106?
+  Expected: Transaction 106 was a MB at WH-WASH. The status was APPROVED and the quantity was 950kg. Remarks: SCN-100:Wash.
+  Got: Transaction 106 was a MB at WH-WASH. The status was APPROVED and the quantity was 950kg. Remarks: SCN-100:Wash.
+Test 7/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 107?
+  Expected: Transaction 107 was a QC at WH-WASH. The status was APPROVED and the quantity was 950kg. Remarks: SCN-100:Pass.
+  Got: Transaction 107 was a QC at WH-WASH. The status was APPROVED and the quantity was 950kg. Remarks: SCN-100:Pass.
+Test 8/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 108?
+  Expected: Transaction 108 was a MB at WH-RECY. The status was APPROVED and the quantity was 920kg. Remarks: SCN-100:Granule.
+  Got: Transaction 108 was a MB at WH-RECY. The status was APPROVED and the quantity was 920kg. Remarks: SCN-100:Granule.
+Test 9/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 109?
+  Expected: Transaction 109 was a MB at WH-FACT. The status was APPROVED and the quantity was 900kg. Remarks: SCN-100:Final-Pipe.
+  Got: Transaction 109 was a MB at WH-FACT. The status was APPROVED and the quantity was 900kg. Remarks: SCN-100:Final-Pipe.
+Test 10/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 201?
+  Expected: Transaction 201 was a PR at WH-COLLECT. The status was APPROVED and the quantity was 2000kg. Remarks: SCN-200:Large-In.
+  Got: Transaction 201 was a PR at WH-COLLECT. The status was APPROVED and the quantity was 2000kg. Remarks: SCN-200:Large-In.
+Test 11/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 202?
+  Expected: Transaction 202 was a SEG at WH-COLLECT. The status was APPROVED and the quantity was 1950kg. Remarks: SCN-200:Grade-Split.
+  Got: Transaction 202 was a SEG at WH-COLLECT. The status was APPROVED and the quantity was 1950kg. Remarks: SCN-200:Grade-Split.
+Test 12/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 203?
+  Expected: Transaction 203 was a MB at WH-COLLECT. The status was APPROVED and the quantity was 975kg. Remarks: SCN-200:Bale-A.
+  Got: Transaction 203 was a MB at WH-COLLECT. The status was APPROVED and the quantity was 975kg. Remarks: SCN-200:Bale-A.
+Test 13/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 204?
+  Expected: Transaction 204 was a MB at WH-COLLECT. The status was APPROVED and the quantity was 975kg. Remarks: SCN-200:Bale-B.
+  Got: Transaction 204 was a MB at WH-COLLECT. The status was APPROVED and the quantity was 975kg. Remarks: SCN-200:Bale-B.
+Test 14/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 301?
+  Expected: Transaction 301 was a MB at WH-WASH. The status was APPROVED and the quantity was 500kg. Remarks: SCN-300:Wash-Pre-QC.
+  Got: Transaction 301 was a MB at WH-WASH. The status was APPROVED and the quantity was 500kg. Remarks: SCN-300:Wash-Pre-QC.
+Test 15/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 302?
+  Expected: Transaction 302 was a QC at WH-WASH. The status was REJECTED and the quantity was 500kg. Remarks: SCN-300:Fail-High-Moisture.
+  Got: Transaction 302 was a QC at WH-WASH. The status was REJECTED and the quantity was 500kg. Remarks: SCN-300:Fail-High-Moisture.
+Test 16/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 401?
+  Expected: Transaction 401 was a MB at WH-FACT. The status was APPROVED and the quantity was 1500kg. Remarks: SCN-400:Merge-Lots.
+  Got: Transaction 401 was a MB at WH-FACT. The status was APPROVED and the quantity was 1500kg. Remarks: SCN-400:Merge-Lots.
+Test 17/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 501?
+  Expected: Transaction 501 was a WT at WH-RECY. The status was APPROVED and the quantity was 500kg. Remarks: SCN-500:Dispatched.
+  Got: Transaction 501 was a WT at WH-RECY. The status was APPROVED and the quantity was 500kg. Remarks: SCN-500:Dispatched.
+Test 18/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 502?
+  Expected: Transaction 502 was a WTR at WH-FACT. The status was APPROVED and the quantity was 480kg. Remarks: SCN-500:Recv-Loss-20kg.
+  Got: Transaction 502 was a WTR at WH-FACT. The status was APPROVED and the quantity was 480kg. Remarks: SCN-500:Recv-Loss-20kg.
+Test 19/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 601?
+  Expected: Transaction 601 was a PR at WH-COLLECT. The status was APPROVED and the quantity was 800kg. Remarks: SCN-601:Clean-Waste.
+  Got: Transaction 601 was a PR at WH-COLLECT. The status was APPROVED and the quantity was 800kg. Remarks: SCN-601:Clean-Waste.
+Test 20/38: Γ£à PASS
+  Prompt: In Scenario 1, what happened to transaction 602?
+  Expected: Transaction 602 was a WT at WH-COLLECT. The status was APPROVED and the quantity was 800kg. Remarks: SCN-601:Skip-Baling.
+  Got: Transaction 602 was a WT at WH-COLLECT. The status was APPROVED and the quantity was 800kg. Remarks: SCN-601:Skip-Baling.
+
+--- ≡ƒÅü FINAL AUDIT RESULTS ---
+≡ƒôè Total Scenarios Tested: 20
+≡ƒÄ» Factual Matches: 20
+≡ƒÅå MODEL ACCURACY: 100.00%
