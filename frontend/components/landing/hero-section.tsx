@@ -278,7 +278,7 @@ export function HeroSection() {
             initial={{ opacity: 0, y: 30 }}
             animate={inView ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-6 leading-[0.95]"
+            className="text-5xl md:text-7xl lg:text-8xl font-bold tracking-tighter mb-4 leading-[0.95]"
           >
             <span className="text-foreground">Track Every Gram.</span>
             <br />
@@ -286,6 +286,16 @@ export function HeroSection() {
               Trust Every Chain.
             </span>
           </motion.h1>
+
+          {/* Compelling tagline */}
+          <motion.p
+            initial={{ opacity: 0, y: 20 }}
+            animate={inView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.6, delay: 0.15 }}
+            className="text-xl md:text-2xl font-semibold text-foreground/80 mb-4 tracking-tight"
+          >
+            From waste to verified value — in one intelligent platform.
+          </motion.p>
 
           {/* Subtext */}
           <motion.p
