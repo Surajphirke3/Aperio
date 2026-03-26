@@ -123,7 +123,13 @@ export function useDashboardStats(): FetchState<DashboardKPIs> {
 
 export function useSankeyData(): FetchState<ApiSankeyData> {
   return useFetch<ApiSankeyData>(
-    () => statsApi.getSankey(),
+    async () => {
+      const result = await statsApi.getSankey()
+      // If Mongo is unreachable/empty, backend may return empty nodes/links (still a 200).
+      // Treat that as a fallback scenario so the chart doesn't render blank.
+      if (!result?.nodes?.length || !result?.links?.length) return mockSankey
+      return result
+    },
     mockSankey
   )
 }

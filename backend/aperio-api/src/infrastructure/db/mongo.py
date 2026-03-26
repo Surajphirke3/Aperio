@@ -7,7 +7,13 @@ _client: AsyncIOMotorClient | None = None
 
 async def init_mongo() -> None:
     global _client
-    _client = AsyncIOMotorClient(settings.mongodb_url)
+    _client = AsyncIOMotorClient(
+        settings.mongodb_url,
+        # Fail fast so API endpoints don't hang forever when MongoDB is unreachable.
+        # These apply to server selection/connection attempts made by Motor.
+        serverSelectionTimeoutMS=3000,
+        connectTimeoutMS=3000,
+    )
 
 
 async def close_mongo() -> None:

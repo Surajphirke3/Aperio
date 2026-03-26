@@ -1,23 +1,35 @@
 from datetime import datetime
 from typing import Any
 
+import logging
+
 from src.infrastructure.db.mongo import entries_col
+
+logger = logging.getLogger(__name__)
 
 
 class EntryRepository:
     async def create(self, data: dict) -> Any:
-        data["created_at"] = datetime.utcnow().isoformat()
-        result = await entries_col().insert_one(data)
-        return result
+        try:
+            data["created_at"] = datetime.utcnow().isoformat()
+            result = await entries_col().insert_one(data)
+            return result
+        except Exception as e:
+            logger.error(f"Mongo entry create failed: {e}")
+            raise
 
     async def get_with_losses(self, days: int) -> list[dict]:
         from datetime import timedelta
         since = datetime.utcnow() - timedelta(days=days)
-        cursor = entries_col().find({
-            "created_at": {"$gte": since.isoformat()},
-            "loss_kg": {"$exists": True, "$ne": None},
-        })
-        return await cursor.to_list(length=200)
+        try:
+            cursor = entries_col().find({
+                "created_at": {"$gte": since.isoformat()},
+                "loss_kg": {"$exists": True, "$ne": None},
+            })
+            return await cursor.to_list(length=200)
+        except Exception as e:
+            logger.warning(f"Mongo get_with_losses failed: {e}")
+            return []
 
     async def query_stats(self, filters: dict) -> dict:
         query: dict = {}
@@ -41,15 +53,23 @@ class EntryRepository:
                 "total_loss": {"$sum": {"$ifNull": ["$loss_kg", 0]}},
             }},
         ]
-        async for doc in entries_col().aggregate(pipeline):
-            total = doc["total_kg"] or 1
-            return {
-                "count": doc["count"],
-                "total_kg": round(doc["total_kg"], 2),
-                "loss_pct": round((doc["total_loss"] / total) * 100, 2),
-            }
-        return {"count": 0, "total_kg": 0, "loss_pct": 0}
+        try:
+            async for doc in entries_col().aggregate(pipeline):
+                total = doc["total_kg"] or 1
+                return {
+                    "count": doc["count"],
+                    "total_kg": round(doc["total_kg"], 2),
+                    "loss_pct": round((doc["total_loss"] / total) * 100, 2),
+                }
+            return {"count": 0, "total_kg": 0, "loss_pct": 0}
+        except Exception as e:
+            logger.warning(f"Mongo query_stats failed: {e}")
+            return {"count": 0, "total_kg": 0, "loss_pct": 0}
 
     async def list_all(self, limit: int = 200) -> list[dict]:
-        cursor = entries_col().find().sort("created_at", -1).limit(limit)
-        return await cursor.to_list(length=limit)
+        try:
+            cursor = entries_col().find().sort("created_at", -1).limit(limit)
+            return await cursor.to_list(length=limit)
+        except Exception as e:
+            logger.warning(f"Mongo list_all failed: {e}")
+            return []

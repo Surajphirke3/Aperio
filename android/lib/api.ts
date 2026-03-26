@@ -4,7 +4,7 @@ import { Platform } from 'react-native';
 
 // Backend URL - UPDATE THIS to your computer's local IP for physical devices
 // Use 10.0.2.2 for Android emulator, localhost for iOS sim, or your actual IP for physical devices
-const LOCAL_IP = '10.120.134.235'; // <-- UPDATE THIS to your computer's IP
+const LOCAL_IP = process.env.EXPO_PUBLIC_BACKEND_IP || '10.0.2.2'; // <-- UPDATE THIS to your computer's IP
 
 export const API_URL = Platform.OS === 'android' && !__DEV__
   ? `http://${LOCAL_IP}:8000/v1`

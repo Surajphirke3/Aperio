@@ -37,18 +37,12 @@ const roleSubtitles = {
 export default function DashboardPage() {
   const [selectedRange, setSelectedRange] = useState("7d")
   const [backendStatus, setBackendStatus] = useState("Loading...")
-  const [liveKpi, setLiveKpi] = useState<any>(null)
   const [liveAnomalies, setLiveAnomalies] = useState<any[]>([])
 
   useEffect(() => {
     // Fetch live APIs
-    Promise.all([
-      fetchFromAPI("/stats/"),
-      fetchFromAPI("/anomalies/")
-    ])
-      .then(([statsData, anomaliesData]) => {
-        setLiveKpi(statsData)
-        setLiveAnomalies(anomaliesData.anomalies || [])
+    fetchFromAPI("/anomalies/").then((anomaliesData) => {
+        setLiveAnomalies(anomaliesData?.anomalies || [])
         setBackendStatus("Connected")
       })
       .catch((err) => {
@@ -57,17 +51,6 @@ export default function DashboardPage() {
       })
   }, [])
 
-  // Provide fallback so UI doesn't crash while loading
-  const currentKpi = liveKpi ? {
-    totalTracked: liveKpi.total_tracked,
-    totalTrackedChange: liveKpi.total_tracked_change,
-    avgCompleteness: liveKpi.avg_completeness,
-    completenessChange: liveKpi.completeness_change,
-    activeBatches: liveKpi.active_batches,
-    criticalBatches: liveKpi.critical_batches,
-    co2Saved: liveKpi.co2_saved_t * 1000 // Convert tons to kg for UI matching
-  } : kpiData;
-
   const currentAnomalies = liveAnomalies.length > 0 ? liveAnomalies : anomalies;
   const { user } = useAuth()
   const router = useRouter()
@@ -75,6 +58,7 @@ export default function DashboardPage() {
 
   // Live data from backend with fallback
   const { data: kpiData, isLoading, refetch } = useDashboardStats()
+  const currentKpi = kpiData;
 
   return (
     <div className="min-h-screen">
@@ -182,9 +166,9 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Anomaly Alerts — regulator gets full, stakeholder filtered, customer hidden */}
-        {role === "regulator" && <AnomalyPanel anomalies={anomalies} />}
+          {role === "regulator" && <AnomalyPanel anomalies={currentAnomalies} />}
         {role === "stakeholder" && (
-          <AnomalyPanel anomalies={anomalies.filter((a) => a.severity === "critical")} />
+          <AnomalyPanel anomalies={currentAnomalies.filter((a) => a.severity === "critical")} />
         )}
 
         {/* Charts Row 1 — all roles get Sankey + Weekly */}

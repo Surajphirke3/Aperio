@@ -3,9 +3,19 @@
     "chat:session:test1": [
       "{\"role\": \"assistant\", \"content\": \"\\u26a0\\ufe0f I understood your request but couldn't fully process it. The AI service may be temporarily unavailable. Please check your API keys (FEATHERLESS_API_KEY, GROQ_API_KEY) in the .env file and try again.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T01:29:20.972777\", \"user_id\": \"Bearer test\"}",
       "{\"role\": \"user\", \"content\": \"hello\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T01:29:20.914304\", \"user_id\": \"Bearer test\"}"
+    ],
+    "chat:session:dfc1e040-5c9a-4ff6-890b-870d33852fcc": [
+      "{\"role\": \"assistant\", \"content\": \"\\u26a0\\ufe0f I understood your request but couldn't fully process it. The AI service may be temporarily unavailable. Please check your API keys (FEATHERLESS_API_KEY, GROQ_API_KEY) in the .env file and try again.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T03:23:05.442381\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"test\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:22:35.272935\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:45f3aaeb-26e8-47d4-be6e-447dcc808690": [
+      "{\"role\": \"assistant\", \"content\": \"I couldn't process that. Try rephrasing \\u2014 e.g. 'Purchased 200kg PET from Vendor A'.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T03:23:15.517350\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"test message\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:22:45.140536\", \"user_id\": \"anonymous\"}"
     ]
   },
   "expires_at": {
-    "chat:session:test1": "2026-03-27T01:29:20.996920"
+    "chat:session:test1": "2026-03-27T01:29:20.996920",
+    "chat:session:dfc1e040-5c9a-4ff6-890b-870d33852fcc": "2026-03-27T03:23:05.469179",
+    "chat:session:45f3aaeb-26e8-47d4-be6e-447dcc808690": "2026-03-27T03:23:15.537355"
   }
 }

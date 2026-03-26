@@ -1,5 +1,6 @@
 import json
 from datetime import datetime, timedelta
+import asyncio
 from fnmatch import fnmatch
 from pathlib import Path
 
@@ -93,13 +94,15 @@ class LocalRedis:
 
 async def init_redis() -> None:
     global _redis
-    client = aioredis.from_url(
-        settings.redis_url,
-        encoding="utf-8",
-        decode_responses=True,
-    )
     try:
-        await client.ping()
+        client = aioredis.from_url(
+            settings.redis_url,
+            encoding="utf-8",
+            decode_responses=True,
+        )
+        # The backend should not block startup waiting for an unreachable Redis.
+        # If the ping can't complete quickly, fall back to a local JSON-backed cache.
+        await asyncio.wait_for(client.ping(), timeout=3)
         _redis = client
     except Exception:
         _redis = LocalRedis(_cache_file)
