@@ -2,12 +2,12 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Send, Mic, Bot, Leaf, FileText, Clock } from "lucide-react"
+import { Send, Mic, Bot, Leaf, FileText, Clock, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MessageBubble } from "./message-bubble"
 import { NLPPipelinePanel } from "./nlp-pipeline-panel"
 import { AIModelInfo } from "./ai-model-info"
-import { fetchFromAPI } from "@/lib/api"
+import { sendChatMessage, getChatHistory, clearSessionId, getSessionId, clearChatSession, APIError } from "@/lib/api"
 import { cn } from "@/lib/utils"
 
 interface Message {
@@ -63,8 +63,39 @@ export function ChatPanel() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const [sessionId, setSessionId] = useState<string>("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Initialize session ID on mount
+  useEffect(() => {
+    const sid = getSessionId()
+    setSessionId(sid)
+    loadChatHistory(sid)
+  }, [])
+
+  // Load chat history from backend
+  const loadChatHistory = async (sid: string) => {
+    if (!sid) return
+    setIsLoadingHistory(true)
+    try {
+      const history = await getChatHistory(sid)
+      if (history.messages && history.messages.length > 0) {
+        const loadedMessages: Message[] = history.messages.map((m: any, idx: number) => ({
+          id: `${sid}_${idx}`,
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.timestamp),
+        }))
+        setMessages(loadedMessages)
+      }
+    } catch (error) {
+      console.error("Failed to load chat history:", error)
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -73,6 +104,22 @@ export function ChatPanel() {
   useEffect(() => {
     scrollToBottom()
   }, [messages])
+
+  const handleNewChat = () => {
+    clearSessionId()
+    const newSid = getSessionId()
+    setSessionId(newSid)
+    setMessages([])
+  }
+
+  const handleClearSession = async () => {
+    try {
+      await clearChatSession(sessionId)
+      setMessages([])
+    } catch (error) {
+      console.error("Failed to clear session:", error)
+    }
+  }
 
   const getAIResponse = (userMessage: string): { content: string; pipelineData?: NLPPipelineData } => {
     const lowerMessage = userMessage.toLowerCase()
@@ -370,10 +417,7 @@ export function ChatPanel() {
     setIsTyping(true)
 
     try {
-      const response = await fetchFromAPI("/chat/", {
-        method: "POST",
-        body: JSON.stringify({ message: userMessageContent, session_id: "demo_session" })
-      });
+      const response = await sendChatMessage(userMessageContent)
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -381,7 +425,7 @@ export function ChatPanel() {
         content: response.reply || "I encountered an issue processing that request.",
         timestamp: new Date(),
         pipelineData: response.structured_data ? {
-          intent: response.intent,
+          intent: response.intent?.toUpperCase() || "UNKNOWN",
           confidence: 95,
           rejectedIntents: [],
           entities: [],
@@ -394,24 +438,18 @@ export function ChatPanel() {
     } catch (error: any) {
       console.error("Chat API error:", error)
       
+      const errorMsg = error instanceof Error ? error.message : "Unknown error"
+      const statusCode = (error as APIError)?.status
+      
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: `Sorry, there was an error communicating with the AI backend: ${error.message} (Try checking if your backend env variables are valid)`,
+        content: statusCode === 401 
+          ? "Authentication required. Please sign in to continue."
+          : `Sorry, there was an error: ${errorMsg}. Please check that the backend is running and API keys are configured.`,
         timestamp: new Date(),
       }
       setMessages((prev) => [...prev, errorMessage])
-      
-      // Fallback response for demonstration if backend fails
-      setTimeout(() => {
-        const fbMessage: Message = {
-          id: (Date.now() + 2).toString(),
-          role: "assistant",
-          content: "As a fallback, I recommend making sure your python backend terminal is running without errors and your FEATHERLESS_API_KEY/GROQ_API_KEY is valid in the .env.",
-          timestamp: new Date(),
-        }
-        setMessages((prev) => [...prev, fbMessage])
-      }, 1000)
     } finally {
       setIsTyping(false)
     }
@@ -433,33 +471,78 @@ export function ChatPanel() {
     <div className="flex h-[calc(100vh-73px)]">
       {/* Chat History Sidebar */}
       <div className="w-[280px] border-r border-tf-border bg-tf-bg-primary p-4 flex flex-col">
-        <h3 className="text-tf-text-primary font-semibold mb-4">Chat History</h3>
-        <div className="flex-1 space-y-2 overflow-y-auto">
-          {chatHistory.map((chat) => (
-            <button
-              key={chat.id}
-              className="w-full text-left p-3 rounded-lg bg-tf-bg-secondary hover:bg-tf-bg-tertiary transition-colors"
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-tf-text-primary font-semibold">Chat History</h3>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-tf-text-muted hover:text-tf-accent-green"
+              onClick={handleNewChat}
+              title="New chat"
             >
-              <p className="text-tf-text-primary text-sm truncate">
-                {chat.preview}
-              </p>
-              <div className="flex items-center gap-3 mt-1">
-                <p className="text-tf-text-muted text-xs">{chat.time}</p>
-                {chat.entries > 0 && (
-                  <span className="text-tf-accent-green text-xs flex items-center gap-1">
-                    <FileText className="w-3 h-3" />
-                    {chat.entries} entries
-                  </span>
-                )}
-                {chat.queries > 0 && (
-                  <span className="text-tf-accent-blue text-xs flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {chat.queries} queries
-                  </span>
-                )}
-              </div>
-            </button>
-          ))}
+              <Plus className="w-4 h-4" />
+            </Button>
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-tf-text-muted hover:text-red-500"
+                onClick={handleClearSession}
+                title="Clear current session"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {isLoadingHistory ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex gap-1">
+              <span className="w-2 h-2 rounded-full bg-tf-accent-green animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-2 h-2 rounded-full bg-tf-accent-green animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-2 h-2 rounded-full bg-tf-accent-green animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 space-y-2 overflow-y-auto">
+            {chatHistory.map((chat) => (
+              <button
+                key={chat.id}
+                className="w-full text-left p-3 rounded-lg bg-tf-bg-secondary hover:bg-tf-bg-tertiary transition-colors"
+              >
+                <p className="text-tf-text-primary text-sm truncate">
+                  {chat.preview}
+                </p>
+                <div className="flex items-center gap-3 mt-1">
+                  <p className="text-tf-text-muted text-xs">{chat.time}</p>
+                  {chat.entries > 0 && (
+                    <span className="text-tf-accent-green text-xs flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      {chat.entries} entries
+                    </span>
+                  )}
+                  {chat.queries > 0 && (
+                    <span className="text-tf-accent-blue text-xs flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {chat.queries} queries
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        
+        {/* Session info */}
+        <div className="mt-4 pt-4 border-t border-tf-border">
+          <p className="text-tf-text-muted text-xs truncate">
+            Session: <span className="font-mono">{sessionId.slice(0, 16)}...</span>
+          </p>
+          <p className="text-tf-text-muted text-xs mt-1">
+            {messages.length} message{messages.length !== 1 ? 's' : ''}
+          </p>
         </div>
       </div>
 

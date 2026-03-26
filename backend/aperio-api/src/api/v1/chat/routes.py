@@ -1,4 +1,5 @@
 import uuid
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException
 
@@ -11,6 +12,7 @@ from src.infrastructure.ai.groq_client import GroqAdapter
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 _groq = GroqAdapter()
+logger = logging.getLogger(__name__)
 
 
 @router.post("/", response_model=ChatResponse)
@@ -19,12 +21,25 @@ async def send_message(
     user_id: str = Depends(verify_token),
 ) -> ChatResponse:
     session_id = request.session_id or str(uuid.uuid4())
-    memory = ChatMemory(session_id=session_id)
+    memory = ChatMemory(session_id=session_id, user_id=user_id)
 
-    history = await memory.get_history()
-    similar_context = await get_similar_context(request.message, history)
+    try:
+        history = await memory.get_history()
+    except Exception as e:
+        logger.error(f"Failed to load chat history: {e}")
+        history = []
 
-    groq_intent = await _groq.fast_classify(request.message)
+    try:
+        similar_context = await get_similar_context(request.message, history)
+    except Exception as e:
+        logger.warning(f"Similarity search failed: {e}")
+        similar_context = []
+
+    try:
+        groq_intent = await _groq.fast_classify(request.message)
+    except Exception as e:
+        logger.warning(f"Groq classification failed: {e}")
+        groq_intent = "unknown"
 
     initial_state = {
         "session_id": session_id,
@@ -42,10 +57,15 @@ async def send_message(
     try:
         final_state = await chat_graph.ainvoke(initial_state)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Chat pipeline failed: {str(e)}")
+        logger.error(f"Chat pipeline failed: {e}")
+        raise HTTPException(status_code=500, detail=f"Chat processing failed: {str(e)}")
 
-    await memory.append("user", request.message, intent=groq_intent)
-    await memory.append("assistant", final_state["reply"], intent=str(final_state.get("intent")))
+    # Persist messages to memory
+    try:
+        await memory.append("user", request.message, intent=groq_intent)
+        await memory.append("assistant", final_state.get("reply", ""), intent=str(final_state.get("intent")))
+    except Exception as e:
+        logger.error(f"Failed to persist messages: {e}")
 
     db_result = final_state.get("db_result") or {}
     if db_result.get("action") == "stored":
@@ -57,10 +77,10 @@ async def send_message(
 
     return ChatResponse(
         session_id=session_id,
-        reply=final_state["reply"],
-        intent=str(final_state.get("intent", "unknown")),
+        reply=final_state.get("reply", "I couldn't process that request."),
+        intent=str(final_state.get("intent", groq_intent)),
         structured_data=structured_data,
-        success=True,
+        success=final_state.get("error") is None,
     )
 
 
@@ -69,7 +89,7 @@ async def get_session_history(
     session_id: str,
     user_id: str = Depends(verify_token),
 ):
-    memory = ChatMemory(session_id=session_id)
+    memory = ChatMemory(session_id=session_id, user_id=user_id)
     history = await memory.get_history()
     return {"session_id": session_id, "messages": history, "count": len(history)}
 
@@ -79,6 +99,16 @@ async def clear_session(
     session_id: str,
     user_id: str = Depends(verify_token),
 ):
-    memory = ChatMemory(session_id=session_id)
+    memory = ChatMemory(session_id=session_id, user_id=user_id)
     await memory.clear()
     return {"message": "Session cleared", "session_id": session_id}
+
+
+@router.get("/sessions")
+async def list_user_sessions(
+    user_id: str = Depends(verify_token),
+):
+    """List all chat sessions for the authenticated user."""
+    memory = ChatMemory(session_id="", user_id=user_id)
+    sessions = await memory.get_user_sessions(user_id)
+    return {"user_id": user_id, "sessions": sessions, "count": len(sessions)}
