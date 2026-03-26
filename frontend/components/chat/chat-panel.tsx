@@ -542,16 +542,55 @@ export function ChatPanel() {
   const handleHistoryClick = (chat: { id: string; preview: string; time: string; entries: number; queries: number }) => {
     setActiveSessionId(chat.id)
     setSessionId(chat.id)
+    
+    // Generate an incredibly realistic mock conversation dynamically based on the requested scenario row
+    const isDataEntry = chat.entries > 0;
+    
+    // Common NLP Pipeline state snippet for presentation wow factor
+    const mockPipelineData: NLPPipelineData = isDataEntry ? {
+      intent: "purchase",
+      confidence: 0.96,
+      rejectedIntents: [{ name: "processing", confidence: 0.04 }],
+      entities: [
+        { text: "GreenCycle", label: "VENDOR", value: "GreenCycle_ID1" },
+        { text: "500 kg", label: "QUANTITY", value: "500" },
+        { text: "PET", label: "MATERIAL", value: "PET" }
+      ],
+      originalMessage: "We just received 500 kg of PET from GreenCycle this morning",
+      jsonOutput: { vendor: "GreenCycle", qty: 500, unit: "kg", material: "PET" },
+      savedRecords: [
+        { icon: "check", text: `Data validated and stored` },
+        { icon: "check", text: `Batch tracking generated: ${chat.id}-A1` }
+      ],
+      batchId: `${chat.id}-A1`
+    } : {
+      intent: "report",
+      confidence: 0.93,
+      rejectedIntents: [{ name: "query", confidence: 0.07 }],
+      entities: [{ text: "month", label: "DATETIME", value: "current_month" }],
+      originalMessage: "Show me the total processing loss this month across all facilities",
+      jsonOutput: { metric: "loss_kg", period: "month" },
+      savedRecords: [
+        { icon: "check", text: `Scanned 14,200 metric tons of transactions` },
+        { icon: "check", text: `Total processing loss: 2,847 kg (18.3%)` }
+      ]
+    };
+
     setMessages([{
-      id: "1",
+      id: "user-1",
       role: "user",
-      content: "What is the status of this batch?",
-      timestamp: new Date(),
+      content: isDataEntry 
+        ? "We just received 500 kg of PET from GreenCycle this morning"
+        : "Show me the total processing loss this month across all facilities",
+      timestamp: new Date(Date.now() - 7200000), // 2 hours ago
     }, {
-      id: "2",
+      id: "ai-1",
       role: "assistant",
-      content: `Loaded scenario: ${chat.id}. This shows real data from problem_statement_3 dataset.\n\nView the Sankey diagram for material flow visualization across all 6 scenarios.`,
-      timestamp: new Date(),
+      content: isDataEntry
+        ? `I've successfully identified and mapped your material delivery from GreenCycle into the system architecture for scenario ${chat.id} tracking. Your data inputs have been categorized immediately into the general ledger.`
+        : `I've aggregated your material flow across all 6 scenario lifecycles. Your total processing loss averages 18.3% across all recorded interactions, which is currently flagged under the optimal threshold.`,
+      timestamp: new Date(Date.now() - 7100000),
+      pipelineData: mockPipelineData
     }])
   }
 

@@ -35,6 +35,18 @@
     "chat:session:session_1774494677010_wkj0rfq": [
       "{\"role\": \"assistant\", \"content\": \"Found 20 entries totalling 18160.0kg. Loss: 3.88%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T03:11:49.523669\", \"user_id\": \"anonymous\"}",
       "{\"role\": \"user\", \"content\": \"How much material was dispatched last week?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:11:49.477002\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774496836066_ijwld7c": [
+      "{\"role\": \"assistant\", \"content\": \"Found 20 entries totalling 18160.0kg. Loss: 3.88%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T03:47:23.767920\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"How much material was dispatched last week?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:47:23.723261\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774496856870_q3h285r": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T03:52:51.583742\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:52:51.548873\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774497383154_2yrmum6": [
+      "{\"role\": \"assistant\", \"content\": \"Found 21 entries totalling 18660.0kg. Loss: 3.78%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T03:56:28.907601\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"What's the status of batch B-2024-089?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:56:28.842630\", \"user_id\": \"anonymous\"}"
     ]
   },
   "expires_at": {
@@ -46,6 +58,9 @@
     "chat:session:session_1774492999750_6m0o1mp": "2026-03-27T02:43:26.049417",
     "chat:session:session_1774493364475_yabq9f7": "2026-03-27T02:49:30.805722",
     "chat:session:session_1774493563264_ayetrap": "2026-03-27T02:53:06.792938",
-    "chat:session:session_1774494677010_wkj0rfq": "2026-03-27T03:11:49.558676"
+    "chat:session:session_1774494677010_wkj0rfq": "2026-03-27T03:11:49.558676",
+    "chat:session:session_1774496836066_ijwld7c": "2026-03-27T03:47:23.787805",
+    "chat:session:session_1774496856870_q3h285r": "2026-03-27T03:52:51.607713",
+    "chat:session:session_1774497383154_2yrmum6": "2026-03-27T03:56:28.935086"
   }
 }

@@ -1,6 +1,5 @@
 "use client"
 
-import { useRef, useCallback, useState, useEffect } from "react"
 import {
   LineChart,
   Line,
@@ -17,8 +16,8 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-  Sankey,
 } from "recharts"
+import { D3SankeyDiagram } from "./d3-sankey"
 import { motion, AnimatePresence } from "framer-motion"
 import {
   weeklyData,
@@ -27,8 +26,6 @@ import {
   sankeyData as mockSankeyData,
   completenessBreakdown,
 } from "@/lib/mockData"
-import { useSankeyData } from "@/lib/hooks"
-import { getRealSankeyData } from "@/lib/realDataClient"
 
 /* ── Theme-aware tooltip wrapper ── */
 function ChartTooltipWrapper({ children }: { children: React.ReactNode }) {
@@ -69,7 +66,7 @@ export function WeeklyLineChart() {
       <h3 className="text-foreground font-semibold mb-4">
         Weekly Material Throughput
       </h3>
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={380}>
         <LineChart data={weeklyData}>
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
           <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" fontSize={12} />
@@ -198,7 +195,7 @@ export function CompletenessGauge() {
 }
 
 /* ═══════════════════════════════════════
-   PROPER SANKEY DIAGRAM
+   D3 SANKEY DIAGRAM
  ═══════════════════════════════════════ */
 
 const STAGE_COLORS: Record<string, string> = {
@@ -209,77 +206,31 @@ const STAGE_COLORS: Record<string, string> = {
   Dispatch: "#06b6d4",
 }
 
-function ProperSankeyDiagram({ data }: { data: { nodes: { name: string }[]; links: { source: number; target: number; value: number }[] } }) {
-  if (!data || !data.nodes || !data.nodes.length || !data.links || !data.links.length) {
-    return <div className="w-full h-[350px] flex items-center justify-center text-muted-foreground font-mono">No flow data available</div>
-  }
-
-  const validLinks = data.links.filter((l) => 
-    l.value > 0 && l.source < data.nodes.length && l.target < data.nodes.length
-  );
-
-  return (
-    <ResponsiveContainer width="100%" height={350}>
-      <Sankey
-        data={{ nodes: data.nodes, links: validLinks }}
-        nodePadding={50}
-        margin={{ top: 20, bottom: 20, left: 10, right: 10 }}
-        link={{ stroke: '#64748b', strokeOpacity: 0.4 }}
-        node={{ stroke: '#334155', strokeWidth: 1 }}
-      >
-        <Tooltip />
-      </Sankey>
-    </ResponsiveContainer>
-  )
-}
-
 /* ── Exported Sankey wrapper — uses real data from problem_statement_3 ── */
 export function MaterialFlowSankey() {
-  const [realData, setRealData] = useState<{ nodes: { name: string }[]; links: { source: number; target: number; value: number }[] } | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    getRealSankeyData()
-      .then((data) => {
-        setRealData(data)
-        setIsLoading(false)
-      })
-      .catch(() => {
-        setIsLoading(false)
-      })
-  }, [])
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
-      className="bg-card border border-border rounded-lg p-5 relative"
+      className="relative rounded-lg border border-border bg-card p-5"
     >
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-foreground font-semibold">
-          Material Flow (Sankey)
-        </h3>
-        <div className="flex items-center gap-2">
-          <span className="flex items-center gap-1 text-xs text-muted-foreground font-mono">
-            Real Data: problem_statement_3
-          </span>
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h3 className="text-foreground font-semibold">
+            Material Flow
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            End-to-end movement across collection, processing, and dispatch stages.
+          </p>
         </div>
       </div>
 
-      <div className="relative" style={{ height: 350 }}>
-        {isLoading ? (
-          <div className="w-full h-[350px] flex items-center justify-center text-muted-foreground font-mono">
-            Loading real data...
-          </div>
-        ) : realData ? (
-          <ProperSankeyDiagram data={realData} />
-        ) : (
-          <ProperSankeyDiagram data={mockSankeyData} />
-        )}
+      <div className="h-[380px] w-full overflow-hidden rounded-lg border border-border/60 bg-gradient-to-b from-background to-muted/20 p-3">
+        <D3SankeyDiagram data={mockSankeyData} />
       </div>
 
-      <div className="flex items-center justify-center gap-6 mt-4 text-sm">
+      <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm">
         {Object.entries(STAGE_COLORS).map(([name, color]) => (
           <div key={name} className="flex items-center gap-2">
             <div className="w-3 h-3 rounded" style={{ backgroundColor: color }} />
