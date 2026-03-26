@@ -1,4 +1,4 @@
-export const API_URL = "/api";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 // Get auth token from localStorage or cookies
 function getAuthToken(): string | null {
