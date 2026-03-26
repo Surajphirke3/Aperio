@@ -38,7 +38,7 @@ class Settings(BaseSettings):
 
     # App
     environment: str = "development"
-    cors_origins: list[str] = ["http://localhost:3000"]
+    cors_origins: list[str] = ["http://localhost:3000", "*"]
 
     model_config = SettingsConfigDict(
         env_file=str(BASE_DIR / ".env"),

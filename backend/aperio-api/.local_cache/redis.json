@@ -1,1 +1,11 @@
-{"lists": {}, "expires_at": {}}
+{
+  "lists": {
+    "chat:session:test1": [
+      "{\"role\": \"assistant\", \"content\": \"\\u26a0\\ufe0f I understood your request but couldn't fully process it. The AI service may be temporarily unavailable. Please check your API keys (FEATHERLESS_API_KEY, GROQ_API_KEY) in the .env file and try again.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T01:29:20.972777\", \"user_id\": \"Bearer test\"}",
+      "{\"role\": \"user\", \"content\": \"hello\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T01:29:20.914304\", \"user_id\": \"Bearer test\"}"
+    ]
+  },
+  "expires_at": {
+    "chat:session:test1": "2026-03-27T01:29:20.996920"
+  }
+}
