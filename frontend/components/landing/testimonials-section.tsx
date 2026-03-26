@@ -51,7 +51,7 @@ export function TestimonialsSection() {
             Trusted by Industry Leaders
           </span>
           <h2 className="text-3xl md:text-5xl font-bold text-foreground tracking-tight mb-4">
-            What Our Partners Say
+            What Our Stakeholders Say
           </h2>
           <p className="text-muted-foreground text-lg max-w-xl mx-auto">
             Real feedback from recyclers, regulators, and sustainability teams using Aperio.

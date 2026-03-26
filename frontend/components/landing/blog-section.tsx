@@ -44,7 +44,7 @@ const blogPosts = [
   },
   {
     id: 4,
-    title: "Case Study: GreenCycle Partners Cuts Waste by 34%",
+    title: "Case Study: GreenCycle Stakeholders Cuts Waste by 34%",
     excerpt:
       "See how GreenCycle implemented full-stack traceability with Aperio, reducing processing waste from 22% to 14.5% in just 3 months.",
     date: "Mar 10, 2026",

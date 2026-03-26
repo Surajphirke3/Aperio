@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
 import { useUser, useClerk } from "@clerk/nextjs"
 
-export type UserRole = "customer" | "regulator" | "partner"
+export type UserRole = "customer" | "regulator" | "stakeholder"
 
 export interface User {
   name: string
@@ -16,10 +16,11 @@ export interface User {
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
-  login: (email: string, password: string, role?: UserRole) => void
-  signup: (name: string, email: string, password: string, role?: UserRole) => void
+  login: () => void
+  signup: () => void
   logout: () => void
   switchRole: (role: UserRole) => void
+  isRoleUnassigned: boolean
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
@@ -33,10 +34,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Sync Clerk user state into our auth context
   useEffect(() => {
     if (isLoaded && isSignedIn && clerkUser) {
+      const storedRole = clerkUser.publicMetadata?.role || clerkUser.unsafeMetadata?.role
+      const clerkRole = (storedRole as UserRole) || role
       setUser({
         name: clerkUser.fullName || clerkUser.firstName || "User",
         email: clerkUser.primaryEmailAddress?.emailAddress || "",
-        role: role,
+        role: clerkRole,
         avatar: clerkUser.imageUrl,
         clerkId: clerkUser.id,
       })
@@ -45,16 +48,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isLoaded, isSignedIn, clerkUser, role])
 
-  // Legacy login — redirect to Clerk sign-in
-  const login = useCallback((_email: string, _password: string, loginRole: UserRole = "customer") => {
-    setRole(loginRole)
-    // Clerk handles actual authentication — this is for role selection
+  // Simple single-step authentication redirects
+  const login = useCallback(() => {
     window.location.href = "/sign-in"
   }, [])
 
-  // Legacy signup — redirect to Clerk sign-up
-  const signup = useCallback((_name: string, _email: string, _password: string, signupRole: UserRole = "customer") => {
-    setRole(signupRole)
+  const signup = useCallback(() => {
     window.location.href = "/sign-up"
   }, [])
 
@@ -72,8 +71,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [user])
 
+  const isRoleUnassigned = !!(isLoaded && isSignedIn && clerkUser && !clerkUser.publicMetadata?.role && !clerkUser.unsafeMetadata?.role)
+
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, switchRole, isRoleUnassigned }}>
       {children}
     </AuthContext.Provider>
   )

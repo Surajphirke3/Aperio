@@ -17,6 +17,7 @@ import { LiveEventTicker } from "@/components/dashboard/live-event-ticker"
 import { LifecycleWorkflow } from "@/components/dashboard/lifecycle-workflow"
 import { DigitalReport } from "@/components/dashboard/digital-report"
 import { CompliancePanel } from "@/components/dashboard/compliance-panel"
+import { RoleSelectionModal } from "@/components/dashboard/role-selection-modal"
 import { anomalies } from "@/lib/mockData"
 import { useDashboardStats } from "@/lib/hooks"
 import { useAuth } from "@/lib/auth-context"
@@ -29,7 +30,7 @@ const dateRanges = ["7d", "30d", "90d"]
 const roleSubtitles = {
   customer: "Your recycling overview at a glance",
   regulator: "Full analytics, compliance, and audit data",
-  partner: "Key performance metrics and insights",
+  stakeholder: "Key performance metrics and insights",
 }
 
 export default function DashboardPage() {
@@ -43,6 +44,7 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen">
+      <RoleSelectionModal />
       <TopBar
         title="Dashboard"
         subtitle={roleSubtitles[role]}
@@ -145,9 +147,9 @@ export default function DashboardPage() {
           />
         </motion.div>
 
-        {/* Anomaly Alerts — regulator gets full, partner filtered, customer hidden */}
+        {/* Anomaly Alerts — regulator gets full, stakeholder filtered, customer hidden */}
         {role === "regulator" && <AnomalyPanel anomalies={anomalies} />}
-        {role === "partner" && (
+        {role === "stakeholder" && (
           <AnomalyPanel anomalies={anomalies.filter((a) => a.severity === "critical")} />
         )}
 
@@ -157,7 +159,7 @@ export default function DashboardPage() {
           <WeeklyLineChart />
         </div>
 
-        {/* Charts Row 2 — Material Pie for all; Stage Bar + Completeness only for regulator & partner */}
+        {/* Charts Row 2 — Material Pie for all; Stage Bar + Completeness only for regulator & stakeholder */}
         <div className={`grid grid-cols-1 ${
           role === "customer" ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3"
         } gap-6`}>

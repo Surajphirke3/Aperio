@@ -292,7 +292,7 @@ export function VendorScorecard({ vendor, onClose }: VendorScorecardProps) {
               <Lightbulb className="w-4 h-4 text-tf-accent-blue mt-0.5 flex-shrink-0" />
               <p className="text-tf-text-secondary text-sm">
                 {vendor.risk === "low" && vendor.trend !== "down"
-                  ? "Strong partner. Consider expanding order volume or securing long-term contract."
+                  ? "Strong stakeholder. Consider expanding order volume or securing long-term contract."
                   : vendor.trend === "down"
                   ? "Schedule quality review meeting. Request process improvement plan."
                   : "Send delivery confirmation request today. Consider pre-booking next shipment."}

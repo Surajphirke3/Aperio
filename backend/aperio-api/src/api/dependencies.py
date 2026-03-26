@@ -1,30 +1,36 @@
 from fastapi import Header, HTTPException
 from src.config.settings import settings
-
+import base64
+import json
 
 async def verify_token(authorization: str = Header(default=None)) -> str:
     """Verify authentication token.
     
-    In development mode, accepts any non-empty authorization header.
-    When Clerk tokens are sent, extracts the Bearer token.
-    In production, this should validate Clerk JWT tokens.
+    In development mode, accepts any non-empty authorization header and parses the payload.
+    In production, this should validate Clerk JWT tokens via pyjwt or clerk SDK.
     """
-    if settings.environment == "development":
-        # Development mode: accept any auth or return anonymous
-        if not authorization:
+    if not authorization or not authorization.startswith("Bearer "):
+        if settings.environment == "development":
             return "anonymous"
-        # Strip "Bearer " prefix if present
-        token = authorization.replace("Bearer ", "").strip()
-        return token if token else "anonymous"
+        raise HTTPException(status_code=401, detail="Valid Bearer Authorization header required")
 
-    if not authorization:
-        raise HTTPException(status_code=401, detail="Authorization header required")
+    token = authorization.replace("Bearer ", "").strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Empty token")
 
+    if settings.environment == "development":
+        try:
+            # Simple decode for dev mode to extract the Clerk user ID (sub)
+            payload_b64 = token.split('.')[1]
+            padded = payload_b64 + '=' * (4 - len(payload_b64) % 4)
+            payload = json.loads(base64.urlsafe_b64decode(padded))
+            return payload.get("sub", "anonymous")
+        except Exception:
+            return "anonymous"
+
+    # In production: validate Clerk JWT properly
     try:
-        token = authorization.replace("Bearer ", "").strip()
-        if not token:
-            raise ValueError("Empty token")
-        # In production: validate Clerk JWT using clerk-backend-api
+        # Example using clerk-backend-api:
         # from clerk_backend_api import Clerk
         # clerk = Clerk(bearer_auth=settings.clerk_secret_key)
         # session = clerk.sessions.verify_token(token)

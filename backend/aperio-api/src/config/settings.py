@@ -31,6 +31,9 @@ class Settings(BaseSettings):
     embedding_model: str = "sentence-transformers/all-MiniLM-L6-v2"
     similarity_top_k: int = 3  # retrieve top-3 similar past messages
 
+    # Clerk Authentication
+    clerk_secret_key: str = Field(default="", description="Clerk secret key from env")
+
     # App
     environment: str = "development"
     cors_origins: list[str] = ["http://localhost:3000"]

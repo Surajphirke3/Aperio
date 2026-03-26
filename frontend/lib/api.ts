@@ -85,15 +85,12 @@ class ApiError extends Error {
 async function getAuthToken(): Promise<string | null> {
   if (typeof window === "undefined") return null
   try {
-    // Dynamically import Clerk to get the session token
-    const { default: clerk } = await import("@clerk/nextjs")
-    // @ts-ignore - window.__clerk_frontend_api exists at runtime
-    const clerkInstance = (window as any).__clerk
-    if (clerkInstance?.session) {
-      return await clerkInstance.session.getToken()
+    const clerk = (window as any).Clerk
+    if (clerk?.session) {
+      return await clerk.session.getToken()
     }
-  } catch {
-    // Clerk not loaded or no session
+  } catch (err) {
+    console.warn("Clerk Token Generation Failed:", err)
   }
   return null
 }

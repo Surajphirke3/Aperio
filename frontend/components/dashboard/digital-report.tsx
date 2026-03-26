@@ -32,8 +32,8 @@ const reportSections: Record<UserRole, { title: string; items: string[] }> = {
       "Next audit deadline: April 15, 2026",
     ],
   },
-  partner: {
-    title: "Partner Performance Report",
+  stakeholder: {
+    title: "Stakeholder Performance Report",
     items: [
       "Materials supplied this month: 8,400 kg",
       "Quality score: 94.2 (top quartile)",

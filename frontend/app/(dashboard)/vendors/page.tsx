@@ -124,7 +124,7 @@ export default function VendorsPage() {
               <div>
                 <p className="text-muted-foreground text-sm">Total Vendors</p>
                 <p className="text-foreground font-semibold">
-                  Active Partners
+                  Active Stakeholders
                 </p>
               </div>
             </div>

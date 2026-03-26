@@ -23,17 +23,17 @@ import {
 import { useState } from "react"
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["customer", "regulator", "partner"] as UserRole[] },
-  { href: "/batches", label: "Batches", icon: Package, roles: ["customer", "regulator", "partner"] as UserRole[] },
-  { href: "/chat", label: "AI Chat", icon: MessageSquare, roles: ["customer", "regulator", "partner"] as UserRole[] },
-  { href: "/vendors", label: "Vendors", icon: Factory, roles: ["regulator", "partner"] as UserRole[] },
-  { href: "/carbon", label: "Carbon", icon: Leaf, roles: ["regulator", "partner"] as UserRole[] },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["customer", "regulator", "stakeholder"] as UserRole[] },
+  { href: "/batches", label: "Batches", icon: Package, roles: ["customer", "regulator", "stakeholder"] as UserRole[] },
+  { href: "/chat", label: "AI Chat", icon: MessageSquare, roles: ["customer", "regulator", "stakeholder"] as UserRole[] },
+  { href: "/vendors", label: "Vendors", icon: Factory, roles: ["regulator", "stakeholder"] as UserRole[] },
+  { href: "/carbon", label: "Carbon", icon: Leaf, roles: ["regulator", "stakeholder"] as UserRole[] },
 ]
 
 const roleConfig: Record<UserRole, { label: string; color: string; icon: typeof User }> = {
   customer: { label: "Customer", color: "text-blue-500 bg-blue-500/10", icon: User },
   regulator: { label: "Regulator", color: "text-purple-500 bg-purple-500/10", icon: Shield },
-  partner: { label: "Partner", color: "text-amber-500 bg-amber-500/10", icon: Factory },
+  stakeholder: { label: "Stakeholder", color: "text-amber-500 bg-amber-500/10", icon: Factory },
 }
 
 export function Sidebar() {
@@ -84,7 +84,7 @@ export function Sidebar() {
                 animate={{ opacity: 1, y: 0 }}
                 className="absolute top-full left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-xl z-50 overflow-hidden"
               >
-                {(["customer", "regulator", "partner"] as UserRole[]).map((role) => {
+                {(["customer", "regulator", "stakeholder"] as UserRole[]).map((role) => {
                   const rc = roleConfig[role]
                   return (
                     <button

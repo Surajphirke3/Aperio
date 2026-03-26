@@ -17,7 +17,7 @@ interface TopBarProps {
 const roleColors = {
   customer: "bg-blue-500/15 text-blue-500",
   regulator: "bg-purple-500/15 text-purple-500",
-  partner: "bg-amber-500/15 text-amber-500",
+  stakeholder: "bg-amber-500/15 text-amber-500",
 }
 
 /* ── Notification data ── */
