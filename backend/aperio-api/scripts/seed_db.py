@@ -1,51 +1,77 @@
-"""Load Kaggle dataset into Firestore.
+"""Seed MongoDB with sample material entries.
 
 Usage:
-    python scripts/seed_db.py data/kaggle.csv
+    python scripts/seed_db.py
 """
+import asyncio
 import sys
-import json
-import pandas as pd
-import firebase_admin
-from firebase_admin import credentials, firestore
 from pathlib import Path
 
-# Add project root to path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from src.config.settings import settings
+
+from src.infrastructure.db.mongo import init_mongo, close_mongo, entries_col, vendors_col
+from datetime import datetime, timedelta
+import random
 
 
-def seed(csv_path: str) -> None:
-    if not firebase_admin._apps:
-        cred = credentials.Certificate(settings.firebase_credentials_path)
-        firebase_admin.initialize_app(cred)
+MATERIALS = ["PET", "HDPE", "PP", "LDPE", "PVC", "mixed"]
+VENDORS = ["GreenCycle Ltd", "EcoPlast Co", "RePolymer Inc", "CleanScrap LLC", "OceanBound Plastics"]
+STAGES = ["collection", "sorting", "processing", "output", "dispatch"]
+INTENTS = ["purchase", "processing", "dispatch"]
 
-    db = firestore.client()
-    collection = db.collection("material_entries")
 
-    df = pd.read_csv(csv_path)
-    count = 0
+async def seed():
+    await init_mongo()
 
-    for _, row in df.iterrows():
-        data = {
-            "intent": row.get("intent", "purchase"),
-            "material": row.get("material", "mixed"),
-            "quantity_kg": float(row.get("quantity_kg", 0)),
-            "date": str(row.get("date", "")),
-            "vendor": row.get("vendor"),
-            "stage": row.get("stage"),
-            "loss_kg": float(row.get("loss_kg", 0)) if pd.notna(row.get("loss_kg")) else None,
-            "batch_id": row.get("batch_id"),
-            "notes": row.get("notes"),
+    entries = []
+    vendors_data = {}
+
+    base_date = datetime.utcnow() - timedelta(days=90)
+
+    for i in range(100):
+        days_ago = random.randint(0, 90)
+        dt = base_date + timedelta(days=days_ago, hours=random.randint(0, 23))
+
+        material = random.choice(MATERIALS)
+        vendor = random.choice(VENDORS)
+        intent = random.choice(INTENTS)
+        qty = round(random.uniform(50, 500), 2)
+        loss = round(qty * random.uniform(0, 0.1), 2) if random.random() > 0.7 else 0
+
+        entry = {
+            "material": material,
+            "quantity_kg": qty,
+            "intent": intent,
+            "vendor": vendor,
+            "stage": STAGES[INTENTS.index(intent)] if intent in INTENTS else "processing",
+            "loss_kg": loss,
+            "created_at": dt.isoformat(),
+            "batch_id": f"BATCH-{1000 + i}",
         }
-        collection.add(data)
-        count += 1
+        entries.append(entry)
 
-    print(f"Seeded {count} entries into Firestore")
+        if vendor not in vendors_data:
+            vendors_data[vendor] = {"name": vendor, "total_kg": 0, "reliability": 0, "score": 0}
+        vendors_data[vendor]["total_kg"] += qty
+
+    col = entries_col()
+    if entries:
+        await col.insert_many(entries)
+
+    for vendor_name, data in vendors_data.items():
+        data["reliability"] = round(random.uniform(70, 99), 1)
+        data["score"] = round(random.uniform(70, 95), 1)
+        data["risk"] = random.choice(["low", "medium", "low", "low"])
+        data["trend"] = random.choice(["up", "stable", "up"])
+
+    v_col = vendors_col()
+    if vendors_data:
+        await v_col.insert_many(list(vendors_data.values()))
+
+    print(f"Seeded {len(entries)} entries and {len(vendors_data)} vendors into MongoDB")
+
+    await close_mongo()
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python scripts/seed_db.py <csv_path>")
-        sys.exit(1)
-    seed(sys.argv[1])
+    asyncio.run(seed())

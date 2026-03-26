@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { TopBar } from "@/components/layout/topbar"
 import { StatCard } from "@/components/ui/stat-card"
@@ -21,6 +21,7 @@ import { RoleSelectionModal } from "@/components/dashboard/role-selection-modal"
 import { anomalies } from "@/lib/mockData"
 import { useDashboardStats } from "@/lib/hooks"
 import { useAuth } from "@/lib/auth-context"
+import { fetchFromAPI } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { RefreshCw, Calendar, MessageCircle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -35,6 +36,39 @@ const roleSubtitles = {
 
 export default function DashboardPage() {
   const [selectedRange, setSelectedRange] = useState("7d")
+  const [backendStatus, setBackendStatus] = useState("Loading...")
+  const [liveKpi, setLiveKpi] = useState<any>(null)
+  const [liveAnomalies, setLiveAnomalies] = useState<any[]>([])
+
+  useEffect(() => {
+    // Fetch live APIs
+    Promise.all([
+      fetchFromAPI("/stats/"),
+      fetchFromAPI("/anomalies/")
+    ])
+      .then(([statsData, anomaliesData]) => {
+        setLiveKpi(statsData)
+        setLiveAnomalies(anomaliesData.anomalies || [])
+        setBackendStatus("Connected")
+      })
+      .catch((err) => {
+        setBackendStatus(`Error: ${err.message}`)
+        console.error("Backend fetch error:", err)
+      })
+  }, [])
+
+  // Provide fallback so UI doesn't crash while loading
+  const currentKpi = liveKpi ? {
+    totalTracked: liveKpi.total_tracked,
+    totalTrackedChange: liveKpi.total_tracked_change,
+    avgCompleteness: liveKpi.avg_completeness,
+    completenessChange: liveKpi.completeness_change,
+    activeBatches: liveKpi.active_batches,
+    criticalBatches: liveKpi.critical_batches,
+    co2Saved: liveKpi.co2_saved_t * 1000 // Convert tons to kg for UI matching
+  } : kpiData;
+
+  const currentAnomalies = liveAnomalies.length > 0 ? liveAnomalies : anomalies;
   const { user } = useAuth()
   const router = useRouter()
   const role = user?.role || "customer"
@@ -47,7 +81,7 @@ export default function DashboardPage() {
       <RoleSelectionModal />
       <TopBar
         title="Dashboard"
-        subtitle={roleSubtitles[role]}
+        subtitle={`Real-time analytics and insights (Backend: ${backendStatus})`}
       />
 
       <div className="p-6 space-y-6">
@@ -111,9 +145,9 @@ export default function DashboardPage() {
         >
           <StatCard
             title="Total Tracked"
-            value={kpiData.totalTracked}
+            value={currentKpi.totalTracked}
             suffix=" kg"
-            change={kpiData.totalTrackedChange}
+            change={currentKpi.totalTrackedChange}
             subtitle="vs last week"
             accentColor="green"
             index={0}
@@ -132,14 +166,14 @@ export default function DashboardPage() {
           )}
           <StatCard
             title="Active Batches"
-            value={kpiData.activeBatches}
-            subtitle={`${kpiData.criticalBatches} critical`}
+            value={currentKpi.activeBatches}
+            subtitle={`${currentKpi.criticalBatches} critical`}
             accentColor="amber"
             index={2}
           />
           <StatCard
             title="CO2 Saved"
-            value={kpiData.co2Saved}
+            value={currentKpi.co2Saved}
             suffix=" kg"
             subtitle="vs virgin material"
             accentColor="teal"

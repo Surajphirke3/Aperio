@@ -2,11 +2,12 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Send, Mic, Bot, Leaf, FileText, Clock, Trash2 } from "lucide-react"
+import { Send, Mic, Bot, Leaf, FileText, Clock, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MessageBubble } from "./message-bubble"
 import { NLPPipelinePanel } from "./nlp-pipeline-panel"
 import { AIModelInfo } from "./ai-model-info"
+import { sendChatMessage, getChatHistory, clearSessionId, getSessionId, clearChatSession, APIError } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import { chatApi, type ApiChatResponse } from "@/lib/api"
 
@@ -114,27 +115,41 @@ export function ChatPanel() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState("")
   const [isTyping, setIsTyping] = useState(false)
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+  const [sessionId, setSessionId] = useState<string>("")
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking">("checking")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Check API connection on mount
+  // Initialize session ID on mount
   useEffect(() => {
-    const checkConnection = async () => {
-      try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/health`)
-        if (res.ok) {
-          setConnectionStatus("connected")
-        } else {
-          setConnectionStatus("disconnected")
-        }
-      } catch {
-        setConnectionStatus("disconnected")
-      }
-    }
-    checkConnection()
+    const sid = getSessionId()
+    setSessionId(sid)
+    loadChatHistory(sid)
   }, [])
+
+  // Load chat history from backend
+  const loadChatHistory = async (sid: string) => {
+    if (!sid) return
+    setIsLoadingHistory(true)
+    try {
+      const history = await getChatHistory(sid)
+      if (history.messages && history.messages.length > 0) {
+        const loadedMessages: Message[] = history.messages.map((m: any, idx: number) => ({
+          id: `${sid}_${idx}`,
+          role: m.role,
+          content: m.content,
+          timestamp: new Date(m.timestamp),
+        }))
+        setMessages(loadedMessages)
+      }
+    } catch (error) {
+      console.error("Failed to load chat history:", error)
+    } finally {
+      setIsLoadingHistory(false)
+    }
+  }
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
@@ -144,13 +159,310 @@ export function ChatPanel() {
     scrollToBottom()
   }, [messages])
 
+  const handleNewChat = () => {
+    clearSessionId()
+    const newSid = getSessionId()
+    setSessionId(newSid)
+    setMessages([])
+  }
+
+  const handleClearSession = async () => {
+    try {
+      await clearChatSession(sessionId)
+      setMessages([])
+    } catch (error) {
+      console.error("Failed to clear session:", error)
+    }
+  }
+
+  const getAIResponse = (userMessage: string): { content: string; pipelineData?: NLPPipelineData } => {
+    const lowerMessage = userMessage.toLowerCase()
+
+    // PURCHASE intent
+    if (lowerMessage.includes("purchased") || lowerMessage.includes("received") || lowerMessage.includes("bought") || lowerMessage.match(/received.*kg/i)) {
+      const quantityMatch = userMessage.match(/(\d+)\s*kg/i)
+      const materialMatch = userMessage.match(/(PET|HDPE|PP|PVC|plastic|bottles|containers|film|packaging|granules)/i)
+      const vendorMatch = userMessage.match(/from\s+([A-Za-z\s]+?)(?:\s+(?:today|yesterday|this|on|$))/i)
+      const dateText = lowerMessage.includes("yesterday") ? "Yesterday" : lowerMessage.includes("this morning") ? "This morning" : "Today"
+      
+      const batchId = generateBatchId()
+      const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 500
+      const material = materialMatch ? materialMatch[1] : "PET"
+      const vendor = vendorMatch ? vendorMatch[1].trim() : "GreenCycle Industries"
+
+      return {
+        content: "I've processed your entry and extracted the following data:",
+        pipelineData: {
+          intent: "PURCHASE",
+          confidence: 87,
+          rejectedIntents: [
+            { name: "DISPATCH", confidence: 23 },
+            { name: "QUERY", confidence: 12 },
+          ],
+          entities: [
+            { text: `${quantity} kg`, label: "QUANTITY", value: `${quantity}` },
+            { text: material, label: "MATERIAL", value: material },
+            { text: vendor, label: "VENDOR", value: vendor },
+            { text: dateText.toLowerCase(), label: "DATE", value: getCurrentDate() },
+          ],
+          originalMessage: userMessage,
+          jsonOutput: {
+            intent: "PURCHASE",
+            confidence: 0.87,
+            entities: {
+              material: material,
+              quantity_kg: quantity,
+              vendor: vendor,
+              date: getCurrentDate(),
+              stage: "COLLECTION"
+            },
+            batch_id_generated: batchId,
+            flags: []
+          },
+          savedRecords: [
+            { icon: "check", text: `Batch record created: ${batchId}` },
+            { icon: "check", text: "Collection stage logged" },
+            { icon: "check", text: "Vendor record updated" },
+            { icon: "check", text: `Carbon tracker updated (+${(quantity * 0.00042).toFixed(2)} kg)` },
+          ],
+          batchId: batchId,
+        },
+      }
+    }
+
+    // DISPATCH intent
+    if (lowerMessage.includes("dispatched") || lowerMessage.includes("sent") || lowerMessage.includes("shipped")) {
+      const quantityMatch = userMessage.match(/(\d+)\s*kg/i)
+      const materialMatch = userMessage.match(/(PET|HDPE|PP|PVC|plastic|bottles|containers|film|packaging|granules)/i)
+      const buyerMatch = userMessage.match(/to\s+([A-Za-z\s]+?)(?:\s+(?:today|yesterday|this|on|$))/i)
+      
+      const quantity = quantityMatch ? parseInt(quantityMatch[1]) : 180
+      const material = materialMatch ? materialMatch[1] : "HDPE granules"
+      const buyer = buyerMatch ? buyerMatch[1].trim() : "Buyer Corp"
+
+      return {
+        content: "Dispatch entry recorded successfully:",
+        pipelineData: {
+          intent: "DISPATCH",
+          confidence: 91,
+          rejectedIntents: [
+            { name: "PURCHASE", confidence: 18 },
+            { name: "PROCESSING", confidence: 8 },
+          ],
+          entities: [
+            { text: `${quantity} kg`, label: "QUANTITY", value: `${quantity}` },
+            { text: material, label: "MATERIAL", value: material },
+            { text: buyer, label: "BUYER", value: buyer },
+            { text: "today", label: "DATE", value: getCurrentDate() },
+          ],
+          originalMessage: userMessage,
+          jsonOutput: {
+            intent: "DISPATCH",
+            confidence: 0.91,
+            entities: {
+              material: material,
+              quantity_kg: quantity,
+              buyer: buyer,
+              date: getCurrentDate(),
+              stage: "DISPATCH"
+            },
+            batch_id_updated: "B-2024-088",
+            flags: []
+          },
+          savedRecords: [
+            { icon: "check", text: "Dispatch stage logged to B-2024-088" },
+            { icon: "check", text: `${quantity} kg marked as dispatched` },
+            { icon: "check", text: "Buyer record created" },
+            { icon: "check", text: "Batch status updated to COMPLETE" },
+          ],
+          batchId: "B-2024-088",
+        },
+      }
+    }
+
+    // PROCESSING intent
+    if (lowerMessage.includes("processed") || lowerMessage.includes("shredded") || lowerMessage.includes("sorted")) {
+      const inputMatch = userMessage.match(/(\d+)\s*kg/i)
+      const outputMatch = userMessage.match(/got\s+(\d+)|output\s+(\d+)|out\s+(\d+)/i)
+      const stageMatch = userMessage.match(/(shredder|sorting|granulation|washing)/i)
+      
+      const inputKg = inputMatch ? parseInt(inputMatch[1]) : 320
+      const outputKg = outputMatch ? parseInt(outputMatch[1] || outputMatch[2] || outputMatch[3]) : 280
+      const lossKg = inputKg - outputKg
+      const stage = stageMatch ? stageMatch[1] : "shredder"
+
+      return {
+        content: "Processing stage recorded:",
+        pipelineData: {
+          intent: "PROCESSING",
+          confidence: 89,
+          rejectedIntents: [
+            { name: "PURCHASE", confidence: 15 },
+            { name: "DISPATCH", confidence: 11 },
+          ],
+          entities: [
+            { text: `${inputKg} kg`, label: "QUANTITY", value: `${inputKg}` },
+            { text: stage, label: "STAGE", value: stage },
+            { text: `${outputKg} kg out`, label: "QUANTITY", value: `${outputKg}` },
+          ],
+          originalMessage: userMessage,
+          jsonOutput: {
+            intent: "PROCESSING",
+            confidence: 0.89,
+            entities: {
+              stage: stage.toUpperCase(),
+              input_kg: inputKg,
+              output_kg: outputKg,
+              loss_kg: lossKg,
+              loss_percent: ((lossKg / inputKg) * 100).toFixed(1),
+              date: getCurrentDate()
+            },
+            batch_id_updated: "B-2024-090",
+            flags: lossKg / inputKg > 0.2 ? ["HIGH_LOSS_WARNING"] : []
+          },
+          savedRecords: [
+            { icon: "check", text: "Processing stage logged to B-2024-090" },
+            { icon: "check", text: `Input: ${inputKg} kg, Output: ${outputKg} kg` },
+            { icon: "check", text: `Loss recorded: ${lossKg} kg (${((lossKg / inputKg) * 100).toFixed(1)}%)` },
+            { icon: "check", text: "Batch completeness updated" },
+          ],
+          batchId: "B-2024-090",
+        },
+      }
+    }
+
+    // QUERY_REPORT intent
+    if (lowerMessage.includes("how much") || lowerMessage.includes("show me") || lowerMessage.includes("total") || (lowerMessage.includes("dispatch") && lowerMessage.includes("week"))) {
+      return {
+        content: "Here's the report you requested:",
+        pipelineData: {
+          intent: "QUERY_REPORT",
+          confidence: 93,
+          rejectedIntents: [
+            { name: "QUERY_LOSSES", confidence: 32 },
+            { name: "QUERY_STATUS", confidence: 14 },
+          ],
+          entities: [
+            { text: "dispatched", label: "METRIC", value: "dispatch_volume" },
+            { text: "last week", label: "DATE", value: "last_7_days" },
+          ],
+          originalMessage: userMessage,
+          jsonOutput: {
+            intent: "QUERY_REPORT",
+            filters: {
+              metric: "dispatch_volume",
+              date_range: { from: "2026-03-18", to: "2026-03-25" },
+              process_type: null
+            },
+            result_preview: {
+              total_kg: 2847,
+              batch_count: 4,
+              top_material: "PET Bottles"
+            }
+          },
+          savedRecords: [
+            { icon: "check", text: "Query executed successfully" },
+            { icon: "check", text: "Found 4 matching batches" },
+            { icon: "check", text: "Total: 2,847 kg dispatched" },
+          ],
+        },
+      }
+    }
+
+    // QUERY_LOSSES intent
+    if (lowerMessage.includes("loss") || lowerMessage.includes("losses") || lowerMessage.includes("wasted")) {
+      return {
+        content: "Here's the loss analysis:",
+        pipelineData: {
+          intent: "QUERY_LOSSES",
+          confidence: 95,
+          rejectedIntents: [
+            { name: "QUERY_REPORT", confidence: 28 },
+            { name: "PROCESSING", confidence: 9 },
+          ],
+          entities: [
+            { text: "processing", label: "STAGE", value: "processing" },
+            { text: "this month", label: "DATE", value: "march_2026" },
+          ],
+          originalMessage: userMessage,
+          jsonOutput: {
+            intent: "QUERY_LOSSES",
+            filters: {
+              stage: "processing",
+              date_range: { from: "2026-03-01", to: "2026-03-25" },
+              threshold: 0.2
+            },
+            result_preview: {
+              total_loss_kg: 2847,
+              avg_loss_percent: 18.3,
+              batches_above_threshold: 2,
+              worst_batch: "B-2024-089"
+            }
+          },
+          savedRecords: [
+            { icon: "check", text: "Loss query executed" },
+            { icon: "check", text: "Analyzed 12 batches" },
+            { icon: "check", text: "2 batches flagged above 20% threshold" },
+          ],
+        },
+      }
+    }
+
+    // QUERY_STATUS intent
+    if (lowerMessage.includes("status") || lowerMessage.includes("where is") || lowerMessage.includes("check batch")) {
+      const batchMatch = userMessage.match(/B-\d{4}-\d{3}/i)
+      const batchId = batchMatch ? batchMatch[0] : "B-2024-089"
+
+      return {
+        content: `Here's the status for batch ${batchId}:`,
+        pipelineData: {
+          intent: "QUERY_STATUS",
+          confidence: 96,
+          rejectedIntents: [
+            { name: "QUERY_REPORT", confidence: 18 },
+            { name: "QUERY_LOSSES", confidence: 12 },
+          ],
+          entities: [
+            { text: batchId, label: "BATCH_ID", value: batchId },
+          ],
+          originalMessage: userMessage,
+          jsonOutput: {
+            intent: "QUERY_STATUS",
+            filters: {
+              batch_id: batchId
+            },
+            result_preview: {
+              status: "ANOMALY",
+              current_stage: "PROCESSING",
+              completeness: 72,
+              last_update: "2 hours ago",
+              flags: ["HIGH_PROCESSING_LOSS"]
+            }
+          },
+          savedRecords: [
+            { icon: "check", text: `Status retrieved for ${batchId}` },
+            { icon: "check", text: "Current stage: PROCESSING" },
+            { icon: "check", text: "Alert: High processing loss detected" },
+          ],
+          batchId: batchId,
+        },
+      }
+    }
+
+    // Generic response
+    return {
+      content: "I'm here to help you manage your traceability data. You can ask me to:\n\n- **Log entries**: 'Received 500 kg PET from GreenCycle today'\n- **Track dispatches**: 'Dispatched 180 kg HDPE to Buyer Corp'\n- **Log processing**: 'Processed 320 kg PP through shredder, got 280 kg out'\n- **Query data**: 'How much was dispatched last week?'\n- **Check losses**: 'Show losses during processing this month'\n- **Check status**: 'What's the status of batch B-2024-089?'\n\nTry one of the suggested prompts below!",
+    }
+  }
+
   const handleSend = async () => {
     if (!input.trim()) return
 
+    const userMessageContent = input.trim()
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: input.trim(),
+      content: userMessageContent,
       timestamp: new Date(),
     }
 
@@ -160,41 +472,41 @@ export function ChatPanel() {
     setIsTyping(true)
 
     try {
-      // Real backend API call
-      const response = await chatApi.send({
-        message: userText,
-        session_id: sessionId || undefined,
-      })
-
-      if (!sessionId) setSessionId(response.session_id)
-
-      const pipelineData = apiResponseToPipeline(userText, response)
+      const response = await sendChatMessage(userMessageContent)
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: response.reply,
+        content: response.reply || "I encountered an issue processing that request.",
         timestamp: new Date(),
-        pipelineData,
+        pipelineData: response.structured_data ? {
+          intent: response.intent?.toUpperCase() || "UNKNOWN",
+          confidence: 95,
+          rejectedIntents: [],
+          entities: [],
+          originalMessage: userMessageContent,
+          jsonOutput: response.structured_data,
+          savedRecords: [{ icon: "check", text: "Action processed via backend" }]
+        } : undefined,
       }
-
-      setIsTyping(false)
       setMessages((prev) => [...prev, aiMessage])
-      setConnectionStatus("connected")
     } catch (error: any) {
-      console.error("[Chat] API error:", error)
-      setConnectionStatus("disconnected")
-
-      // Fallback: use local response if backend is down
-      const fallbackMessage: Message = {
+      console.error("Chat API error:", error)
+      
+      const errorMsg = error instanceof Error ? error.message : "Unknown error"
+      const statusCode = (error as APIError)?.status
+      
+      const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: "I'm having trouble connecting to the server. The backend may be starting up. Please try again in a moment.\n\nIn the meantime, you can:\n- Check that the backend is running on port 8000\n- Try refreshing the page",
+        content: statusCode === 401 
+          ? "Authentication required. Please sign in to continue."
+          : `Sorry, there was an error: ${errorMsg}. Please check that the backend is running and API keys are configured.`,
         timestamp: new Date(),
       }
-
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
       setIsTyping(false)
-      setMessages((prev) => [...prev, fallbackMessage])
     }
   }
 
@@ -223,34 +535,79 @@ export function ChatPanel() {
   return (
     <div className="flex h-[calc(100vh-73px)]">
       {/* Chat History Sidebar */}
-      <div className="w-[280px] border-r border-border bg-card p-4 flex flex-col">
-        <h3 className="text-foreground font-semibold mb-4">Chat History</h3>
-        <div className="flex-1 space-y-2 overflow-y-auto">
-          {chatHistory.map((chat) => (
-            <button
-              key={chat.id}
-              className="w-full text-left p-3 rounded-lg bg-secondary hover:bg-accent transition-colors"
+      <div className="w-[280px] border-r border-tf-border bg-tf-bg-primary p-4 flex flex-col">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-tf-text-primary font-semibold">Chat History</h3>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 text-tf-text-muted hover:text-tf-accent-green"
+              onClick={handleNewChat}
+              title="New chat"
             >
-              <p className="text-foreground text-sm truncate">
-                {chat.preview}
-              </p>
-              <div className="flex items-center gap-3 mt-1">
-                <p className="text-muted-foreground text-xs">{chat.time}</p>
-                {chat.entries > 0 && (
-                  <span className="text-green-500 text-xs flex items-center gap-1">
-                    <FileText className="w-3 h-3" />
-                    {chat.entries} entries
-                  </span>
-                )}
-                {chat.queries > 0 && (
-                  <span className="text-blue-500 text-xs flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {chat.queries} queries
-                  </span>
-                )}
-              </div>
-            </button>
-          ))}
+              <Plus className="w-4 h-4" />
+            </Button>
+            {messages.length > 0 && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-tf-text-muted hover:text-red-500"
+                onClick={handleClearSession}
+                title="Clear current session"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        
+        {isLoadingHistory ? (
+          <div className="flex-1 flex items-center justify-center">
+            <div className="flex gap-1">
+              <span className="w-2 h-2 rounded-full bg-tf-accent-green animate-bounce" style={{ animationDelay: "0ms" }} />
+              <span className="w-2 h-2 rounded-full bg-tf-accent-green animate-bounce" style={{ animationDelay: "150ms" }} />
+              <span className="w-2 h-2 rounded-full bg-tf-accent-green animate-bounce" style={{ animationDelay: "300ms" }} />
+            </div>
+          </div>
+        ) : (
+          <div className="flex-1 space-y-2 overflow-y-auto">
+            {chatHistory.map((chat) => (
+              <button
+                key={chat.id}
+                className="w-full text-left p-3 rounded-lg bg-tf-bg-secondary hover:bg-tf-bg-tertiary transition-colors"
+              >
+                <p className="text-tf-text-primary text-sm truncate">
+                  {chat.preview}
+                </p>
+                <div className="flex items-center gap-3 mt-1">
+                  <p className="text-tf-text-muted text-xs">{chat.time}</p>
+                  {chat.entries > 0 && (
+                    <span className="text-tf-accent-green text-xs flex items-center gap-1">
+                      <FileText className="w-3 h-3" />
+                      {chat.entries} entries
+                    </span>
+                  )}
+                  {chat.queries > 0 && (
+                    <span className="text-tf-accent-blue text-xs flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      {chat.queries} queries
+                    </span>
+                  )}
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+        
+        {/* Session info */}
+        <div className="mt-4 pt-4 border-t border-tf-border">
+          <p className="text-tf-text-muted text-xs truncate">
+            Session: <span className="font-mono">{sessionId.slice(0, 16)}...</span>
+          </p>
+          <p className="text-tf-text-muted text-xs mt-1">
+            {messages.length} message{messages.length !== 1 ? 's' : ''}
+          </p>
         </div>
       </div>
 

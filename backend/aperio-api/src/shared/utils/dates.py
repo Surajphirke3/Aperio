@@ -1,5 +1,9 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 import re
+
+
+def today_iso() -> str:
+    return datetime.utcnow().date().isoformat()
 
 
 def parse_relative_date(text: str) -> str | None:
@@ -25,12 +29,10 @@ def parse_relative_date(text: str) -> str | None:
             return now.replace(year=now.year - 1, month=12, day=1).date().isoformat()
         return now.replace(month=now.month - 1, day=1).date().isoformat()
 
-    # "N days ago"
     days_ago = re.search(r"(\d+)\s*days?\s*ago", text)
     if days_ago:
         return (now - timedelta(days=int(days_ago.group(1)))).date().isoformat()
 
-    # "N weeks ago"
     weeks_ago = re.search(r"(\d+)\s*weeks?\s*ago", text)
     if weeks_ago:
         return (now - timedelta(weeks=int(weeks_ago.group(1)))).date().isoformat()

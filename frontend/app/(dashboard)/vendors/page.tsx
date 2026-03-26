@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { TopBar } from "@/components/layout/topbar"
 import { VendorScorecard } from "@/components/vendors/vendor-scorecard"
@@ -21,6 +21,17 @@ import type { Vendor } from "@/lib/mockData"
 export default function VendorsPage() {
   const { data: vendors, isLoading } = useVendors()
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
+  const [liveVendors, setLiveVendors] = useState<any[]>([])
+
+  useEffect(() => {
+    fetchFromAPI("/vendors/")
+      .then((data) => {
+        if (data.vendors) setLiveVendors(data.vendors)
+      })
+      .catch((err) => console.error("Error fetching vendors:", err))
+  }, [])
+
+  const currentVendors = liveVendors.length > 0 ? liveVendors : mockVendors;
 
   const bestPerformer = vendors.length > 0
     ? vendors.reduce((best, v) => v.score > best.score ? v : best)
@@ -194,7 +205,7 @@ export default function VendorsPage() {
                 </tr>
               </thead>
               <tbody>
-                {vendors.map((vendor, index) => (
+                {currentVendors.map((vendor: any, index: number) => (
                   <motion.tr
                     key={vendor.id}
                     initial={{ opacity: 0, x: -20 }}
@@ -216,7 +227,7 @@ export default function VendorsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-1">
-                        {vendor.materials.map((m) => (
+                        {vendor.materials.map((m: string) => (
                           <span
                             key={m}
                             className="px-2 py-0.5 rounded bg-secondary text-muted-foreground text-xs"

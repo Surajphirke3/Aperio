@@ -1,195 +1,133 @@
-/**
- * Aperio API Client
- * Centralized HTTP client for all backend endpoints.
- * Uses Clerk session tokens for authentication.
- */
+export const API_URL = "/api";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"
-
-/* ─── Types ─── */
-
-export interface ApiBatch {
-  id: string
-  material?: string
-  vendor?: string
-  quantity_kg?: number
-  loss_kg?: number
-  stage?: string
-  intent?: string
-  status?: string
-  completeness?: number
-  created_at?: string
-  date?: string
-  anomalies?: ApiAnomaly[]
-  [key: string]: unknown
+// Get auth token from localStorage or cookies
+function getAuthToken(): string | null {
+  if (typeof window !== "undefined") {
+    const token = localStorage.getItem("auth_token");
+    if (token) return token;
+    const sessionToken = sessionStorage.getItem("auth_token");
+    if (sessionToken) return sessionToken;
+  }
+  return null;
 }
 
-export interface ApiAnomaly {
-  batch_id: string
-  stage: string
-  metric: string
-  value: number
-  threshold: number
-  message: string
-}
-
-export interface ApiDashboardStats {
-  total_entries: number
-  by_material: Record<string, number>
-  by_stage: Record<string, number>
-  total_dispatched_kg: number
-}
-
-export interface ApiSankeyData {
-  nodes: { name: string }[]
-  links: { source: number; target: number; value: number }[]
-}
-
-export interface ApiVendor {
-  id: string
-  name: string
-  total_kg: number
-  entry_count: number
-}
-
-export interface ApiChatRequest {
-  message: string
-  session_id?: string
-}
-
-export interface ApiChatResponse {
-  session_id: string
-  reply: string
-  intent: string
-  structured_data?: Record<string, unknown> | null
-  success: boolean
-}
-
-export interface ApiInsight {
-  batch_id: string
-  narrative: string
-  [key: string]: unknown
-}
-
-/* ─── HTTP helper ─── */
-
-class ApiError extends Error {
-  status: number
-  constructor(message: string, status: number) {
-    super(message)
-    this.name = "ApiError"
-    this.status = status
+// Store auth token
+export function setAuthToken(token: string): void {
+  if (typeof window !== "undefined") {
+    localStorage.setItem("auth_token", token);
+    sessionStorage.setItem("auth_token", token);
   }
 }
 
-async function getAuthToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null
-  try {
-    const clerk = (window as any).Clerk
-    if (clerk?.session) {
-      return await clerk.session.getToken()
+// Clear auth token
+export function clearAuthToken(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("auth_token");
+    sessionStorage.removeItem("auth_token");
+  }
+}
+
+// Generate or retrieve session ID for chat
+export function getSessionId(): string {
+  if (typeof window !== "undefined") {
+    let sessionId = localStorage.getItem("chat_session_id");
+    if (!sessionId) {
+      sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+      localStorage.setItem("chat_session_id", sessionId);
     }
-  } catch (err) {
-    console.warn("Clerk Token Generation Failed:", err)
+    return sessionId;
   }
-  return null
+  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 }
 
-async function apiFetch<T>(
-  path: string,
-  options: RequestInit = {}
-): Promise<T> {
-  const token = await getAuthToken()
+// Clear session ID (for new chat)
+export function clearSessionId(): void {
+  if (typeof window !== "undefined") {
+    localStorage.removeItem("chat_session_id");
+  }
+}
 
+export interface APIError extends Error {
+  status?: number;
+  data?: unknown;
+}
+
+export async function fetchFromAPI(endpoint: string, options: RequestInit = {}) {
+  const token = getAuthToken();
+  
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
-    ...(options.headers as Record<string, string>),
-  }
-
+    ...(options.headers as Record<string, string> || {}),
+  };
+  
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`
+    headers["Authorization"] = `Bearer ${token}`;
   }
+  
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  const url = `${API_BASE}/v1${path}`
-
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  })
-
-  if (!response.ok) {
-    const errorBody = await response.text().catch(() => "Unknown error")
-    throw new ApiError(
-      `API Error ${response.status}: ${errorBody}`,
-      response.status
-    )
+    if (!response.ok) {
+      const error: APIError = new Error(`API error: ${response.status} ${response.statusText}`);
+      error.status = response.status;
+      
+      try {
+        error.data = await response.json();
+      } catch {
+        error.data = await response.text();
+      }
+      
+      if (response.status === 401) {
+        clearAuthToken();
+        error.message = "Authentication required. Please sign in again.";
+      }
+      
+      throw error;
+    }
+    
+    if (response.status === 204) {
+      return null;
+    }
+    
+    return response.json();
+  } catch (error) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error(`Network error: ${String(error)}`);
   }
-
-  return response.json()
 }
 
-/* ─── Batches API ─── */
-
-export const batchesApi = {
-  getAll: (limit = 50) =>
-    apiFetch<ApiBatch[]>(`/batches/?limit=${limit}`),
-
-  getById: (batchId: string) =>
-    apiFetch<ApiBatch & { anomalies: ApiAnomaly[] }>(`/batches/${batchId}`),
+// Chat-specific API functions
+export async function sendChatMessage(message: string, sessionId?: string) {
+  const body = {
+    message,
+    session_id: sessionId || getSessionId(),
+  };
+  
+  return fetchFromAPI("/chat/", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
 }
 
-/* ─── Stats / Dashboard API ─── */
-
-export const statsApi = {
-  getDashboard: () =>
-    apiFetch<ApiDashboardStats>("/stats/"),
-
-  getSankey: () =>
-    apiFetch<ApiSankeyData>("/stats/sankey"),
+export async function getChatHistory(sessionId?: string) {
+  const sid = sessionId || getSessionId();
+  return fetchFromAPI(`/chat/sessions/${sid}/history`);
 }
 
-/* ─── Vendors API ─── */
-
-export const vendorsApi = {
-  getAll: () =>
-    apiFetch<ApiVendor[]>("/vendors/"),
+export async function clearChatSession(sessionId?: string) {
+  const sid = sessionId || getSessionId();
+  const result = await fetchFromAPI(`/chat/sessions/${sid}`, {
+    method: "DELETE",
+  });
+  clearSessionId();
+  return result;
 }
 
-/* ─── Chat API ─── */
-
-export const chatApi = {
-  send: (data: ApiChatRequest) =>
-    apiFetch<ApiChatResponse>("/chat/", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
-
-  getHistory: (sessionId: string) =>
-    apiFetch<{ session_id: string; messages: unknown[]; count: number }>(
-      `/chat/sessions/${sessionId}/history`
-    ),
-
-  clearSession: (sessionId: string) =>
-    apiFetch<{ message: string }>(`/chat/sessions/${sessionId}`, {
-      method: "DELETE",
-    }),
-}
-
-/* ─── Insights API ─── */
-
-export const insightsApi = {
-  generate: (batchId: string) =>
-    apiFetch<ApiInsight>(`/insights/${batchId}`, {
-      method: "POST",
-    }),
-}
-
-/* ─── Health Check ─── */
-
-export const healthApi = {
-  check: async (): Promise<{ status: string; model: string }> => {
-    const res = await fetch(`${API_BASE}/health`)
-    if (!res.ok) throw new ApiError("Health check failed", res.status)
-    return res.json()
-  },
+export async function listChatSessions() {
+  return fetchFromAPI("/chat/sessions");
 }
