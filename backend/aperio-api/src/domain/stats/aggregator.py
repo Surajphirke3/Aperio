@@ -82,28 +82,42 @@ class StatsAggregator:
     async def get_sankey(self, days: int) -> dict:
         since = datetime.utcnow() - timedelta(days=days)
         pipeline = [
-            {"$match": {"created_at": {"$gte": since.isoformat()}, "stage": {"$ne": None}}},
+            {"$match": {
+                "created_at": {"$gte": since.isoformat()}, 
+                "stage": {"$ne": None},
+                "intent": {"$ne": "query"} # exclude logic-only intents
+            }},
             {"$group": {"_id": {"from": "$intent", "to": "$stage"}, "value": {"$sum": "$quantity_kg"}}},
         ]
-        try:
-            node_set = set()
-            links = []
-            async for doc in entries_col().aggregate(pipeline):
-                src = doc["_id"]["from"]
-                tgt = doc["_id"]["to"]
-                node_set.update([src, tgt])
-                links.append({"source": src, "target": tgt, "value": round(doc["value"], 2)})
+        
+        # Explicit lifecycle order for visual consistency
+        LIFECYCLE_ORDER = ["Collection", "Sorting", "Processing", "Output", "Dispatch"]
+        def sort_key(node_name):
+            n = node_name.capitalize()
+            return LIFECYCLE_ORDER.index(n) if n in LIFECYCLE_ORDER else 99
 
-            nodes = [{"name": n} for n in sorted(node_set)]
-            node_idx = {n["name"]: i for i, n in enumerate(nodes)}
-            indexed_links = [
-                {"source": node_idx[l["source"]], "target": node_idx[l["target"]], "value": l["value"]}
-                for l in links if l["source"] in node_idx and l["target"] in node_idx
-            ]
-            return {"nodes": nodes, "links": indexed_links}
-        except Exception as e:
-            logger.warning(f"Mongo sankey aggregation failed: {e}")
-            return {"nodes": [], "links": []}
+        node_set = set()
+        links = []
+        async for doc in entries_col().aggregate(pipeline):
+            # Normalize to match frontend capitalization
+            src = (doc["_id"]["from"] or "Collection").capitalize()
+            tgt = (doc["_id"]["to"] or "Collection").capitalize()
+            
+            # Map "Purchase" intent back to "Collection" for UI clarity
+            if src == "Purchase": src = "Collection"
+            
+            if src == tgt: continue # skip self-loops that break D3
+            
+            node_set.update([src, tgt])
+            links.append({"source": src, "target": tgt, "value": round(doc["value"], 2)})
+
+        nodes = [{"name": n} for n in sorted(list(node_set), key=sort_key)]
+        node_idx = {n["name"]: i for i, n in enumerate(nodes)}
+        indexed_links = [
+            {"source": node_idx[l["source"]], "target": node_idx[l["target"]], "value": l["value"]}
+            for l in links if l["source"] in node_idx and l["target"] in node_idx
+        ]
+        return {"nodes": nodes, "links": indexed_links}
 
     async def get_weekly(self, days: int) -> dict:
         since = datetime.utcnow() - timedelta(days=days)

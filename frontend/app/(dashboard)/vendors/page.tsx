@@ -17,6 +17,8 @@ import {
   Loader2,
 } from "lucide-react"
 import type { Vendor } from "@/lib/mockData"
+import { vendors as mockVendors } from "@/lib/mockData"
+import { fetchFromAPI } from "@/lib/api"
 
 export default function VendorsPage() {
   const { data: vendors, isLoading } = useVendors()
@@ -32,12 +34,13 @@ export default function VendorsPage() {
   }, [])
 
   const currentVendors = liveVendors.length > 0 ? liveVendors : mockVendors;
+  const activeVendors = vendors || currentVendors;
 
-  const bestPerformer = vendors.length > 0
-    ? vendors.reduce((best, v) => v.score > best.score ? v : best)
+  const bestPerformer = activeVendors.length > 0
+    ? activeVendors.reduce((best: any, v: any) => v.score > best.score ? v : best)
     : null
-  const avgReliability = vendors.length > 0
-    ? vendors.reduce((sum, v) => sum + v.reliability, 0) / vendors.length
+  const avgReliability = activeVendors.length > 0
+    ? activeVendors.reduce((sum: number, v: any) => sum + v.reliability, 0) / activeVendors.length
     : 0
 
   const getScoreColor = (score: number) => {
@@ -93,7 +96,7 @@ export default function VendorsPage() {
               </span>
             ) : (
               <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-500 text-sm font-medium">
-                {vendors.length} Active Vendors
+                {vendors?.length || currentVendors.length} Active Vendors
               </span>
             )}
           </div>
@@ -140,7 +143,7 @@ export default function VendorsPage() {
               </div>
             </div>
             <p className="text-foreground font-mono text-2xl font-bold">
-              {vendors.length}
+              {vendors?.length || currentVendors.length}
             </p>
           </motion.div>
 

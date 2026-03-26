@@ -168,18 +168,27 @@ export function Sidebar() {
           </p>
         </div>
 
-        {/* User — Clerk UserButton or Sign In */}
+        {/* User — Clerk UserButton & Explicit Sign Out */}
         {isSignedIn ? (
-          <div className="flex items-center gap-3 px-3 py-2">
-            <UserButton afterSignOutUrl="/" />
-            <div className="flex-1 min-w-0">
-              <span className="text-foreground text-sm font-medium truncate block">
-                {clerkUser?.fullName || clerkUser?.firstName || "User"}
-              </span>
-              <span className="text-muted-foreground text-xs truncate block">
-                {clerkUser?.primaryEmailAddress?.emailAddress}
-              </span>
+          <div className="space-y-2">
+            <div className="flex items-center gap-3 px-3 py-2">
+              <UserButton />
+              <div className="flex-1 min-w-0">
+                <span className="text-foreground text-sm font-medium truncate block">
+                  {clerkUser?.fullName || clerkUser?.firstName || "User"}
+                </span>
+                <span className="text-muted-foreground text-xs truncate block">
+                  {clerkUser?.primaryEmailAddress?.emailAddress}
+                </span>
+              </div>
             </div>
+            <button
+               onClick={logout}
+               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg bg-secondary/50 hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive border border-transparent hover:border-destructive/20"
+            >
+              <LogOut className="w-4 h-4 ml-1" />
+              <span className="text-sm font-medium">Sign Out</span>
+            </button>
           </div>
         ) : (
           <SignInButton mode="modal">

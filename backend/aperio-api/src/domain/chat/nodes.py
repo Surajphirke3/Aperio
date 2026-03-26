@@ -1,6 +1,7 @@
 import logging
 
 from src.infrastructure.ai.featherless import FeatherlessAdapter
+# Force uvicorn reload
 from src.infrastructure.ai.prompts.intent import INTENT_SYSTEM_PROMPT
 from src.infrastructure.ai.prompts.entity import build_entity_prompt
 from src.infrastructure.ai.prompts.query import QUERY_SYSTEM_PROMPT

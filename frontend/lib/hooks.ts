@@ -125,10 +125,13 @@ export function useSankeyData(): FetchState<ApiSankeyData> {
   return useFetch<ApiSankeyData>(
     async () => {
       const result = await statsApi.getSankey()
-      // If Mongo is unreachable/empty, backend may return empty nodes/links (still a 200).
-      // Treat that as a fallback scenario so the chart doesn't render blank.
-      if (!result?.nodes?.length || !result?.links?.length) return mockSankey
-      return result
+      if (!result || !result.nodes || result.nodes.length === 0) return mockSankey
+      
+      // Auto-capitalize node names to match UI color bindings
+      return {
+        nodes: result.nodes.map(n => ({ name: n.name.charAt(0).toUpperCase() + n.name.slice(1) })),
+        links: result.links
+      }
     },
     mockSankey
   )
@@ -191,7 +194,8 @@ function normalizeBatch(raw: ApiBatch, index: number): NormalizedBatch {
 export function useBatches(limit = 50): FetchState<NormalizedBatch[]> {
   return useFetch<NormalizedBatch[]>(
     async () => {
-      const raw = await batchesApi.getAll(limit)
+      const res = await batchesApi.getAll(limit)
+      const raw: ApiBatch[] = Array.isArray(res) ? res : (res as any).batches || []
       if (!raw || raw.length === 0) return mockBatches
       return raw.map((b, i) => normalizeBatch(b, i))
     },
@@ -230,7 +234,8 @@ function normalizeVendor(raw: ApiVendor, index: number): NormalizedVendor {
 export function useVendors(): FetchState<NormalizedVendor[]> {
   return useFetch<NormalizedVendor[]>(
     async () => {
-      const raw = await vendorsApi.getAll()
+      const res = await vendorsApi.getAll()
+      const raw: ApiVendor[] = Array.isArray(res) ? res : (res as any).vendors || []
       if (!raw || raw.length === 0) return mockVendors
       return raw.map((v, i) => normalizeVendor(v, i))
     },

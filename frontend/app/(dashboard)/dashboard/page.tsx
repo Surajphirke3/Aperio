@@ -38,6 +38,9 @@ export default function DashboardPage() {
   const [selectedRange, setSelectedRange] = useState("7d")
   const [backendStatus, setBackendStatus] = useState("Loading...")
   const [liveAnomalies, setLiveAnomalies] = useState<any[]>([])
+  
+  // Live data from backend with fallback
+  const { data: kpiData, isLoading, refetch } = useDashboardStats()
 
   useEffect(() => {
     // Fetch live APIs
@@ -129,9 +132,9 @@ export default function DashboardPage() {
         >
           <StatCard
             title="Total Tracked"
-            value={currentKpi.totalTracked}
+            value={currentKpi?.totalTracked || 0}
             suffix=" kg"
-            change={currentKpi.totalTrackedChange}
+            change={currentKpi?.totalTrackedChange || 0}
             subtitle="vs last week"
             accentColor="green"
             index={0}
@@ -139,10 +142,10 @@ export default function DashboardPage() {
           {role !== "customer" && (
             <StatCard
               title="Avg Completeness"
-              value={kpiData.avgCompleteness}
+              value={kpiData?.avgCompleteness || 0}
               suffix="%"
               decimals={1}
-              change={kpiData.completenessChange}
+              change={kpiData?.completenessChange || 0}
               changeLabel=" pts"
               accentColor="green"
               index={1}
@@ -150,14 +153,14 @@ export default function DashboardPage() {
           )}
           <StatCard
             title="Active Batches"
-            value={currentKpi.activeBatches}
-            subtitle={`${currentKpi.criticalBatches} critical`}
+            value={currentKpi?.activeBatches || 0}
+            subtitle={`${currentKpi?.criticalBatches || 0} critical`}
             accentColor="amber"
             index={2}
           />
           <StatCard
             title="CO2 Saved"
-            value={currentKpi.co2Saved}
+            value={currentKpi?.co2Saved || 0}
             suffix=" kg"
             subtitle="vs virgin material"
             accentColor="teal"

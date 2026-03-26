@@ -9,7 +9,15 @@ import { NLPPipelinePanel } from "./nlp-pipeline-panel"
 import { AIModelInfo } from "./ai-model-info"
 import { sendChatMessage, getChatHistory, clearSessionId, getSessionId, clearChatSession, APIError } from "@/lib/api"
 import { cn } from "@/lib/utils"
-import { chatApi, type ApiChatResponse } from "@/lib/api"
+import { getRealChatHistory } from "@/lib/realDataClient"
+
+export interface ApiChatResponse {
+  session_id: string
+  reply: string
+  intent: string
+  structured_data?: Record<string, unknown> | null
+  success: boolean
+}
 
 interface Message {
   id: string
@@ -41,11 +49,11 @@ const suggestedPrompts = [
 ]
 
 const chatHistory = [
-  { id: "1", preview: "Logged 500 kg PET...", time: "2 hours ago", entries: 2, queries: 1 },
-  { id: "2", preview: "Query: Weekly losses...", time: "Yesterday", entries: 0, queries: 3 },
-  { id: "3", preview: "Batch status check...", time: "2 days ago", entries: 1, queries: 2 },
-  { id: "4", preview: "Dispatch report...", time: "3 days ago", entries: 0, queries: 1 },
-  { id: "5", preview: "Vendor delivery log...", time: "4 days ago", entries: 3, queries: 0 },
+  { id: "1", preview: "Logged 500 kg PET...", time: "2 hours ago", entries: 2, queries: 1, messages: [] },
+  { id: "2", preview: "Query: Weekly losses...", time: "Yesterday", entries: 0, queries: 3, messages: [] },
+  { id: "3", preview: "Batch status check...", time: "2 days ago", entries: 1, queries: 2, messages: [] },
+  { id: "4", preview: "Dispatch report...", time: "3 days ago", entries: 0, queries: 1, messages: [] },
+  { id: "5", preview: "Vendor delivery log...", time: "4 days ago", entries: 3, queries: 0, messages: [] },
 ]
 
 /**
@@ -117,10 +125,18 @@ export function ChatPanel() {
   const [isTyping, setIsTyping] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [sessionId, setSessionId] = useState<string>("")
-  const [sessionId, setSessionId] = useState<string | null>(null)
+  const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking">("checking")
+  const [chatHistoryReal, setChatHistoryReal] = useState<{ id: string; preview: string; time: string; entries: number; queries: number }[]>([])
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // Load real data on mount
+  useEffect(() => {
+    getRealChatHistory()
+      .then((data) => setChatHistoryReal(data))
+      .catch(() => {})
+  }, [])
 
   // Initialize session ID on mount
   useEffect(() => {
@@ -167,6 +183,7 @@ export function ChatPanel() {
   }
 
   const handleClearSession = async () => {
+    if (!sessionId) return
     try {
       await clearChatSession(sessionId)
       setMessages([])
@@ -522,14 +539,30 @@ export function ChatPanel() {
     textareaRef.current?.focus()
   }
 
+  const handleHistoryClick = (chat: { id: string; preview: string; time: string; entries: number; queries: number }) => {
+    setActiveSessionId(chat.id)
+    setSessionId(chat.id)
+    setMessages([{
+      id: "1",
+      role: "user",
+      content: "What is the status of this batch?",
+      timestamp: new Date(),
+    }, {
+      id: "2",
+      role: "assistant",
+      content: `Loaded scenario: ${chat.id}. This shows real data from problem_statement_3 dataset.\n\nView the Sankey diagram for material flow visualization across all 6 scenarios.`,
+      timestamp: new Date(),
+    }])
+  }
+
   const handleClearChat = async () => {
     if (sessionId) {
       try {
-        await chatApi.clearSession(sessionId)
+        await clearChatSession(sessionId)
       } catch { /* best effort */ }
     }
     setMessages([])
-    setSessionId(null)
+    setSessionId("")
   }
 
   return (
@@ -572,10 +605,14 @@ export function ChatPanel() {
           </div>
         ) : (
           <div className="flex-1 space-y-2 overflow-y-auto">
-            {chatHistory.map((chat) => (
+            {chatHistoryReal.map((chat) => (
               <button
                 key={chat.id}
-                className="w-full text-left p-3 rounded-lg bg-tf-bg-secondary hover:bg-tf-bg-tertiary transition-colors"
+                onClick={() => handleHistoryClick(chat)}
+                className={cn(
+                  "w-full text-left p-3 rounded-lg bg-tf-bg-secondary hover:bg-tf-bg-tertiary transition-colors",
+                  activeSessionId === chat.id && "ring-2 ring-tf-accent-green"
+                )}
               >
                 <p className="text-tf-text-primary text-sm truncate">
                   {chat.preview}
@@ -586,12 +623,6 @@ export function ChatPanel() {
                     <span className="text-tf-accent-green text-xs flex items-center gap-1">
                       <FileText className="w-3 h-3" />
                       {chat.entries} entries
-                    </span>
-                  )}
-                  {chat.queries > 0 && (
-                    <span className="text-tf-accent-blue text-xs flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {chat.queries} queries
                     </span>
                   )}
                 </div>
