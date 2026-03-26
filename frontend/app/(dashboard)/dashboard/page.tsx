@@ -54,18 +54,12 @@ export default function DashboardPage() {
       })
   }, [])
 
-  // Provide fallback so UI doesn't crash while loading
-  // HARDCODED TO MOCK DATA FOR DEMO PRESENTATION
-  const currentKpi = mockKpi;
-  const currentAnomalies = anomalies;
+  const currentAnomalies = liveAnomalies.length > 0 ? liveAnomalies : anomalies;
+  const currentKpi = kpiData || mockKpi;
+
   const { user } = useAuth()
   const router = useRouter()
   const role = user?.role || "customer"
-
-  // Live data from backend with fallback
-  const { data: kpiData, isLoading, refetch } = useDashboardStats()
-  const currentKpi = kpiData;
-
   return (
     <div className="min-h-screen">
       <RoleSelectionModal />
