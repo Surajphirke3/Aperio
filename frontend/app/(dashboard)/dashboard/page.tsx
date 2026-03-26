@@ -17,10 +17,11 @@ import { LiveEventTicker } from "@/components/dashboard/live-event-ticker"
 import { LifecycleWorkflow } from "@/components/dashboard/lifecycle-workflow"
 import { DigitalReport } from "@/components/dashboard/digital-report"
 import { CompliancePanel } from "@/components/dashboard/compliance-panel"
-import { anomalies, kpiData } from "@/lib/mockData"
+import { anomalies } from "@/lib/mockData"
+import { useDashboardStats } from "@/lib/hooks"
 import { useAuth } from "@/lib/auth-context"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, Calendar, MessageCircle } from "lucide-react"
+import { RefreshCw, Calendar, MessageCircle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 const dateRanges = ["7d", "30d", "90d"]
@@ -36,6 +37,9 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const router = useRouter()
   const role = user?.role || "customer"
+
+  // Live data from backend with fallback
+  const { data: kpiData, isLoading, refetch } = useDashboardStats()
 
   return (
     <div className="min-h-screen">
@@ -79,8 +83,14 @@ export default function DashboardPage() {
               variant="outline"
               size="sm"
               className="border-border text-muted-foreground hover:text-foreground"
+              onClick={refetch}
+              disabled={isLoading}
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
               Refresh
             </Button>
           </div>
@@ -89,7 +99,7 @@ export default function DashboardPage() {
         {/* Lifecycle Workflow (all roles) */}
         <LifecycleWorkflow />
 
-        {/* KPI Row — scaled by role */}
+        {/* KPI Row — scaled by role, now using live data */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

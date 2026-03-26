@@ -1,6 +1,7 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
+import { useUser, useClerk } from "@clerk/nextjs"
 
 export type UserRole = "customer" | "regulator" | "partner"
 
@@ -9,6 +10,7 @@ export interface User {
   email: string
   role: UserRole
   avatar?: string
+  clerkId?: string
 }
 
 interface AuthContextType {
@@ -22,30 +24,53 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-const MOCK_USERS: Record<UserRole, User> = {
-  customer: { name: "Alex Customer", email: "alex@aperio.app", role: "customer" },
-  regulator: { name: "Jordan Regulator", email: "jordan@epa.gov", role: "regulator" },
-  partner: { name: "Sam Partner", email: "sam@greencycle.co", role: "partner" },
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { isSignedIn, user: clerkUser, isLoaded } = useUser()
+  const { signOut } = useClerk()
+  const [role, setRole] = useState<UserRole>("customer")
   const [user, setUser] = useState<User | null>(null)
 
-  const login = useCallback((_email: string, _password: string, role: UserRole = "customer") => {
-    setUser(MOCK_USERS[role])
+  // Sync Clerk user state into our auth context
+  useEffect(() => {
+    if (isLoaded && isSignedIn && clerkUser) {
+      setUser({
+        name: clerkUser.fullName || clerkUser.firstName || "User",
+        email: clerkUser.primaryEmailAddress?.emailAddress || "",
+        role: role,
+        avatar: clerkUser.imageUrl,
+        clerkId: clerkUser.id,
+      })
+    } else if (isLoaded && !isSignedIn) {
+      setUser(null)
+    }
+  }, [isLoaded, isSignedIn, clerkUser, role])
+
+  // Legacy login — redirect to Clerk sign-in
+  const login = useCallback((_email: string, _password: string, loginRole: UserRole = "customer") => {
+    setRole(loginRole)
+    // Clerk handles actual authentication — this is for role selection
+    window.location.href = "/sign-in"
   }, [])
 
-  const signup = useCallback((name: string, email: string, _password: string, role: UserRole = "customer") => {
-    setUser({ name, email, role })
+  // Legacy signup — redirect to Clerk sign-up
+  const signup = useCallback((_name: string, _email: string, _password: string, signupRole: UserRole = "customer") => {
+    setRole(signupRole)
+    window.location.href = "/sign-up"
   }, [])
 
-  const logout = useCallback(() => {
+  // Logout via Clerk
+  const logout = useCallback(async () => {
     setUser(null)
-  }, [])
+    await signOut()
+  }, [signOut])
 
-  const switchRole = useCallback((role: UserRole) => {
-    setUser(MOCK_USERS[role])
-  }, [])
+  // Role switching still works the same
+  const switchRole = useCallback((newRole: UserRole) => {
+    setRole(newRole)
+    if (user) {
+      setUser((prev) => prev ? { ...prev, role: newRole } : null)
+    }
+  }, [user])
 
   return (
     <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, switchRole }}>

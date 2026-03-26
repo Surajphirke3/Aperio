@@ -6,6 +6,7 @@ import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { useAuth, type UserRole } from "@/lib/auth-context"
+import { UserButton, SignInButton, useUser } from "@clerk/nextjs"
 import {
   LayoutDashboard,
   Package,
@@ -17,6 +18,7 @@ import {
   Shield,
   LogOut,
   ChevronDown,
+  LogIn,
 } from "lucide-react"
 import { useState } from "react"
 
@@ -38,6 +40,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const router = useRouter()
   const { user, isAuthenticated, switchRole, logout } = useAuth()
+  const { isSignedIn, user: clerkUser } = useUser()
   const [roleDropdownOpen, setRoleDropdownOpen] = useState(false)
 
   const userRole = user?.role || "customer"
@@ -60,7 +63,7 @@ export function Sidebar() {
       </div>
 
       {/* Role Badge */}
-      {isAuthenticated && (
+      {(isAuthenticated || isSignedIn) && (
         <div className="px-4 pt-4 pb-2">
           <div className="relative">
             <button
@@ -165,31 +168,28 @@ export function Sidebar() {
           </p>
         </div>
 
-        {/* User */}
-        {isAuthenticated && (
+        {/* User — Clerk UserButton or Sign In */}
+        {isSignedIn ? (
           <div className="flex items-center gap-3 px-3 py-2">
-            <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
-              <User className="w-4 h-4 text-muted-foreground" />
-            </div>
+            <UserButton afterSignOutUrl="/" />
             <div className="flex-1 min-w-0">
               <span className="text-foreground text-sm font-medium truncate block">
-                {user?.name || "Demo User"}
+                {clerkUser?.fullName || clerkUser?.firstName || "User"}
               </span>
               <span className="text-muted-foreground text-xs truncate block">
-                {user?.email}
+                {clerkUser?.primaryEmailAddress?.emailAddress}
               </span>
             </div>
-            <button
-              onClick={() => {
-                logout()
-                router.push("/")
-              }}
-              className="text-muted-foreground hover:text-destructive transition-colors"
-              title="Sign out"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
           </div>
+        ) : (
+          <SignInButton mode="modal">
+            <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
+              <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center">
+                <LogIn className="w-4 h-4" />
+              </div>
+              <span className="text-sm font-medium">Sign In</span>
+            </button>
+          </SignInButton>
         )}
       </div>
     </aside>
