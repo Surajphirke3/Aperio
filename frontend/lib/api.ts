@@ -1,4 +1,4 @@
-export const API_URL = "/api";
+export const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
 // Types
 export interface ApiDashboardStats {
@@ -238,3 +238,78 @@ export async function clearChatSession(sessionId?: string) {
 export async function listChatSessions() {
   return fetchFromAPI("/chat/sessions");
 }
+
+// Type definitions needed by hooks.ts
+export interface ApiDashboardStats {
+  total_entries: number;
+  by_material: Record<string, number>;
+  by_stage: Record<string, number>;
+}
+
+export interface ApiSankeyData {
+  nodes: { name: string }[];
+  links: { source: number; target: number; value: number }[];
+}
+
+export interface ApiBatch {
+  id?: string;
+  batch_id?: string;
+  material?: string;
+  vendor?: string;
+  stage?: string;
+  intent?: string;
+  quantity_kg?: number;
+  loss_kg?: number;
+  status?: string;
+  completeness?: number;
+  date?: string;
+  created_at?: string;
+}
+
+export interface ApiVendor {
+  name: string;
+  total_kg: number;
+  entry_count: number;
+}
+
+export interface ApiChatRequest {
+  message: string;
+  session_id?: string;
+}
+
+export interface ApiChatResponse {
+  session_id: string;
+  reply: string;
+  intent: string;
+  structured_data: Record<string, unknown> | null;
+  success: boolean;
+}
+
+// API namespace objects
+export const statsApi = {
+  getDashboard: (): Promise<ApiDashboardStats> => fetchFromAPI("/stats/"),
+  getSankey: (): Promise<ApiSankeyData> => fetchFromAPI("/stats/sankey"),
+};
+
+export const batchesApi = {
+  getAll: (limit = 50): Promise<ApiBatch[]> =>
+    fetchFromAPI(`/batches/?limit=${limit}`).then((r) => r.batches || []),
+};
+
+export const vendorsApi = {
+  getAll: (): Promise<ApiVendor[]> =>
+    fetchFromAPI("/vendors/").then((r) => r.vendors || []),
+};
+
+export const chatApi = {
+  send: (req: ApiChatRequest): Promise<ApiChatResponse> =>
+    fetchFromAPI("/chat/", {
+      method: "POST",
+      body: JSON.stringify(req),
+    }),
+  getHistory: (sessionId: string) =>
+    fetchFromAPI(`/chat/sessions/${sessionId}/history`),
+  clearSession: (sessionId: string) =>
+    fetchFromAPI(`/chat/sessions/${sessionId}`, { method: "DELETE" }),
+  listSessions: () => fetchFromAPI("/chat/sessions"),
+};

@@ -7,6 +7,10 @@ class KPIResponse(BaseModel):
     dispatched_kg: float
     loss_pct: float
     batch_count: int
+    # Next.js dashboard hook expects these fields for aggregation normalization.
+    total_entries: int
+    by_material: dict[str, float]
+    by_stage: dict[str, float]
 
 
 class SankeyNode(BaseModel):

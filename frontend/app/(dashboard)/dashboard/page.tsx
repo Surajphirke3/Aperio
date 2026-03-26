@@ -37,7 +37,6 @@ const roleSubtitles = {
 export default function DashboardPage() {
   const [selectedRange, setSelectedRange] = useState("7d")
   const [backendStatus, setBackendStatus] = useState("Loading...")
-  const [liveKpi, setLiveKpi] = useState<any>(null)
   const [liveAnomalies, setLiveAnomalies] = useState<any[]>([])
   
   // Live data from backend with fallback
@@ -45,13 +44,8 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // Fetch live APIs
-    Promise.all([
-      fetchFromAPI("/stats/"),
-      fetchFromAPI("/anomalies/")
-    ])
-      .then(([statsData, anomaliesData]) => {
-        setLiveKpi(statsData)
-        setLiveAnomalies(anomaliesData.anomalies || [])
+    fetchFromAPI("/anomalies/").then((anomaliesData) => {
+        setLiveAnomalies(anomaliesData?.anomalies || [])
         setBackendStatus("Connected")
       })
       .catch((err) => {
@@ -67,6 +61,10 @@ export default function DashboardPage() {
   const { user } = useAuth()
   const router = useRouter()
   const role = user?.role || "customer"
+
+  // Live data from backend with fallback
+  const { data: kpiData, isLoading, refetch } = useDashboardStats()
+  const currentKpi = kpiData;
 
   return (
     <div className="min-h-screen">
@@ -174,9 +172,9 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Anomaly Alerts — regulator gets full, stakeholder filtered, customer hidden */}
-        {role === "regulator" && <AnomalyPanel anomalies={anomalies} />}
+          {role === "regulator" && <AnomalyPanel anomalies={currentAnomalies} />}
         {role === "stakeholder" && (
-          <AnomalyPanel anomalies={anomalies.filter((a) => a.severity === "critical")} />
+          <AnomalyPanel anomalies={currentAnomalies.filter((a) => a.severity === "critical")} />
         )}
 
         {/* Charts Row 1 — all roles get Sankey + Weekly side by side */}
