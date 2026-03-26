@@ -9,7 +9,14 @@ import { NLPPipelinePanel } from "./nlp-pipeline-panel"
 import { AIModelInfo } from "./ai-model-info"
 import { sendChatMessage, getChatHistory, clearSessionId, getSessionId, clearChatSession, APIError } from "@/lib/api"
 import { cn } from "@/lib/utils"
-import { chatApi, type ApiChatResponse } from "@/lib/api"
+
+export interface ApiChatResponse {
+  session_id: string
+  reply: string
+  intent: string
+  structured_data?: Record<string, unknown> | null
+  success: boolean
+}
 
 interface Message {
   id: string
@@ -117,7 +124,6 @@ export function ChatPanel() {
   const [isTyping, setIsTyping] = useState(false)
   const [isLoadingHistory, setIsLoadingHistory] = useState(false)
   const [sessionId, setSessionId] = useState<string>("")
-  const [sessionId, setSessionId] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking">("checking")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -167,6 +173,7 @@ export function ChatPanel() {
   }
 
   const handleClearSession = async () => {
+    if (!sessionId) return
     try {
       await clearChatSession(sessionId)
       setMessages([])
@@ -525,11 +532,11 @@ export function ChatPanel() {
   const handleClearChat = async () => {
     if (sessionId) {
       try {
-        await chatApi.clearSession(sessionId)
+        await clearChatSession(sessionId)
       } catch { /* best effort */ }
     }
     setMessages([])
-    setSessionId(null)
+    setSessionId("")
   }
 
   return (
