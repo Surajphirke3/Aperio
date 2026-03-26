@@ -7,7 +7,8 @@ import { TopBar } from "@/components/layout/topbar"
 import { BatchCard } from "@/components/batches/batch-card"
 import { BatchFilters } from "@/components/batches/batch-filters"
 import { Button } from "@/components/ui/button"
-import { MessageSquare } from "lucide-react"
+import { MessageSquare, Loader2 } from "lucide-react"
+import { useBatches } from "@/lib/hooks"
 import { batches as mockBatches } from "@/lib/mockData"
 import { fetchFromAPI } from "@/lib/api"
 
@@ -88,7 +89,7 @@ export default function BatchesPage() {
                   </span>{" "}
                   of{" "}
                   <span className="text-foreground font-mono">
-                    {batches.length}
+                    {batches?.length || currentBatches.length}
                   </span>{" "}
                   batches
                 </>

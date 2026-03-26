@@ -34,19 +34,37 @@ class FeatherlessAdapter:
         max_tokens: int | None = None,
         temperature: float | None = None,
     ) -> AIResponse:
-        if not self.api_key:
-            raise RuntimeError("FEATHERLESS_API_KEY not configured. Please set a valid API key in your .env file.")
         
         async with httpx.AsyncClient(timeout=30.0) as client:
-            for model in [settings.primary_model, settings.fallback_model]:
-                result = await self._call(
-                    client, prompt, system_prompt, model,
-                    max_tokens or settings.model_max_tokens,
-                    temperature or settings.model_temperature,
+            try:
+                resp = await client.post(
+                    "https://api.groq.com/openai/v1/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {settings.groq_api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": "llama-3.3-70b-versatile",
+                        "max_tokens": max_tokens or settings.model_max_tokens,
+                        "temperature": temperature or settings.model_temperature,
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt},
+                        ],
+                    },
                 )
-                if result:
-                    return result
-        raise RuntimeError("Both Featherless models failed")
+                resp.raise_for_status()
+                d = resp.json()
+                return AIResponse(
+                    content=d["choices"][0]["message"]["content"],
+                    model="llama-3.3-70b-versatile",
+                    tokens_used=d.get("usage", {}).get("total_tokens", 0),
+                )
+            except Exception as e:
+                logger.error(f"Groq API fallback failed: {e}")
+                raise RuntimeError(f"Both primary AI and fallback failed: {str(e)}")
+
+        raise RuntimeError("Unexpected end of completion function")
 
     async def _call(self, client, prompt, system_prompt, model, max_tokens, temperature):
         try:

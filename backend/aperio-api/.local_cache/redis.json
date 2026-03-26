@@ -1,1 +1,46 @@
-{"lists": {}, "expires_at": {}}
+{
+  "lists": {
+    "chat:session:123": [
+      "{\"role\": \"assistant\", \"content\": \"Found 0 entries totalling 0kg. Loss: 0%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T02:31:57.628143\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Testing bypass now\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:31:57.586275\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774492190010_2n0y2ga": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T02:42:33.279723\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:42:33.249193\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774492957943_hubb1hl": [
+      "{\"role\": \"assistant\", \"content\": \"Found 1 entries totalling 500kg. Loss: 0.0%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T02:42:50.610412\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"How much material was dispatched last week?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:42:50.590488\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774492980258_ei1tumc": [
+      "{\"role\": \"assistant\", \"content\": \"Found 1 entries totalling 500kg. Loss: 0.0%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T02:43:06.292549\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Show losses during processing this month\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:43:06.264067\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774492991101_4ta3mbj": [
+      "{\"role\": \"assistant\", \"content\": \"Found 1 entries totalling 500kg. Loss: 0.0%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T02:43:15.854569\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"What's the status of batch B-2024-089?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:43:15.830663\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774492999750_6m0o1mp": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T02:43:26.028491\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:43:26.005775\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774493364475_yabq9f7": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 320kg PP \\u2014 processing recorded.\", \"intent\": \"processing\", \"timestamp\": \"2026-03-26T02:49:30.780537\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Processed 320 kg PP through shredder, got 280 kg out\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:49:30.744393\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774493563264_ayetrap": [
+      "{\"role\": \"assistant\", \"content\": \"Found 3 entries totalling 1320kg. Loss: 3.03%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T02:53:06.585475\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"How much material was dispatched last week?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:53:06.390473\", \"user_id\": \"anonymous\"}"
+    ]
+  },
+  "expires_at": {
+    "chat:session:123": "2026-03-27T02:31:57.649827",
+    "chat:session:session_1774492190010_2n0y2ga": "2026-03-27T02:42:33.304098",
+    "chat:session:session_1774492957943_hubb1hl": "2026-03-27T02:42:50.635592",
+    "chat:session:session_1774492980258_ei1tumc": "2026-03-27T02:43:06.311624",
+    "chat:session:session_1774492991101_4ta3mbj": "2026-03-27T02:43:15.877539",
+    "chat:session:session_1774492999750_6m0o1mp": "2026-03-27T02:43:26.049417",
+    "chat:session:session_1774493364475_yabq9f7": "2026-03-27T02:49:30.805722",
+    "chat:session:session_1774493563264_ayetrap": "2026-03-27T02:53:06.792938"
+  }
+}
