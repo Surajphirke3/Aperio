@@ -12,6 +12,8 @@ import { batches as mockBatches } from "@/lib/mockData"
 import { fetchFromAPI } from "@/lib/api"
 
 export default function BatchesPage() {
+  const { data: batches, isLoading } = useBatches()
+
   const [filters, setFilters] = useState({
     material: "all",
     stage: "all",
@@ -72,20 +74,29 @@ export default function BatchesPage() {
         {/* Header Actions */}
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-tf-text-secondary">
-              Showing{" "}
-              <span className="text-tf-text-primary font-mono">
-                {filteredBatches.length}
-              </span>{" "}
-              of{" "}
-              <span className="text-tf-text-primary font-mono">
-                {currentBatches.length}
-              </span>{" "}
-              batches
+            <p className="text-muted-foreground">
+              {isLoading ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  Loading batches...
+                </span>
+              ) : (
+                <>
+                  Showing{" "}
+                  <span className="text-foreground font-mono">
+                    {filteredBatches.length}
+                  </span>{" "}
+                  of{" "}
+                  <span className="text-foreground font-mono">
+                    {batches.length}
+                  </span>{" "}
+                  batches
+                </>
+              )}
             </p>
           </div>
           <Link href="/chat">
-            <Button className="bg-tf-accent-green hover:bg-tf-accent-green-dim text-tf-bg-primary">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
               <MessageSquare className="w-4 h-4 mr-2" />
               New Entry via Chat
             </Button>
@@ -105,16 +116,16 @@ export default function BatchesPage() {
         </motion.div>
 
         {/* Empty State */}
-        {filteredBatches.length === 0 && (
+        {filteredBatches.length === 0 && !isLoading && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-center py-16"
           >
-            <p className="text-tf-text-secondary text-lg">
+            <p className="text-muted-foreground text-lg">
               No batches match your filters
             </p>
-            <p className="text-tf-text-muted mt-2">
+            <p className="text-muted-foreground/60 mt-2">
               Try adjusting your search criteria
             </p>
           </motion.div>

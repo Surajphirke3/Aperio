@@ -7,7 +7,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import { Recycle, ArrowRight, Menu, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { AuthModal } from "./auth-modal"
 import { useAuth } from "@/lib/auth-context"
 
 const navLinks = [
@@ -19,7 +18,6 @@ const navLinks = [
 export function LandingNavbar() {
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
-  const [authOpen, setAuthOpen] = useState(false)
   const { isAuthenticated, user, logout } = useAuth()
   const router = useRouter()
 
@@ -97,7 +95,7 @@ export function LandingNavbar() {
               </div>
             ) : (
               <Button
-                onClick={() => setAuthOpen(true)}
+                onClick={() => router.push('/sign-in')}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium px-6"
               >
                 Sign In
@@ -140,7 +138,7 @@ export function LandingNavbar() {
                 <Button
                   onClick={() => {
                     setMobileOpen(false)
-                    setAuthOpen(true)
+                    router.push('/sign-in')
                   }}
                   className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
                 >
@@ -151,8 +149,6 @@ export function LandingNavbar() {
           )}
         </AnimatePresence>
       </motion.nav>
-
-      <AuthModal open={authOpen} onClose={() => setAuthOpen(false)} />
     </>
   )
 }

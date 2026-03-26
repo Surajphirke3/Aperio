@@ -36,6 +36,9 @@ class Settings(BaseSettings):
     # Firebase (JWT auth only)
     firebase_credentials_path: str = Field(default="firebase-credentials.json")
 
+    # Clerk Authentication
+    clerk_secret_key: str = Field(default="", description="Clerk secret key from env")
+
     # App
     environment: str = "development"
     cors_origins: list[str] = ["http://localhost:3000", "*"]

@@ -17,11 +17,13 @@ import { LiveEventTicker } from "@/components/dashboard/live-event-ticker"
 import { LifecycleWorkflow } from "@/components/dashboard/lifecycle-workflow"
 import { DigitalReport } from "@/components/dashboard/digital-report"
 import { CompliancePanel } from "@/components/dashboard/compliance-panel"
-import { anomalies, kpiData } from "@/lib/mockData"
+import { RoleSelectionModal } from "@/components/dashboard/role-selection-modal"
+import { anomalies } from "@/lib/mockData"
+import { useDashboardStats } from "@/lib/hooks"
 import { useAuth } from "@/lib/auth-context"
 import { fetchFromAPI } from "@/lib/api"
 import { Button } from "@/components/ui/button"
-import { RefreshCw, Calendar, MessageCircle } from "lucide-react"
+import { RefreshCw, Calendar, MessageCircle, Loader2 } from "lucide-react"
 import { useRouter } from "next/navigation"
 
 const dateRanges = ["7d", "30d", "90d"]
@@ -29,7 +31,7 @@ const dateRanges = ["7d", "30d", "90d"]
 const roleSubtitles = {
   customer: "Your recycling overview at a glance",
   regulator: "Full analytics, compliance, and audit data",
-  partner: "Key performance metrics and insights",
+  stakeholder: "Key performance metrics and insights",
 }
 
 export default function DashboardPage() {
@@ -71,8 +73,12 @@ export default function DashboardPage() {
   const router = useRouter()
   const role = user?.role || "customer"
 
+  // Live data from backend with fallback
+  const { data: kpiData, isLoading, refetch } = useDashboardStats()
+
   return (
     <div className="min-h-screen">
+      <RoleSelectionModal />
       <TopBar
         title="Dashboard"
         subtitle={`Real-time analytics and insights (Backend: ${backendStatus})`}
@@ -113,8 +119,14 @@ export default function DashboardPage() {
               variant="outline"
               size="sm"
               className="border-border text-muted-foreground hover:text-foreground"
+              onClick={refetch}
+              disabled={isLoading}
             >
-              <RefreshCw className="w-4 h-4 mr-2" />
+              {isLoading ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4 mr-2" />
+              )}
               Refresh
             </Button>
           </div>
@@ -123,7 +135,7 @@ export default function DashboardPage() {
         {/* Lifecycle Workflow (all roles) */}
         <LifecycleWorkflow />
 
-        {/* KPI Row — scaled by role */}
+        {/* KPI Row — scaled by role, now using live data */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -169,9 +181,9 @@ export default function DashboardPage() {
           />
         </motion.div>
 
-        {/* Anomaly Alerts — regulator gets full, partner filtered, customer hidden */}
+        {/* Anomaly Alerts — regulator gets full, stakeholder filtered, customer hidden */}
         {role === "regulator" && <AnomalyPanel anomalies={anomalies} />}
-        {role === "partner" && (
+        {role === "stakeholder" && (
           <AnomalyPanel anomalies={anomalies.filter((a) => a.severity === "critical")} />
         )}
 
@@ -181,7 +193,7 @@ export default function DashboardPage() {
           <WeeklyLineChart />
         </div>
 
-        {/* Charts Row 2 — Material Pie for all; Stage Bar + Completeness only for regulator & partner */}
+        {/* Charts Row 2 — Material Pie for all; Stage Bar + Completeness only for regulator & stakeholder */}
         <div className={`grid grid-cols-1 ${
           role === "customer" ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3"
         } gap-6`}>

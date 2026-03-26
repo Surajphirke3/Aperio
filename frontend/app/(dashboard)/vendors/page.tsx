@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { TopBar } from "@/components/layout/topbar"
-import { StatCard } from "@/components/ui/stat-card"
 import { VendorScorecard } from "@/components/vendors/vendor-scorecard"
-import { vendors as mockVendors } from "@/lib/mockData"
-import { fetchFromAPI } from "@/lib/api"
+import { useVendors } from "@/lib/hooks"
 import { cn } from "@/lib/utils"
 import {
   TrendingUp,
@@ -16,10 +14,12 @@ import {
   Trophy,
   Users,
   Truck,
+  Loader2,
 } from "lucide-react"
 import type { Vendor } from "@/lib/mockData"
 
 export default function VendorsPage() {
+  const { data: vendors, isLoading } = useVendors()
   const [selectedVendor, setSelectedVendor] = useState<Vendor | null>(null)
   const [liveVendors, setLiveVendors] = useState<any[]>([])
 
@@ -33,34 +33,35 @@ export default function VendorsPage() {
 
   const currentVendors = liveVendors.length > 0 ? liveVendors : mockVendors;
 
-  const bestPerformer = currentVendors.reduce((best: any, v: any) =>
-    v.score > best.score ? v : best
-  , currentVendors[0] || { score: 0 })
-  const avgReliability = currentVendors.length > 0 ?
-    currentVendors.reduce((sum: number, v: any) => sum + v.reliability, 0) / currentVendors.length : 0
+  const bestPerformer = vendors.length > 0
+    ? vendors.reduce((best, v) => v.score > best.score ? v : best)
+    : null
+  const avgReliability = vendors.length > 0
+    ? vendors.reduce((sum, v) => sum + v.reliability, 0) / vendors.length
+    : 0
 
   const getScoreColor = (score: number) => {
-    if (score >= 90) return "text-tf-accent-green bg-tf-accent-green/20"
-    if (score >= 80) return "text-tf-accent-amber bg-tf-accent-amber/20"
-    return "text-tf-accent-red bg-tf-accent-red/20"
+    if (score >= 90) return "text-green-500 bg-green-500/20"
+    if (score >= 80) return "text-amber-500 bg-amber-500/20"
+    return "text-red-500 bg-red-500/20"
   }
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
       case "up":
-        return <TrendingUp className="w-4 h-4 text-tf-accent-green" />
+        return <TrendingUp className="w-4 h-4 text-green-500" />
       case "down":
-        return <TrendingDown className="w-4 h-4 text-tf-accent-red" />
+        return <TrendingDown className="w-4 h-4 text-red-500" />
       default:
-        return <Minus className="w-4 h-4 text-tf-text-muted" />
+        return <Minus className="w-4 h-4 text-muted-foreground" />
     }
   }
 
   const getRiskBadge = (risk: string) => {
     const colors = {
-      low: "bg-tf-accent-green/20 text-tf-accent-green",
-      medium: "bg-tf-accent-amber/20 text-tf-accent-amber",
-      high: "bg-tf-accent-red/20 text-tf-accent-red",
+      low: "bg-green-500/20 text-green-500",
+      medium: "bg-amber-500/20 text-amber-500",
+      high: "bg-red-500/20 text-red-500",
     }
     return (
       <span
@@ -84,10 +85,17 @@ export default function VendorsPage() {
       <div className="p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <span className="px-3 py-1 rounded-full bg-tf-accent-green/20 text-tf-accent-green text-sm font-medium">
-              {currentVendors.length} Active Vendors
-            </span>
+          <div className="flex items-center gap-2">
+            {isLoading ? (
+              <span className="flex items-center gap-2 text-muted-foreground text-sm">
+                <Loader2 className="w-3 h-3 animate-spin" />
+                Loading vendors...
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-500 text-sm font-medium">
+                {vendors.length} Active Vendors
+              </span>
+            )}
           </div>
         </div>
 
@@ -96,21 +104,21 @@ export default function VendorsPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-tf-bg-secondary border border-tf-border rounded-lg p-5"
+            className="bg-card border border-border rounded-lg p-5"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-tf-accent-green/20 flex items-center justify-center">
-                <Trophy className="w-5 h-5 text-tf-accent-green" />
+              <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                <Trophy className="w-5 h-5 text-green-500" />
               </div>
               <div>
-                <p className="text-tf-text-muted text-sm">Best Performer</p>
-                <p className="text-tf-text-primary font-semibold">
-                  {bestPerformer.name}
+                <p className="text-muted-foreground text-sm">Best Performer</p>
+                <p className="text-foreground font-semibold">
+                  {bestPerformer?.name || "—"}
                 </p>
               </div>
             </div>
-            <p className="text-tf-accent-green font-mono text-2xl font-bold">
-              {bestPerformer.score}
+            <p className="text-green-500 font-mono text-2xl font-bold">
+              {bestPerformer?.score || 0}
             </p>
           </motion.div>
 
@@ -118,21 +126,21 @@ export default function VendorsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-tf-bg-secondary border border-tf-border rounded-lg p-5"
+            className="bg-card border border-border rounded-lg p-5"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-tf-accent-blue/20 flex items-center justify-center">
-                <Users className="w-5 h-5 text-tf-accent-blue" />
+              <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <Users className="w-5 h-5 text-blue-500" />
               </div>
               <div>
-                <p className="text-tf-text-muted text-sm">Total Vendors</p>
-                <p className="text-tf-text-primary font-semibold">
-                  Active Partners
+                <p className="text-muted-foreground text-sm">Total Vendors</p>
+                <p className="text-foreground font-semibold">
+                  Active Stakeholders
                 </p>
               </div>
             </div>
-            <p className="text-tf-text-primary font-mono text-2xl font-bold">
-              {currentVendors.length}
+            <p className="text-foreground font-mono text-2xl font-bold">
+              {vendors.length}
             </p>
           </motion.div>
 
@@ -140,20 +148,20 @@ export default function VendorsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-tf-bg-secondary border border-tf-border rounded-lg p-5"
+            className="bg-card border border-border rounded-lg p-5"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-lg bg-tf-accent-teal/20 flex items-center justify-center">
-                <Truck className="w-5 h-5 text-tf-accent-teal" />
+              <div className="w-10 h-10 rounded-lg bg-teal-500/20 flex items-center justify-center">
+                <Truck className="w-5 h-5 text-teal-500" />
               </div>
               <div>
-                <p className="text-tf-text-muted text-sm">Avg Delivery Reliability</p>
-                <p className="text-tf-text-primary font-semibold">
+                <p className="text-muted-foreground text-sm">Avg Delivery Reliability</p>
+                <p className="text-foreground font-semibold">
                   All Vendors
                 </p>
               </div>
             </div>
-            <p className="text-tf-accent-teal font-mono text-2xl font-bold">
+            <p className="text-teal-500 font-mono text-2xl font-bold">
               {avgReliability.toFixed(1)}%
             </p>
           </motion.div>
@@ -164,34 +172,34 @@ export default function VendorsPage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="bg-tf-bg-secondary border border-tf-border rounded-lg overflow-hidden"
+          className="bg-card border border-border rounded-lg overflow-hidden"
         >
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-tf-border bg-tf-bg-tertiary">
-                  <th className="text-left px-6 py-4 text-tf-text-secondary text-sm font-medium">
+                <tr className="border-b border-border bg-secondary">
+                  <th className="text-left px-6 py-4 text-muted-foreground text-sm font-medium">
                     Vendor Name
                   </th>
-                  <th className="text-left px-6 py-4 text-tf-text-secondary text-sm font-medium">
+                  <th className="text-left px-6 py-4 text-muted-foreground text-sm font-medium">
                     Materials
                   </th>
-                  <th className="text-left px-6 py-4 text-tf-text-secondary text-sm font-medium">
+                  <th className="text-left px-6 py-4 text-muted-foreground text-sm font-medium">
                     Avg Quality
                   </th>
-                  <th className="text-left px-6 py-4 text-tf-text-secondary text-sm font-medium">
+                  <th className="text-left px-6 py-4 text-muted-foreground text-sm font-medium">
                     Reliability
                   </th>
-                  <th className="text-left px-6 py-4 text-tf-text-secondary text-sm font-medium">
+                  <th className="text-left px-6 py-4 text-muted-foreground text-sm font-medium">
                     Total Supplied
                   </th>
-                  <th className="text-left px-6 py-4 text-tf-text-secondary text-sm font-medium">
+                  <th className="text-left px-6 py-4 text-muted-foreground text-sm font-medium">
                     Score
                   </th>
-                  <th className="text-left px-6 py-4 text-tf-text-secondary text-sm font-medium">
+                  <th className="text-left px-6 py-4 text-muted-foreground text-sm font-medium">
                     Risk
                   </th>
-                  <th className="text-left px-6 py-4 text-tf-text-secondary text-sm font-medium">
+                  <th className="text-left px-6 py-4 text-muted-foreground text-sm font-medium">
                     Actions
                   </th>
                 </tr>
@@ -204,14 +212,14 @@ export default function VendorsPage() {
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.1 * index }}
                     className={cn(
-                      "border-b border-tf-border hover:bg-tf-bg-tertiary transition-colors cursor-pointer",
-                      selectedVendor?.id === vendor.id && "bg-tf-bg-tertiary"
+                      "border-b border-border hover:bg-secondary transition-colors cursor-pointer",
+                      selectedVendor?.id === vendor.id && "bg-secondary"
                     )}
                     onClick={() => setSelectedVendor(vendor)}
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <span className="text-tf-text-primary font-medium">
+                        <span className="text-foreground font-medium">
                           {vendor.name}
                         </span>
                         {getTrendIcon(vendor.trend)}
@@ -222,20 +230,20 @@ export default function VendorsPage() {
                         {vendor.materials.map((m: string) => (
                           <span
                             key={m}
-                            className="px-2 py-0.5 rounded bg-tf-bg-tertiary text-tf-text-secondary text-xs"
+                            className="px-2 py-0.5 rounded bg-secondary text-muted-foreground text-xs"
                           >
                             {m}
                           </span>
                         ))}
                       </div>
                     </td>
-                    <td className="px-6 py-4 font-mono text-tf-text-primary">
+                    <td className="px-6 py-4 font-mono text-foreground">
                       {vendor.quality}%
                     </td>
-                    <td className="px-6 py-4 font-mono text-tf-text-primary">
+                    <td className="px-6 py-4 font-mono text-foreground">
                       {vendor.reliability}%
                     </td>
-                    <td className="px-6 py-4 font-mono text-tf-text-primary">
+                    <td className="px-6 py-4 font-mono text-foreground">
                       {vendor.totalKg.toLocaleString()} kg
                     </td>
                     <td className="px-6 py-4">
@@ -255,7 +263,7 @@ export default function VendorsPage() {
                           e.stopPropagation()
                           setSelectedVendor(vendor)
                         }}
-                        className="text-tf-accent-green hover:text-tf-accent-green-dim flex items-center gap-1 text-sm"
+                        className="text-primary hover:text-primary/80 flex items-center gap-1 text-sm"
                       >
                         View
                         <ChevronRight className="w-4 h-4" />

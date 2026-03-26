@@ -1,54 +1,80 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
+import { useUser, useClerk } from "@clerk/nextjs"
 
-export type UserRole = "customer" | "regulator" | "partner"
+export type UserRole = "customer" | "regulator" | "stakeholder"
 
 export interface User {
   name: string
   email: string
   role: UserRole
   avatar?: string
+  clerkId?: string
 }
 
 interface AuthContextType {
   user: User | null
   isAuthenticated: boolean
-  login: (email: string, password: string, role?: UserRole) => void
-  signup: (name: string, email: string, password: string, role?: UserRole) => void
+  login: () => void
+  signup: () => void
   logout: () => void
   switchRole: (role: UserRole) => void
+  isRoleUnassigned: boolean
 }
 
 const AuthContext = createContext<AuthContextType | null>(null)
 
-const MOCK_USERS: Record<UserRole, User> = {
-  customer: { name: "Alex Customer", email: "alex@aperio.app", role: "customer" },
-  regulator: { name: "Jordan Regulator", email: "jordan@epa.gov", role: "regulator" },
-  partner: { name: "Sam Partner", email: "sam@greencycle.co", role: "partner" },
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const { isSignedIn, user: clerkUser, isLoaded } = useUser()
+  const { signOut } = useClerk()
+  const [role, setRole] = useState<UserRole>("customer")
   const [user, setUser] = useState<User | null>(null)
 
-  const login = useCallback((_email: string, _password: string, role: UserRole = "customer") => {
-    setUser(MOCK_USERS[role])
+  // Sync Clerk user state into our auth context
+  useEffect(() => {
+    if (isLoaded && isSignedIn && clerkUser) {
+      const storedRole = clerkUser.publicMetadata?.role || clerkUser.unsafeMetadata?.role
+      const clerkRole = (storedRole as UserRole) || role
+      setUser({
+        name: clerkUser.fullName || clerkUser.firstName || "User",
+        email: clerkUser.primaryEmailAddress?.emailAddress || "",
+        role: clerkRole,
+        avatar: clerkUser.imageUrl,
+        clerkId: clerkUser.id,
+      })
+    } else if (isLoaded && !isSignedIn) {
+      setUser(null)
+    }
+  }, [isLoaded, isSignedIn, clerkUser, role])
+
+  // Simple single-step authentication redirects
+  const login = useCallback(() => {
+    window.location.href = "/sign-in"
   }, [])
 
-  const signup = useCallback((name: string, email: string, _password: string, role: UserRole = "customer") => {
-    setUser({ name, email, role })
+  const signup = useCallback(() => {
+    window.location.href = "/sign-up"
   }, [])
 
-  const logout = useCallback(() => {
+  // Logout via Clerk
+  const logout = useCallback(async () => {
     setUser(null)
-  }, [])
+    await signOut()
+  }, [signOut])
 
-  const switchRole = useCallback((role: UserRole) => {
-    setUser(MOCK_USERS[role])
-  }, [])
+  // Role switching still works the same
+  const switchRole = useCallback((newRole: UserRole) => {
+    setRole(newRole)
+    if (user) {
+      setUser((prev) => prev ? { ...prev, role: newRole } : null)
+    }
+  }, [user])
+
+  const isRoleUnassigned = !!(isLoaded && isSignedIn && clerkUser && !clerkUser.publicMetadata?.role && !clerkUser.unsafeMetadata?.role)
 
   return (
-    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, switchRole }}>
+    <AuthContext.Provider value={{ user, isAuthenticated: !!user, login, signup, logout, switchRole, isRoleUnassigned }}>
       {children}
     </AuthContext.Provider>
   )

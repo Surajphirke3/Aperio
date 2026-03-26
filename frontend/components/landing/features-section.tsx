@@ -41,7 +41,7 @@ const features = [
     icon: Shield,
     title: "Role-Based Dashboards",
     description:
-      "Separate views for customers, regulators, and partners. Each role sees exactly the data they need with appropriate granularity.",
+      "Separate views for customers, regulators, and stakeholders. Each role sees exactly the data they need with appropriate granularity.",
     color: "text-amber-500",
     bgColor: "bg-amber-500/10",
   },
