@@ -1,6 +1,6 @@
 import logging
 
-from src.infrastructure.ai.featherless import FeatherlessAdapter
+from src.infrastructure.ai.groq_client import GroqAdapter
 # Force uvicorn reload
 from src.infrastructure.ai.prompts.intent import INTENT_SYSTEM_PROMPT
 from src.infrastructure.ai.prompts.entity import build_entity_prompt
@@ -8,7 +8,7 @@ from src.infrastructure.ai.prompts.query import QUERY_SYSTEM_PROMPT
 from src.shared.utils.json_parser import extract_json
 from src.shared.utils.dates import today_iso
 
-_ai = FeatherlessAdapter()
+_ai = GroqAdapter()
 logger = logging.getLogger(__name__)
 
 
@@ -65,6 +65,8 @@ async def store_entry(state: dict) -> dict:
         data = {**state["extracted_data"], "session_id": state["session_id"]}
         repo = EntryRepository()
         result = await repo.create(data)
+        if "_id" in data:
+            data.pop("_id")
         return {"db_result": {"action": "stored", "id": str(result.inserted_id), "data": data}}
     except Exception as e:
         logger.error(f"Failed to store entry: {e}")
@@ -102,7 +104,7 @@ async def generate_reply(state: dict) -> dict:
         reply = (
             "⚠️ I understood your request but couldn't fully process it. "
             "The AI service may be temporarily unavailable. "
-            "Please check your API keys (FEATHERLESS_API_KEY, GROQ_API_KEY) in the .env file and try again."
+            "Please check your API keys (GROQ_API_KEY) in the .env file and try again."
         )
     else:
         reply = "I couldn't process that. Try rephrasing — e.g. 'Purchased 200kg PET from Vendor A'."

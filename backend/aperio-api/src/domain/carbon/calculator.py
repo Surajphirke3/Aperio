@@ -22,6 +22,7 @@ class CarbonCalculator:
         monthly: dict[str, float] = {}
 
         async for doc in col.find({"created_at": {"$gte": since.isoformat()}, "intent": "dispatch"}):
+            doc.pop("_id", None)
             mat = doc.get("material", "mixed")
             qty = doc.get("quantity_kg", 0)
             co2 = qty * CO2_FACTORS.get(mat, 1.5)

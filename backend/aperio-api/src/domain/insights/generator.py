@@ -1,10 +1,10 @@
-from src.infrastructure.ai.featherless import FeatherlessAdapter
+from src.infrastructure.ai.groq_client import GroqAdapter
 from src.infrastructure.ai.prompts.insight import INSIGHT_SYSTEM_PROMPT, BATCH_INSIGHT_PROMPT
 from src.domain.stats.aggregator import StatsAggregator
 from src.infrastructure.db.repositories.batch_repo import BatchRepository
 from src.shared.utils.json_parser import extract_json
 
-_ai = FeatherlessAdapter()
+_ai = GroqAdapter()
 
 
 class InsightGenerator:

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../lib/auth-context';
@@ -8,13 +8,18 @@ export default function LandingScreen() {
   const router = useRouter();
   const { isAuthenticated, isLoading } = useAuth();
 
-  if (isLoading) return null; // Or a splash screen
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/(tabs)');
+    }
+  }, [isAuthenticated, router]);
 
-  if (isAuthenticated) {
-    // If already logged in, go straight to dashboard
-    // Need a slight delay to avoid state updates during render
-    setTimeout(() => router.replace('/(tabs)'), 0);
-    return null;
+  if (isLoading || isAuthenticated) {
+    return (
+      <View className="flex-1 bg-slate-50 items-center justify-center">
+        <Text className="text-lg text-gray-600">Loading...</Text>
+      </View>
+    );
   }
 
   return (

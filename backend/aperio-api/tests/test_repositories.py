@@ -43,7 +43,7 @@ class TestJSONParser:
         assert result["intent"] == "query"
 
     def test_embedded_json(self):
-        text = "Here is the result: {\\"intent\\": \\"dispatch\\"} thanks"
+        text = 'Here is the result: {"intent": "dispatch"} thanks'
         result = extract_json(text)
         assert result["intent"] == "dispatch"
 

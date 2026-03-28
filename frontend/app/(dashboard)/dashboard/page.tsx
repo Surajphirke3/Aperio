@@ -59,8 +59,6 @@ export default function DashboardPage() {
   const router = useRouter()
   const role = user?.role || "customer"
 
-  // Live data from backend with fallback
-  const { data: kpiData, isLoading, refetch } = useDashboardStats()
   const currentKpi = kpiData;
 
   return (

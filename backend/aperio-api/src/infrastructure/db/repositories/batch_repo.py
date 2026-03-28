@@ -31,7 +31,11 @@ class BatchRepository:
 
         try:
             cursor = batches_col().find(query).sort("created_at", -1).limit(limit)
-            return await cursor.to_list(length=limit)
+            docs = await cursor.to_list(length=limit)
+            for doc in docs:
+                if "_id" in doc:
+                    doc["id"] = str(doc.pop("_id"))
+            return docs
         except Exception as e:
             logger.warning(f"Mongo batch list failed: {e}")
             return []

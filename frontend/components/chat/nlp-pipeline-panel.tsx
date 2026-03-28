@@ -256,7 +256,7 @@ export function NLPPipelinePanel({ data, onComplete }: NLPPipelinePanelProps) {
               ))}
             </div>
             <p className="text-tf-text-muted text-xs mt-3 font-mono">
-              Model: Llama-3.2-3B via Featherless AI
+              Model: Llama-3.3-70B via Groq API
             </p>
           </motion.div>
         )}

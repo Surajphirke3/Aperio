@@ -1,29 +1,5 @@
 {
   "lists": {
-    "chat:session:123": [
-      "{\"role\": \"assistant\", \"content\": \"Found 0 entries totalling 0kg. Loss: 0%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T02:31:57.628143\", \"user_id\": \"anonymous\"}",
-      "{\"role\": \"user\", \"content\": \"Testing bypass now\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:31:57.586275\", \"user_id\": \"anonymous\"}"
-    ],
-    "chat:session:session_1774492190010_2n0y2ga": [
-      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T02:42:33.279723\", \"user_id\": \"anonymous\"}",
-      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:42:33.249193\", \"user_id\": \"anonymous\"}"
-    ],
-    "chat:session:session_1774492957943_hubb1hl": [
-      "{\"role\": \"assistant\", \"content\": \"Found 1 entries totalling 500kg. Loss: 0.0%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T02:42:50.610412\", \"user_id\": \"anonymous\"}",
-      "{\"role\": \"user\", \"content\": \"How much material was dispatched last week?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:42:50.590488\", \"user_id\": \"anonymous\"}"
-    ],
-    "chat:session:session_1774492980258_ei1tumc": [
-      "{\"role\": \"assistant\", \"content\": \"Found 1 entries totalling 500kg. Loss: 0.0%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T02:43:06.292549\", \"user_id\": \"anonymous\"}",
-      "{\"role\": \"user\", \"content\": \"Show losses during processing this month\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:43:06.264067\", \"user_id\": \"anonymous\"}"
-    ],
-    "chat:session:session_1774492991101_4ta3mbj": [
-      "{\"role\": \"assistant\", \"content\": \"Found 1 entries totalling 500kg. Loss: 0.0%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T02:43:15.854569\", \"user_id\": \"anonymous\"}",
-      "{\"role\": \"user\", \"content\": \"What's the status of batch B-2024-089?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:43:15.830663\", \"user_id\": \"anonymous\"}"
-    ],
-    "chat:session:session_1774492999750_6m0o1mp": [
-      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T02:43:26.028491\", \"user_id\": \"anonymous\"}",
-      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:43:26.005775\", \"user_id\": \"anonymous\"}"
-    ],
     "chat:session:session_1774493364475_yabq9f7": [
       "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 320kg PP \\u2014 processing recorded.\", \"intent\": \"processing\", \"timestamp\": \"2026-03-26T02:49:30.780537\", \"user_id\": \"anonymous\"}",
       "{\"role\": \"user\", \"content\": \"Processed 320 kg PP through shredder, got 280 kg out\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T02:49:30.744393\", \"user_id\": \"anonymous\"}"
@@ -35,17 +11,60 @@
     "chat:session:session_1774494677010_wkj0rfq": [
       "{\"role\": \"assistant\", \"content\": \"Found 20 entries totalling 18160.0kg. Loss: 3.88%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T03:11:49.523669\", \"user_id\": \"anonymous\"}",
       "{\"role\": \"user\", \"content\": \"How much material was dispatched last week?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:11:49.477002\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774502278756_agaokws": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T05:18:10.464657\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T05:18:10.381405\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774502329887_0himhmc": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T05:18:58.731635\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T05:18:58.375964\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774505683717_chftzsi": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T06:14:46.441407\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T06:14:46.404639\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774505763385_i7tuayf": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T06:16:09.343801\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T06:16:09.166289\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774506079290_aj2glgk": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 180kg HDPE \\u2014 dispatch recorded.\", \"intent\": \"dispatch\", \"timestamp\": \"2026-03-26T06:21:22.038591\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Dispatched 180 kg HDPE granules to Buyer Corp today\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T06:21:21.850907\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774506865467_zaldfls": [
+      "{\"role\": \"assistant\", \"content\": \"Found 28 entries totalling 21660.0kg. Loss: 3.44%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T06:47:43.911420\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"hiii\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T06:47:43.833901\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"assistant\", \"content\": \"Found 0 entries totalling 0kg. Loss: 0%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T06:34:39.105976\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"how much data of PET\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T06:34:39.063800\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774507795381_q5yjvtv": [
+      "{\"role\": \"assistant\", \"content\": \"Found 28 entries totalling 21660.0kg. Loss: 3.44%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T06:51:21.443109\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"how much profit did i make last month\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T06:51:21.360585\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"assistant\", \"content\": \"I couldn't process that. Try rephrasing \\u2014 e.g. 'Purchased 200kg PET from Vendor A'.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T06:50:38.596304\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"i ordered 320 kg of pet and 410 kg of hdpe today\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T06:50:38.499946\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:test123": [
+      "{\"role\": \"assistant\", \"content\": \"Found 28 entries totalling 21660.0kg. Loss: 3.44%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T07:20:36.888826\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Hello, what can you do?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T07:20:36.793686\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:demo": [
+      "{\"role\": \"assistant\", \"content\": \"Found 28 entries totalling 21660.0kg. Loss: 3.44%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T07:22:49.850075\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Show me stats\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T07:22:49.755368\", \"user_id\": \"anonymous\"}"
     ]
   },
   "expires_at": {
-    "chat:session:123": "2026-03-27T02:31:57.649827",
-    "chat:session:session_1774492190010_2n0y2ga": "2026-03-27T02:42:33.304098",
-    "chat:session:session_1774492957943_hubb1hl": "2026-03-27T02:42:50.635592",
-    "chat:session:session_1774492980258_ei1tumc": "2026-03-27T02:43:06.311624",
-    "chat:session:session_1774492991101_4ta3mbj": "2026-03-27T02:43:15.877539",
-    "chat:session:session_1774492999750_6m0o1mp": "2026-03-27T02:43:26.049417",
     "chat:session:session_1774493364475_yabq9f7": "2026-03-27T02:49:30.805722",
     "chat:session:session_1774493563264_ayetrap": "2026-03-27T02:53:06.792938",
-    "chat:session:session_1774494677010_wkj0rfq": "2026-03-27T03:11:49.558676"
+    "chat:session:session_1774494677010_wkj0rfq": "2026-03-27T03:11:49.558676",
+    "chat:session:session_1774502278756_agaokws": "2026-03-27T05:18:10.500721",
+    "chat:session:session_1774502329887_0himhmc": "2026-03-27T05:18:58.754786",
+    "chat:session:session_1774505683717_chftzsi": "2026-03-27T06:14:46.469450",
+    "chat:session:session_1774505763385_i7tuayf": "2026-03-27T06:16:09.364625",
+    "chat:session:session_1774506079290_aj2glgk": "2026-03-27T06:21:22.061274",
+    "chat:session:session_1774506865467_zaldfls": "2026-03-27T06:47:43.944319",
+    "chat:session:session_1774507795381_q5yjvtv": "2026-03-27T06:51:21.475594",
+    "chat:session:test123": "2026-03-27T07:20:36.924509",
+    "chat:session:demo": "2026-03-27T07:22:49.894858"
   }
 }

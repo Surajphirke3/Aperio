@@ -160,7 +160,7 @@ export function Sidebar() {
           <div className="flex items-center gap-2 text-sm">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
             <span className="text-muted-foreground font-mono text-xs">
-              Featherless AI · Online
+              Groq AI · Online
             </span>
           </div>
           <p className="text-muted-foreground text-xs mt-1 font-mono">

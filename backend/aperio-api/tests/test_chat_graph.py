@@ -31,29 +31,32 @@ class TestRouteAfterClassify:
 
 
 class TestGenerateReply:
-    def test_stored_reply(self):
+    @pytest.mark.asyncio
+    async def test_stored_reply(self):
         state = {
             "db_result": {
                 "action": "stored",
                 "data": {"quantity_kg": 300, "material": "PET", "intent": "purchase"}
             }
         }
-        result = generate_reply(state)
+        result = await generate_reply(state)
         assert "300" in result["reply"]
         assert "PET" in result["reply"]
 
-    def test_queried_reply(self):
+    @pytest.mark.asyncio
+    async def test_queried_reply(self):
         state = {
             "db_result": {
                 "action": "queried",
                 "result": {"count": 5, "total_kg": 1500, "loss_pct": 2.0}
             }
         }
-        result = generate_reply(state)
+        result = await generate_reply(state)
         assert "5" in result["reply"]
         assert "1500" in result["reply"]
 
-    def test_fallback_reply(self):
+    @pytest.mark.asyncio
+    async def test_fallback_reply(self):
         state = {"db_result": {}}
-        result = generate_reply(state)
+        result = await generate_reply(state)
         assert "couldn't process" in result["reply"].lower()

@@ -24,7 +24,7 @@ async def get_anomalies(
             loss_pct = (loss / qty) * 100
             if loss_pct > threshold:
                 anomalies.append({
-                    "id": str(e.get("_id", "")),
+                    "id": str(e.get("id", e.get("_id", ""))),
                     "batch_id": e.get("batch_id", ""),
                     "stage": stage,
                     "material": e.get("material"),

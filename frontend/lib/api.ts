@@ -1,111 +1,6 @@
 export const API_URL = process.env.NEXT_PUBLIC_API_URL || "/api";
 
-// Types
-export interface ApiDashboardStats {
-  total_entries: number;
-  by_material: Record<string, number>;
-  by_stage: Record<string, number>;
-}
-
-export interface ApiSankeyData {
-  nodes: { name: string }[];
-  links: { source: number; target: number; value: number }[];
-}
-
-export interface ApiBatch {
-  id?: string;
-  batch_id?: string;
-  material?: string;
-  vendor?: string;
-  status?: "anomaly" | "warning" | "complete" | "active";
-  stage?: string;
-  intent?: string;
-  quantity_kg?: number;
-  loss_kg?: number;
-  completeness?: number;
-  date?: string;
-  created_at?: string;
-}
-
-export interface ApiVendor {
-  name: string;
-  total_kg: number;
-  entry_count: number;
-}
-
-export interface ApiChatRequest {
-  message: string;
-  session_id?: string;
-}
-
-export interface ApiChatResponse {
-  reply: string;
-  session_id: string;
-  intent?: string;
-  structured_data?: Record<string, unknown>;
-}
-
-// API Modules
-export const statsApi = {
-  async getDashboard(): Promise<ApiDashboardStats> {
-    return fetchFromAPI("/stats/dashboard");
-  },
-
-  async getSankey(): Promise<ApiSankeyData> {
-    return fetchFromAPI("/stats/sankey");
-  },
-};
-
-export const batchesApi = {
-  async getAll(limit = 50): Promise<ApiBatch[]> {
-    return fetchFromAPI(`/batches?limit=${limit}`);
-  },
-
-  async getById(id: string): Promise<ApiBatch> {
-    return fetchFromAPI(`/batches/${id}`);
-  },
-};
-
-export const vendorsApi = {
-  async getAll(): Promise<ApiVendor[]> {
-    return fetchFromAPI("/vendors");
-  },
-
-  async getByName(name: string): Promise<ApiVendor> {
-    return fetchFromAPI(`/vendors/${encodeURIComponent(name)}`);
-  },
-};
-
-export const chatApi = {
-  async send(request: ApiChatRequest): Promise<ApiChatResponse> {
-    const body = {
-      message: request.message,
-      session_id: request.session_id || getSessionId(),
-    };
-    return fetchFromAPI("/chat/", {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-  },
-
-  async getHistory(sessionId?: string): Promise<unknown[]> {
-    const sid = sessionId || getSessionId();
-    return fetchFromAPI(`/chat/sessions/${sid}/history`);
-  },
-
-  async clearSession(sessionId?: string): Promise<unknown> {
-    const sid = sessionId || getSessionId();
-    const result = await fetchFromAPI(`/chat/sessions/${sid}`, {
-      method: "DELETE",
-    });
-    clearSessionId();
-    return result;
-  },
-
-  async listSessions(): Promise<unknown[]> {
-    return fetchFromAPI("/chat/sessions");
-  },
-};
+// Types and API modules are defined later in this file.
 
 // Get auth token from localStorage or cookies
 function getAuthToken(): string | null {
@@ -209,12 +104,46 @@ export async function fetchFromAPI(endpoint: string, options: RequestInit = {}) 
 }
 
 // Chat-specific API functions
+export async function sendChatMessageWithAudio(
+  message: string,
+  audioBlob: Blob,
+  filename: string,
+  sessionId?: string
+) {
+  const token = getAuthToken();
+  const formData = new FormData();
+  formData.append("message", message);
+  formData.append("session_id", sessionId || getSessionId());
+  formData.append("audio", audioBlob, filename);
+
+  const response = await fetch(`${API_URL}/chat/`, {
+    method: "POST",
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const error: APIError = new Error(`API error: ${response.status} ${response.statusText}`);
+    error.status = response.status;
+    try {
+      error.data = await response.json();
+    } catch {
+      error.data = await response.text();
+    }
+    throw error;
+  }
+
+  return response.json();
+}
+
 export async function sendChatMessage(message: string, sessionId?: string) {
   const body = {
     message,
     session_id: sessionId || getSessionId(),
   };
-  
+
   return fetchFromAPI("/chat/", {
     method: "POST",
     body: JSON.stringify(body),
@@ -237,6 +166,12 @@ export async function clearChatSession(sessionId?: string) {
 
 export async function listChatSessions() {
   return fetchFromAPI("/chat/sessions");
+}
+
+export interface ApiChatSession {
+  session_id: string;
+  last_updated?: string;
+  preview?: string;
 }
 
 // Type definitions needed by hooks.ts

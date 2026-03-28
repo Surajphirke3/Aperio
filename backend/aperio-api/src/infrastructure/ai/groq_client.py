@@ -1,15 +1,23 @@
 import httpx
 import logging
+from dataclasses import dataclass
 
 from src.config.settings import settings
 
 logger = logging.getLogger(__name__)
 
+@dataclass
+class AIResponse:
+    content: str
+    model: str
+    tokens_used: int
+
 
 class GroqAdapter:
-    """Groq adapter — two jobs:
+    """Groq adapter — three jobs:
     1. Voice transcription: audio file → text (Whisper large-v3, ~300ms)
-    2. Fast NLP assist: simple intent pre-classification to offload Featherless
+    2. Fast NLP assist: simple intent pre-classification to offload
+    3. Main completion: Complex reasoning and entity extraction
     """
     BASE_URL = "https://api.groq.com/openai/v1"
 
@@ -18,6 +26,70 @@ class GroqAdapter:
         if not self.api_key or self.api_key == "your_key_here":
             logger.warning("GROQ_API_KEY not configured. Groq features will be unavailable.")
             self.api_key = None
+
+    async def complete(
+        self,
+        prompt: str,
+        system_prompt: str,
+        max_tokens: int | None = None,
+        temperature: float | None = None,
+    ) -> AIResponse:
+        
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            try:
+                resp = await client.post(
+                    f"{self.BASE_URL}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": settings.primary_model,
+                        "max_tokens": max_tokens or settings.model_max_tokens,
+                        "temperature": temperature or settings.model_temperature,
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt},
+                        ],
+                    },
+                )
+                resp.raise_for_status()
+                d = resp.json()
+                return AIResponse(
+                    content=d["choices"][0]["message"]["content"],
+                    model=settings.primary_model,
+                    tokens_used=d.get("usage", {}).get("total_tokens", 0),
+                )
+            except Exception as e:
+                logger.error(f"Groq API primary model failed, falling back: {e}")
+                
+            try:
+                resp = await client.post(
+                    f"{self.BASE_URL}/chat/completions",
+                    headers={
+                        "Authorization": f"Bearer {self.api_key}",
+                        "Content-Type": "application/json",
+                    },
+                    json={
+                        "model": settings.fallback_model,
+                        "max_tokens": max_tokens or settings.model_max_tokens,
+                        "temperature": temperature or settings.model_temperature,
+                        "messages": [
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": prompt},
+                        ],
+                    },
+                )
+                resp.raise_for_status()
+                d = resp.json()
+                return AIResponse(
+                    content=d["choices"][0]["message"]["content"],
+                    model=settings.fallback_model,
+                    tokens_used=d.get("usage", {}).get("total_tokens", 0),
+                )
+            except Exception as e:
+                logger.error(f"Groq API fallback model failed: {e}")
+                raise RuntimeError(f"Both primary AI and fallback failed: {str(e)}")
 
     async def transcribe(self, audio_bytes: bytes, filename: str = "audio.webm") -> str:
         """Convert voice audio to text using Groq Whisper."""

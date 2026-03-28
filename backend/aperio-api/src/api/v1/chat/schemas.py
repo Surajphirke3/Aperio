@@ -5,6 +5,8 @@ from typing import Optional
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1)
     session_id: Optional[str] = None
+    audio: Optional[bytes] = None
+    audio_filename: Optional[str] = None
 
 
 class ChatResponse(BaseModel):

@@ -37,7 +37,7 @@ class ChatMemory:
     async def load_from_persistent_storage(self) -> list[dict]:
         """Load session history from MongoDB (fallback if Redis is empty)."""
         try:
-            doc = await sessions_col().find_one({"session_id": self.session_id})
+            doc = await sessions_col().find_one({"session_id": self.session_id, "user_id": self.user_id})
             if doc and "messages" in doc:
                 return list(doc["messages"])
         except Exception:
@@ -62,7 +62,7 @@ class ChatMemory:
         # Update MongoDB (persistent storage)
         try:
             await sessions_col().update_one(
-                {"session_id": self.session_id},
+                {"session_id": self.session_id, "user_id": self.user_id},
                 {
                     "$set": {
                         "session_id": self.session_id,
@@ -86,7 +86,7 @@ class ChatMemory:
         redis = await get_redis()
         await redis.delete(self.key)
         try:
-            await sessions_col().delete_one({"session_id": self.session_id})
+            await sessions_col().delete_one({"session_id": self.session_id, "user_id": self.user_id})
         except Exception:
             pass
 
@@ -99,6 +99,7 @@ class ChatMemory:
             ).sort("updated_at", -1).limit(50)
             sessions = []
             async for doc in cursor:
+                doc.pop("_id", None)
                 sessions.append({
                     "session_id": doc["session_id"],
                     "last_updated": doc.get("updated_at"),

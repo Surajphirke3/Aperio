@@ -102,7 +102,7 @@ export function HowItWorksModal() {
                       <div className="flex flex-col items-center gap-3 py-4">
                         {[
                           { text: "User types in chat", color: "bg-tf-accent-blue/20 text-tf-accent-blue" },
-                          { text: "Llama 3.2-3B via Featherless AI", color: "bg-tf-accent-green/20 text-tf-accent-green" },
+                          { text: "Llama 3.3-70B via Groq API", color: "bg-tf-accent-green/20 text-tf-accent-green" },
                           { text: "Intent + Entity Extraction", color: "bg-tf-accent-amber/20 text-tf-accent-amber" },
                           { text: "Structured JSON output", color: "bg-tf-accent-teal/20 text-tf-accent-teal" },
                           { text: "Mock DB / State", color: "bg-tf-accent-blue/20 text-tf-accent-blue" },

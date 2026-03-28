@@ -8,15 +8,13 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    # Featherless AI (primary model — Qwen2.5-3B)
-    featherless_api_key: str = Field(default="your_key_here")
-    primary_model: str = "Qwen/Qwen2.5-3B-Instruct"
-    fallback_model: str = "Qwen/Qwen2.5-Coder-3B-Instruct"
+    # Groq (voice transcription + NLP assist + main completion)
+    groq_api_key: str = Field(default="your_key_here")
+    primary_model: str = "llama-3.3-70b-versatile"
+    fallback_model: str = "llama3-8b-8192"
     model_temperature: float = 0.1
     model_max_tokens: int = 512
 
-    # Groq (voice transcription + fast NLP assist)
-    groq_api_key: str = Field(default="your_key_here")
     groq_whisper_model: str = "whisper-large-v3"
     groq_nlp_model: str = "llama3-8b-8192"
 

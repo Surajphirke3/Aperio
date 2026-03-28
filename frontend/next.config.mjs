@@ -7,7 +7,9 @@ const nextConfig = {
     unoptimized: true,
   },
   async rewrites() {
-    const backendUrl = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/v1";
+    // Server-side only: where Next should proxy API requests to.
+    // Keep this separate from NEXT_PUBLIC_API_URL (which is used in the browser).
+    const backendUrl = process.env.BACKEND_URL || "http://127.0.0.1:8000/v1";
     return [
       {
         source: "/api/:path*",

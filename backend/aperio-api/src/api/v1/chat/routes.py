@@ -1,7 +1,7 @@
 import uuid
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Form, UploadFile, File
 
 from .schemas import ChatRequest, ChatResponse
 from src.api.dependencies import verify_token
@@ -17,11 +17,27 @@ logger = logging.getLogger(__name__)
 
 @router.post("/", response_model=ChatResponse)
 async def send_message(
-    request: ChatRequest,
+    message: str = Form(...),
+    session_id: str | None = Form(None),
+    audio: UploadFile | None = File(None),
     user_id: str = Depends(verify_token),
 ) -> ChatResponse:
-    session_id = request.session_id or str(uuid.uuid4())
-    memory = ChatMemory(session_id=session_id, user_id=user_id)
+    sid = session_id or str(uuid.uuid4())
+    memory = ChatMemory(session_id=sid, user_id=user_id)
+
+    user_message = message
+
+    if audio:
+        try:
+            audio_bytes = await audio.read()
+            if len(audio_bytes) > 25 * 1024 * 1024:
+                raise HTTPException(status_code=400, detail="Audio file too large (max 25MB)")
+            user_message = await _groq.transcribe(audio_bytes, filename=audio.filename or "audio.webm")
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"Whisper transcription failed: {e}")
+            raise HTTPException(status_code=400, detail=f"Audio transcription failed: {str(e)}")
 
     try:
         history = await memory.get_history()
@@ -30,20 +46,20 @@ async def send_message(
         history = []
 
     try:
-        similar_context = await get_similar_context(request.message, history)
+        similar_context = await get_similar_context(user_message, history)
     except Exception as e:
         logger.warning(f"Similarity search failed: {e}")
         similar_context = []
 
     try:
-        groq_intent = await _groq.fast_classify(request.message)
+        groq_intent = await _groq.fast_classify(user_message)
     except Exception as e:
         logger.warning(f"Groq classification failed: {e}")
         groq_intent = "unknown"
 
     initial_state = {
-        "session_id": session_id,
-        "user_message": request.message,
+        "session_id": sid,
+        "user_message": user_message,
         "history": history,
         "similar_context": similar_context,
         "groq_intent": groq_intent,
@@ -60,9 +76,8 @@ async def send_message(
         logger.error(f"Chat pipeline failed: {e}")
         raise HTTPException(status_code=500, detail=f"Chat processing failed: {str(e)}")
 
-    # Persist messages to memory
     try:
-        await memory.append("user", request.message, intent=groq_intent)
+        await memory.append("user", user_message, intent=groq_intent)
         await memory.append("assistant", final_state.get("reply", ""), intent=str(final_state.get("intent")))
     except Exception as e:
         logger.error(f"Failed to persist messages: {e}")
@@ -76,7 +91,7 @@ async def send_message(
         structured_data = None
 
     return ChatResponse(
-        session_id=session_id,
+        session_id=sid,
         reply=final_state.get("reply", "I couldn't process that request."),
         intent=str(final_state.get("intent", groq_intent)),
         structured_data=structured_data,

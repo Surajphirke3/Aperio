@@ -2,14 +2,23 @@
 
 import { useState, useRef, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Send, Mic, Bot, Leaf, FileText, Clock, Plus, Trash2 } from "lucide-react"
+import { Send, Mic, Bot, Leaf, FileText, Clock, Plus, Trash2, MicOff, Square } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { MessageBubble } from "./message-bubble"
 import { NLPPipelinePanel } from "./nlp-pipeline-panel"
 import { AIModelInfo } from "./ai-model-info"
-import { sendChatMessage, getChatHistory, clearSessionId, getSessionId, clearChatSession, APIError } from "@/lib/api"
+import {
+  sendChatMessage,
+  sendChatMessageWithAudio,
+  getChatHistory,
+  clearSessionId,
+  getSessionId,
+  clearChatSession,
+  listChatSessions,
+  APIError,
+  type ApiChatSession,
+} from "@/lib/api"
 import { cn } from "@/lib/utils"
-import { getRealChatHistory } from "@/lib/realDataClient"
 
 export interface ApiChatResponse {
   session_id: string
@@ -46,14 +55,6 @@ const suggestedPrompts = [
   "How much material was dispatched last week?",
   "Show losses during processing this month",
   "What's the status of batch B-2024-089?",
-]
-
-const chatHistory = [
-  { id: "1", preview: "Logged 500 kg PET...", time: "2 hours ago", entries: 2, queries: 1, messages: [] },
-  { id: "2", preview: "Query: Weekly losses...", time: "Yesterday", entries: 0, queries: 3, messages: [] },
-  { id: "3", preview: "Batch status check...", time: "2 days ago", entries: 1, queries: 2, messages: [] },
-  { id: "4", preview: "Dispatch report...", time: "3 days ago", entries: 0, queries: 1, messages: [] },
-  { id: "5", preview: "Vendor delivery log...", time: "4 days ago", entries: 3, queries: 0, messages: [] },
 ]
 
 /**
@@ -128,21 +129,62 @@ export function ChatPanel() {
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null)
   const [connectionStatus, setConnectionStatus] = useState<"connected" | "disconnected" | "checking">("checking")
   const [chatHistoryReal, setChatHistoryReal] = useState<{ id: string; preview: string; time: string; entries: number; queries: number }[]>([])
+  const [isRecording, setIsRecording] = useState(false)
+  const [recordingDuration, setRecordingDuration] = useState(0)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+  const audioChunksRef = useRef<Blob[]>([])
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load real data on mount
-  useEffect(() => {
-    getRealChatHistory()
-      .then((data) => setChatHistoryReal(data))
-      .catch(() => {})
-  }, [])
+  const generateBatchId = () => {
+    const year = new Date().getFullYear()
+    const num = Math.floor(Math.random() * 900) + 100
+    return `B-${year}-${num}`
+  }
+
+  const getCurrentDate = () => {
+    return new Date().toISOString().split("T")[0]
+  }
+
+  const formatRelativeTime = (value?: string) => {
+    if (!value) return "Unknown"
+    const then = new Date(value)
+    if (Number.isNaN(then.getTime())) return "Unknown"
+    const diffMs = Date.now() - then.getTime()
+    const minutes = Math.floor(diffMs / 60000)
+    if (minutes < 1) return "Just now"
+    if (minutes < 60) return `${minutes} min ago`
+    const hours = Math.floor(minutes / 60)
+    if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`
+    const days = Math.floor(hours / 24)
+    return `${days} day${days > 1 ? "s" : ""} ago`
+  }
+
+  const loadSessionList = async () => {
+    try {
+      const result = await listChatSessions()
+      const sessions = ((result?.sessions || []) as ApiChatSession[]).map((s) => ({
+        id: s.session_id,
+        preview: (s.preview || "Chat session").trim(),
+        time: formatRelativeTime(s.last_updated),
+        entries: 0,
+        queries: 0,
+      }))
+      setChatHistoryReal(sessions)
+      setConnectionStatus("connected")
+    } catch {
+      setConnectionStatus("disconnected")
+      setChatHistoryReal([])
+    }
+  }
 
   // Initialize session ID on mount
   useEffect(() => {
     const sid = getSessionId()
     setSessionId(sid)
     loadChatHistory(sid)
+    loadSessionList()
   }, [])
 
   // Load chat history from backend
@@ -160,8 +202,10 @@ export function ChatPanel() {
         }))
         setMessages(loadedMessages)
       }
+      setConnectionStatus("connected")
     } catch (error) {
       console.error("Failed to load chat history:", error)
+      setConnectionStatus("disconnected")
     } finally {
       setIsLoadingHistory(false)
     }
@@ -179,6 +223,7 @@ export function ChatPanel() {
     clearSessionId()
     const newSid = getSessionId()
     setSessionId(newSid)
+    setActiveSessionId(newSid)
     setMessages([])
   }
 
@@ -187,6 +232,7 @@ export function ChatPanel() {
     try {
       await clearChatSession(sessionId)
       setMessages([])
+      await loadSessionList()
     } catch (error) {
       console.error("Failed to clear session:", error)
     }
@@ -483,13 +529,17 @@ export function ChatPanel() {
       timestamp: new Date(),
     }
 
-    const userText = input.trim()
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsTyping(true)
 
     try {
-      const response = await sendChatMessage(userMessageContent)
+      const response = await sendChatMessage(userMessageContent, sessionId)
+      setConnectionStatus("connected")
+      if (response?.session_id && response.session_id !== sessionId) {
+        setSessionId(response.session_id)
+        setActiveSessionId(response.session_id)
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -507,8 +557,10 @@ export function ChatPanel() {
         } : undefined,
       }
       setMessages((prev) => [...prev, aiMessage])
+      await loadSessionList()
     } catch (error: any) {
       console.error("Chat API error:", error)
+      setConnectionStatus("disconnected")
       
       const errorMsg = error instanceof Error ? error.message : "Unknown error"
       const statusCode = (error as APIError)?.status
@@ -542,17 +594,112 @@ export function ChatPanel() {
   const handleHistoryClick = (chat: { id: string; preview: string; time: string; entries: number; queries: number }) => {
     setActiveSessionId(chat.id)
     setSessionId(chat.id)
-    setMessages([{
-      id: "1",
+    void loadChatHistory(chat.id)
+  }
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: "audio/webm" })
+      mediaRecorderRef.current = mediaRecorder
+      audioChunksRef.current = []
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data)
+        }
+      }
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
+        stream.getTracks().forEach((track) => track.stop())
+        await sendAudioMessage(audioBlob)
+      }
+
+      mediaRecorder.start()
+      setIsRecording(true)
+      setRecordingDuration(0)
+
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration((prev) => prev + 1)
+      }, 1000)
+    } catch (error) {
+      console.error("Failed to start recording:", error)
+    }
+  }
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current)
+        recordingTimerRef.current = null
+      }
+    }
+  }
+
+  const sendAudioMessage = async (audioBlob: Blob) => {
+    const userMessageContent = `Voice message (${Math.round(recordingDuration)}s)`
+    const userMessage: Message = {
+      id: Date.now().toString(),
       role: "user",
-      content: "What is the status of this batch?",
+      content: userMessageContent,
       timestamp: new Date(),
-    }, {
-      id: "2",
-      role: "assistant",
-      content: `Loaded scenario: ${chat.id}. This shows real data from problem_statement_3 dataset.\n\nView the Sankey diagram for material flow visualization across all 6 scenarios.`,
-      timestamp: new Date(),
-    }])
+    }
+
+    setMessages((prev) => [...prev, userMessage])
+    setIsTyping(true)
+    setRecordingDuration(0)
+
+    try {
+      const response = await sendChatMessageWithAudio(
+        userMessageContent,
+        audioBlob,
+        "audio.webm",
+        sessionId
+      )
+      setConnectionStatus("connected")
+      if (response?.session_id && response.session_id !== sessionId) {
+        setSessionId(response.session_id)
+        setActiveSessionId(response.session_id)
+      }
+
+      const aiMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: response.reply || "Audio processed successfully.",
+        timestamp: new Date(),
+        pipelineData: response.structured_data ? {
+          intent: response.intent?.toUpperCase() || "VOICE",
+          confidence: 95,
+          rejectedIntents: [],
+          entities: [],
+          originalMessage: userMessageContent,
+          jsonOutput: response.structured_data,
+          savedRecords: [{ icon: "check", text: "Voice message processed via Whisper" }]
+        } : undefined,
+      }
+      setMessages((prev) => [...prev, aiMessage])
+      await loadSessionList()
+    } catch (error: any) {
+      console.error("Audio chat API error:", error)
+      setConnectionStatus("disconnected")
+      const errorMsg = error instanceof Error ? error.message : "Unknown error"
+      const statusCode = (error as APIError)?.status
+
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: statusCode === 401
+          ? "Authentication required. Please sign in to continue."
+          : `Sorry, there was an error processing your voice message: ${errorMsg}.`,
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
+    } finally {
+      setIsTyping(false)
+    }
   }
 
   const handleClearChat = async () => {
@@ -771,17 +918,36 @@ export function ChatPanel() {
                 </span>
               )}
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="text-muted-foreground hover:text-foreground"
-              title="Voice input coming soon"
-            >
-              <Mic className="w-5 h-5" />
-            </Button>
+            {isRecording ? (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={stopRecording}
+                className="text-red-500 hover:text-red-600 animate-pulse"
+                title="Stop recording"
+              >
+                <Square className="w-5 h-5" />
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={startRecording}
+                disabled={isTyping}
+                className="text-muted-foreground hover:text-foreground"
+                title="Record voice message"
+              >
+                <Mic className="w-5 h-5" />
+              </Button>
+            )}
+            {isRecording && (
+              <span className="text-red-500 text-xs font-mono animate-pulse">
+                {recordingDuration}s
+              </span>
+            )}
             <Button
               onClick={handleSend}
-              disabled={!input.trim() || isTyping}
+              disabled={!input.trim() || isTyping || isRecording}
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               <Send className="w-5 h-5" />

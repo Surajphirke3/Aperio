@@ -26,7 +26,11 @@ class EntryRepository:
                 "created_at": {"$gte": since.isoformat()},
                 "loss_kg": {"$exists": True, "$ne": None},
             })
-            return await cursor.to_list(length=200)
+            docs = await cursor.to_list(length=200)
+            for doc in docs:
+                if "_id" in doc:
+                    doc["id"] = str(doc.pop("_id"))
+            return docs
         except Exception as e:
             logger.warning(f"Mongo get_with_losses failed: {e}")
             return []
@@ -69,7 +73,11 @@ class EntryRepository:
     async def list_all(self, limit: int = 200) -> list[dict]:
         try:
             cursor = entries_col().find().sort("created_at", -1).limit(limit)
-            return await cursor.to_list(length=limit)
+            docs = await cursor.to_list(length=limit)
+            for doc in docs:
+                if "_id" in doc:
+                    doc["id"] = str(doc.pop("_id"))
+            return docs
         except Exception as e:
             logger.warning(f"Mongo list_all failed: {e}")
             return []
