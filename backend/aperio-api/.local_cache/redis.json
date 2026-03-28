@@ -51,20 +51,23 @@
     "chat:session:demo": [
       "{\"role\": \"assistant\", \"content\": \"Found 28 entries totalling 21660.0kg. Loss: 3.44%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T07:22:49.850075\", \"user_id\": \"anonymous\"}",
       "{\"role\": \"user\", \"content\": \"Show me stats\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T07:22:49.755368\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774496836066_ijwld7c": [
+      "{\"role\": \"assistant\", \"content\": \"Found 20 entries totalling 18160.0kg. Loss: 3.88%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T03:47:23.767920\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"How much material was dispatched last week?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:47:23.723261\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774496856870_q3h285r": [
+      "{\"role\": \"assistant\", \"content\": \"\\u2705 Logged: 500kg PET \\u2014 purchase recorded.\", \"intent\": \"purchase\", \"timestamp\": \"2026-03-26T03:52:51.583742\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"Received 500 kg PET from GreenCycle this morning\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:52:51.548873\", \"user_id\": \"anonymous\"}"
+    ],
+    "chat:session:session_1774497383154_2yrmum6": [
+      "{\"role\": \"assistant\", \"content\": \"Found 21 entries totalling 18660.0kg. Loss: 3.78%.\", \"intent\": \"query\", \"timestamp\": \"2026-03-26T03:56:28.907601\", \"user_id\": \"anonymous\"}",
+      "{\"role\": \"user\", \"content\": \"What's the status of batch B-2024-089?\", \"intent\": \"unknown\", \"timestamp\": \"2026-03-26T03:56:28.842630\", \"user_id\": \"anonymous\"}"
     ]
   },
   "expires_at": {
     "chat:session:session_1774493364475_yabq9f7": "2026-03-27T02:49:30.805722",
     "chat:session:session_1774493563264_ayetrap": "2026-03-27T02:53:06.792938",
-    "chat:session:session_1774494677010_wkj0rfq": "2026-03-27T03:11:49.558676",
-    "chat:session:session_1774502278756_agaokws": "2026-03-27T05:18:10.500721",
-    "chat:session:session_1774502329887_0himhmc": "2026-03-27T05:18:58.754786",
-    "chat:session:session_1774505683717_chftzsi": "2026-03-27T06:14:46.469450",
-    "chat:session:session_1774505763385_i7tuayf": "2026-03-27T06:16:09.364625",
-    "chat:session:session_1774506079290_aj2glgk": "2026-03-27T06:21:22.061274",
-    "chat:session:session_1774506865467_zaldfls": "2026-03-27T06:47:43.944319",
-    "chat:session:session_1774507795381_q5yjvtv": "2026-03-27T06:51:21.475594",
-    "chat:session:test123": "2026-03-27T07:20:36.924509",
-    "chat:session:demo": "2026-03-27T07:22:49.894858"
+    "chat:session:session_1774494677010_wkj0rfq": "2026-03-27T03:11:49.558676"
   }
 }

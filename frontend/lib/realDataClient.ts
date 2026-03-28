@@ -32,8 +32,8 @@ export async function getRealSankeyData() {
   const linksMap: Map<string, number> = new Map()
 
   for (let scn = 1; scn <= 6; scn++) {
-    const trans = await loadCSV(scen, "transaction_events.csv")
-    const transform = await loadCSV(scen, "inventory_transforms.csv")
+    const trans = await loadCSV(scn, "transaction_events.csv")
+    const transform = await loadCSV(scn, "inventory_transforms.csv")
 
     transform.slice(1).forEach((row) => {
       const mode = row[4]
@@ -91,7 +91,7 @@ export async function getRealChatHistory() {
   const history: { id: string; preview: string; time: string; entries: number; queries: number }[] = []
 
   for (let scn = 1; scn <= 6; scn++) {
-    const trans = await loadCSV(scen, "transaction_events.csv")
+    const trans = await loadCSV(scn, "transaction_events.csv")
     const transactions = trans.slice(1).filter((r) => r[6] === "APPROVED")
 
     if (transactions.length === 0) continue
@@ -128,7 +128,7 @@ export async function getRealDashboardStats() {
   const batchSet = new Set<string>()
 
   for (let scn = 1; scn <= 6; scn++) {
-    const trans = await loadCSV(scen, "transaction_events.csv")
+    const trans = await loadCSV(scn, "transaction_events.csv")
 
     trans.slice(1).forEach((row) => {
       const status = row[6]

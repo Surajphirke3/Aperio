@@ -18,7 +18,7 @@ import { LifecycleWorkflow } from "@/components/dashboard/lifecycle-workflow"
 import { DigitalReport } from "@/components/dashboard/digital-report"
 import { CompliancePanel } from "@/components/dashboard/compliance-panel"
 import { RoleSelectionModal } from "@/components/dashboard/role-selection-modal"
-import { anomalies } from "@/lib/mockData"
+import { anomalies, kpiData as mockKpi } from "@/lib/mockData"
 import { useDashboardStats } from "@/lib/hooks"
 import { useAuth } from "@/lib/auth-context"
 import { fetchFromAPI } from "@/lib/api"
@@ -55,6 +55,8 @@ export default function DashboardPage() {
   }, [])
 
   const currentAnomalies = liveAnomalies.length > 0 ? liveAnomalies : anomalies;
+  const currentKpi = kpiData || mockKpi;
+
   const { user } = useAuth()
   const router = useRouter()
   const role = user?.role || "customer"
@@ -172,8 +174,8 @@ export default function DashboardPage() {
           <AnomalyPanel anomalies={currentAnomalies.filter((a) => a.severity === "critical")} />
         )}
 
-        {/* Charts Row 1 — all roles get Sankey + Weekly */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Charts Row 1 — all roles get Sankey + Weekly side by side */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <MaterialFlowSankey />
           <WeeklyLineChart />
         </div>

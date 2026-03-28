@@ -1,233 +1,144 @@
 # Contributing to Aperio
 
-Thank you for your interest in contributing to Aperio! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Aperio! We welcome all kinds of contributions — bug reports, feature requests, documentation improvements, and code changes.
 
 ## Table of Contents
 
-- [Getting Started](#getting-started)
-- [Development Workflow](#development-workflow)
-- [Branch Naming Conventions](#branch-naming-conventions)
-- [Commit Message Guidelines](#commit-message-guidelines)
+- [Code of Conduct](#code-of-conduct)
+- [How to Report a Bug](#how-to-report-a-bug)
+- [How to Request a Feature](#how-to-request-a-feature)
+- [Development Setup](#development-setup)
 - [Pull Request Process](#pull-request-process)
-- [Code Style](#code-style)
-- [Reporting Issues](#reporting-issues)
+- [Coding Style](#coding-style)
+- [Commit Message Guidelines](#commit-message-guidelines)
 
 ---
 
-## Getting Started
+## Code of Conduct
 
-### 1. Fork the Repository
-
-Click the **Fork** button at the top right of the [Aperio repository](https://github.com/Surajphirke3/DIMENSITY_LABS_hn4).
-
-### 2. Clone Your Fork
-
-```bash
-git clone https://github.com/<your-username>/DIMENSITY_LABS_hn4.git
-cd DIMENSITY_LABS_hn4
-```
-
-### 3. Add the Upstream Remote
-
-```bash
-git remote add upstream https://github.com/Surajphirke3/DIMENSITY_LABS_hn4.git
-```
-
-### 4. Install Dependencies
-
-Follow the setup instructions in the [README.md](README.md#-getting-started) for each part of the project (backend, frontend, mobile).
-
-### 5. Create a Branch
-
-```bash
-git checkout -b feature/your-feature-name
-```
+Please be respectful and constructive in all interactions. We follow the [Contributor Covenant](https://www.contributor-covenant.org/version/2/1/code_of_conduct/).
 
 ---
 
-## Development Workflow
+## How to Report a Bug
 
-1. **Sync** your fork with upstream before starting work:
-   ```bash
-   git fetch upstream
-   git checkout main
-   git merge upstream/main
-   ```
-2. **Create** a feature branch from `main`.
-3. **Make** your changes with clear, focused commits.
-4. **Test** your changes locally.
-5. **Push** your branch and open a pull request.
+1. Check that the bug hasn't already been reported in the [Issues](https://github.com/Surajphirke3/Aperio/issues) tab.
+2. Open a new issue and include:
+   - A clear, descriptive title
+   - Steps to reproduce the behaviour
+   - Expected vs. actual behaviour
+   - Your environment (OS, Python version, Node version, browser, etc.)
+   - Relevant logs or screenshots
 
 ---
 
-## Branch Naming Conventions
+## How to Request a Feature
 
-Use the following prefixes for your branches:
-
-| Prefix | Use Case | Example |
-|---|---|---|
-| `feature/` | New feature | `feature/batch-export-csv` |
-| `fix/` | Bug fix | `fix/chat-session-timeout` |
-| `docs/` | Documentation changes | `docs/update-api-reference` |
-| `refactor/` | Code refactoring | `refactor/chat-memory-module` |
-| `test/` | Adding or updating tests | `test/chat-endpoint-integration` |
-| `chore/` | Maintenance tasks | `chore/update-dependencies` |
-| `hotfix/` | Critical production fix | `hotfix/cors-origin-crash` |
+Open a new issue with the `enhancement` label and describe:
+- The problem you are trying to solve
+- Your proposed solution
+- Any alternatives you considered
 
 ---
 
-## Commit Message Guidelines
+## Development Setup
 
-We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification.
+See the [Installation & Setup](README.md#installation--setup) section of the README for full setup instructions.
 
-### Format
-
-```
-<type>(<scope>): <short description>
-
-[optional body]
-
-[optional footer(s)]
-```
-
-### Types
-
-| Type | Description |
-|---|---|
-| `feat` | A new feature |
-| `fix` | A bug fix |
-| `docs` | Documentation only changes |
-| `style` | Code style changes (formatting, semicolons, etc.) |
-| `refactor` | Code change that neither fixes a bug nor adds a feature |
-| `perf` | Performance improvement |
-| `test` | Adding or correcting tests |
-| `chore` | Changes to build process or auxiliary tools |
-| `ci` | Changes to CI configuration |
-
-### Examples
+Quick summary:
 
 ```bash
-feat(chat): add voice input support with Whisper transcription
-fix(api): handle timeout in Featherless AI adapter
-docs(readme): add mobile app setup instructions
-refactor(memory): implement dual Redis+MongoDB storage
-test(chat): add integration tests for session management
-chore(deps): update FastAPI to 0.115.0
+# Backend
+cd backend/aperio-api
+cp .env.example .env   # fill in your API keys
+docker compose up --build
+
+# Frontend
+cd frontend
+npm install
+npm run dev
+
+# Mobile
+cd android
+npm install
+npm start
 ```
 
-### Rules
+### Running tests
 
-- Use the **imperative mood** in the subject line: "add feature" not "added feature"
-- Do **not** capitalize the first letter of the subject
-- Do **not** end the subject line with a period
-- Limit the subject line to **72 characters**
-- Use the body to explain **what** and **why**, not how
+```bash
+# Backend
+cd backend/aperio-api
+poetry run pytest
+
+# Frontend
+cd frontend
+npm run lint
+```
 
 ---
 
 ## Pull Request Process
 
-1. **Update** your branch with the latest `main`:
+1. Fork the repository and create your branch from `main`:
    ```bash
-   git fetch upstream
-   git rebase upstream/main
+   git checkout -b feature/your-feature-name
    ```
+2. Make your changes and add or update relevant tests.
+3. Ensure linting passes:
+   - Backend: `poetry run ruff check src/`
+   - Frontend: `npm run lint`
+4. Commit using [conventional commits](#commit-message-guidelines).
+5. Push your branch and open a Pull Request against `main`.
+6. Fill in the PR template, link related issues, and wait for a review.
 
-2. **Push** your branch:
-   ```bash
-   git push origin feature/your-feature-name
-   ```
-
-3. **Open a Pull Request** on GitHub against the `main` branch.
-
-4. **Fill out** the PR template completely, including:
-   - Description of changes
-   - Related issue number(s)
-   - Testing performed
-   - Screenshots (if UI changes)
-
-5. **Request a review** from at least one maintainer.
-
-6. **Address** any review feedback promptly.
-
-7. Once approved, a maintainer will **merge** your PR.
-
-### PR Checklist
-
-- [ ] Code follows the project's style guidelines
-- [ ] Self-review of code performed
-- [ ] Changes are tested locally
-- [ ] Documentation updated (if applicable)
-- [ ] No new warnings or errors introduced
-- [ ] Commit messages follow conventional commits
+PRs are merged once they have at least one approving review and all CI checks pass.
 
 ---
 
-## Code Style
+## Coding Style
 
-### Python (Backend)
+### Python (backend)
+- Follow [PEP 8](https://peps.python.org/pep-0008/).
+- Use [Ruff](https://docs.astral.sh/ruff/) for linting and formatting.
+- Type-annotate all public functions and class attributes using Python 3.11+ syntax.
+- Use Pydantic models for all API request/response schemas.
 
-- Follow [PEP 8](https://peps.python.org/pep-0008/) style guide
-- Use type hints for function parameters and return values
-- Use `async`/`await` for all I/O operations
-- Use `logging` module instead of `print()` statements
-- Docstrings for public functions and classes
+### TypeScript / JavaScript (frontend & mobile)
+- Follow the existing ESLint configuration.
+- Use TypeScript strict mode — avoid `any`.
+- Prefer functional React components and hooks.
+- Use Zod for runtime schema validation.
 
-### TypeScript/JavaScript (Frontend & Mobile)
+---
 
-- Use **TypeScript** for all new files
-- Use **functional components** with hooks
-- Follow the existing project structure and naming conventions
-- Use `const` over `let`; avoid `var`
-- Prefer named exports over default exports (except page components)
+## Commit Message Guidelines
 
-### General
+We use [Conventional Commits](https://www.conventionalcommits.org/):
 
-- No hardcoded secrets or API keys — use environment variables
-- Keep functions small and focused (single responsibility)
-- Write meaningful variable and function names
-- Remove unused imports and dead code
+```
+<type>(<scope>): <short summary>
+```
 
-### Linting
+Common types:
 
-```bash
-# Frontend
-cd frontend && npm run lint
+| Type | When to use |
+|---|---|
+| `feat` | A new feature |
+| `fix` | A bug fix |
+| `docs` | Documentation only |
+| `style` | Formatting, missing semicolons, etc. |
+| `refactor` | Code restructure without behaviour change |
+| `test` | Adding or updating tests |
+| `chore` | Build scripts, CI, dependency updates |
 
-# Backend (if configured)
-cd backend/aperio-api && python -m flake8 src/
+Examples:
+```
+feat(chat): add voice-to-text batch logging
+fix(api): handle missing vendor gracefully in batch endpoint
+docs(readme): add screenshots section
 ```
 
 ---
 
-## Reporting Issues
-
-### Before Reporting
-
-1. **Search** existing issues to avoid duplicates
-2. **Check** the [README](README.md) and documentation for answers
-3. **Try** reproducing the issue with the latest `main` branch
-
-### How to Report
-
-Use our [issue templates](.github/ISSUE_TEMPLATE/) to file:
-
-- **Bug Report** — something is broken or behaving unexpectedly
-- **Feature Request** — suggest a new feature or improvement
-
-### What to Include
-
-- **Clear title** describing the issue
-- **Steps to reproduce** (for bugs)
-- **Expected vs. actual behavior**
-- **Environment details** (OS, Node.js version, Python version, browser)
-- **Screenshots or logs** if applicable
-- **Minimal reproduction** if possible
-
----
-
-## Questions?
-
-If you have questions about contributing, feel free to open a [Discussion](https://github.com/Surajphirke3/DIMENSITY_LABS_hn4/discussions) or reach out to the maintainers.
-
-Thank you for helping make Aperio better!
+Thank you for helping make Aperio better! 🌱
