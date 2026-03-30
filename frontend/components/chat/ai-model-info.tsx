@@ -40,10 +40,10 @@ export function AIModelInfo({ autoCollapse = true, collapseDelay = 5000 }: AIMod
                 </div>
                 <div>
                   <p className="text-tf-text-primary font-medium">
-                    AI Model: meta-llama/Llama-3.2-3B-Instruct
+                    AI Model: qwen3.5:cloud
                   </p>
                   <p className="text-tf-text-muted text-sm">
-                    via Featherless AI (serverless inference)
+                    via Local Ollama Cloud (inference)
                   </p>
                 </div>
               </div>
@@ -92,7 +92,7 @@ export function AIModelInfo({ autoCollapse = true, collapseDelay = 5000 }: AIMod
             )}
           >
             <span className="w-2 h-2 rounded-full bg-tf-accent-green animate-pulse" />
-            <span className="font-mono text-xs">Llama-3.2-3B</span>
+            <span className="font-mono text-xs">qwen3.5:cloud</span>
             <ChevronDown className="w-3 h-3" />
           </motion.button>
         )}

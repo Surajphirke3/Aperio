@@ -35,33 +35,33 @@ class FeatherlessAdapter:
         temperature: float | None = None,
     ) -> AIResponse:
         
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=60.0) as client:
             try:
+                # Redirecting strictly to Local Ollama Cloud
                 resp = await client.post(
-                    "https://api.groq.com/openai/v1/chat/completions",
+                    "http://127.0.0.1:11434/api/chat",
                     headers={
-                        "Authorization": f"Bearer {settings.groq_api_key}",
                         "Content-Type": "application/json",
                     },
                     json={
-                        "model": "llama-3.3-70b-versatile",
-                        "max_tokens": max_tokens or settings.model_max_tokens,
-                        "temperature": temperature or settings.model_temperature,
+                        "model": "qwen3.5:cloud", # Native Ollama tag
                         "messages": [
                             {"role": "system", "content": system_prompt},
                             {"role": "user", "content": prompt},
                         ],
+                        "stream": False
                     },
                 )
                 resp.raise_for_status()
                 d = resp.json()
                 return AIResponse(
-                    content=d["choices"][0]["message"]["content"],
-                    model="llama-3.3-70b-versatile",
-                    tokens_used=d.get("usage", {}).get("total_tokens", 0),
+                    content=d["message"]["content"],
+                    model="ollama-local",
+                    tokens_used=d.get("eval_count", 0),
                 )
             except Exception as e:
-                logger.error(f"Groq API fallback failed: {e}")
+                logger.error(f"Local Ollama Server failed: {e}")
+                # Ensure Ollama is running (`ollama serve`) and model is pulled (`ollama pull llama3.2`)
                 raise RuntimeError(f"Both primary AI and fallback failed: {str(e)}")
 
         raise RuntimeError("Unexpected end of completion function")

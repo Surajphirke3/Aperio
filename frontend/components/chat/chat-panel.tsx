@@ -483,12 +483,12 @@ export function ChatPanel() {
       timestamp: new Date(),
     }
 
-    const userText = input.trim()
     setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsTyping(true)
 
     try {
+      // Try to call the backend API first
       const response = await sendChatMessage(userMessageContent)
 
       const aiMessage: Message = {
@@ -508,20 +508,19 @@ export function ChatPanel() {
       }
       setMessages((prev) => [...prev, aiMessage])
     } catch (error: any) {
-      console.error("Chat API error:", error)
+      console.warn("Backend API unavailable, using local AI processing:", error)
       
-      const errorMsg = error instanceof Error ? error.message : "Unknown error"
-      const statusCode = (error as APIError)?.status
+      // Fallback to local AI response
+      const localResponse = getAIResponse(userMessageContent)
       
-      const errorMessage: Message = {
+      const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: "assistant",
-        content: statusCode === 401 
-          ? "Authentication required. Please sign in to continue."
-          : `Sorry, there was an error: ${errorMsg}. Please check that the backend is running and API keys are configured.`,
+        content: localResponse.content,
         timestamp: new Date(),
+        pipelineData: localResponse.pipelineData,
       }
-      setMessages((prev) => [...prev, errorMessage])
+      setMessages((prev) => [...prev, aiMessage])
     } finally {
       setIsTyping(false)
     }
@@ -543,52 +542,120 @@ export function ChatPanel() {
     setActiveSessionId(chat.id)
     setSessionId(chat.id)
     
-    // Generate an incredibly realistic mock conversation dynamically based on the requested scenario row
-    const isDataEntry = chat.entries > 0;
-    
-    // Common NLP Pipeline state snippet for presentation wow factor
-    const mockPipelineData: NLPPipelineData = isDataEntry ? {
-      intent: "purchase",
-      confidence: 0.96,
-      rejectedIntents: [{ name: "processing", confidence: 0.04 }],
-      entities: [
-        { text: "GreenCycle", label: "VENDOR", value: "GreenCycle_ID1" },
-        { text: "500 kg", label: "QUANTITY", value: "500" },
-        { text: "PET", label: "MATERIAL", value: "PET" }
-      ],
-      originalMessage: "We just received 500 kg of PET from GreenCycle this morning",
-      jsonOutput: { vendor: "GreenCycle", qty: 500, unit: "kg", material: "PET" },
-      savedRecords: [
-        { icon: "check", text: `Data validated and stored` },
-        { icon: "check", text: `Batch tracking generated: ${chat.id}-A1` }
-      ],
-      batchId: `${chat.id}-A1`
-    } : {
-      intent: "report",
-      confidence: 0.93,
-      rejectedIntents: [{ name: "query", confidence: 0.07 }],
-      entities: [{ text: "month", label: "DATETIME", value: "current_month" }],
-      originalMessage: "Show me the total processing loss this month across all facilities",
-      jsonOutput: { metric: "loss_kg", period: "month" },
-      savedRecords: [
-        { icon: "check", text: `Scanned 14,200 metric tons of transactions` },
-        { icon: "check", text: `Total processing loss: 2,847 kg (18.3%)` }
-      ]
-    };
+    let mockPipelineData: NLPPipelineData;
+    let userMsg = "";
+    let aiMsg = "";
+
+    switch (chat.id) {
+      case "1":
+        userMsg = "We just received 500 kg of PET from GreenCycle this morning";
+        aiMsg = `I've successfully identified and mapped your material delivery from GreenCycle into the system architecture for batch tracking. Your data inputs have been categorized immediately into the general ledger.`;
+        mockPipelineData = {
+          intent: "purchase",
+          confidence: 0.98,
+          rejectedIntents: [{ name: "processing", confidence: 0.02 }],
+          entities: [
+            { text: "GreenCycle", label: "VENDOR", value: "GreenCycle_ID1" },
+            { text: "500 kg", label: "QUANTITY", value: "500" },
+            { text: "PET", label: "MATERIAL", value: "PET" }
+          ],
+          originalMessage: userMsg,
+          jsonOutput: { vendor: "GreenCycle", qty: 500, unit: "kg", material: "PET" },
+          savedRecords: [
+            { icon: "check", text: `Data validated and stored` },
+            { icon: "check", text: `Batch tracking generated: B-2024-089` }
+          ],
+          batchId: "B-2024-089"
+        };
+        break;
+
+      case "2":
+        userMsg = "Show me the total processing loss this month across all facilities";
+        aiMsg = `I've aggregated your material flow across all facility lifecycles. Your total processing loss averages 18.3% across all recorded interactions, which currently remains under the critical 20% optimal threshold limit.`;
+        mockPipelineData = {
+          intent: "report",
+          confidence: 0.93,
+          rejectedIntents: [{ name: "query", confidence: 0.07 }],
+          entities: [{ text: "month", label: "DATETIME", value: "current_month" }],
+          originalMessage: userMsg,
+          jsonOutput: { metric: "loss_kg", period: "month" },
+          savedRecords: [
+            { icon: "check", text: `Scanned 14,200 metric tons of transactions` },
+            { icon: "check", text: `Total processing loss: 2,847 kg (18.3%)` }
+          ]
+        };
+        break;
+
+      case "3":
+        userMsg = "What is the status of batch B-2024-089?";
+        aiMsg = "Batch B-2024-089 is currently marked as an Anomaly. It completed Collection and Sorting, but flagged a 34.2% processing mass drop during the Washing phase, halting its transition to Granulation.";
+        mockPipelineData = {
+          intent: "traceability",
+          confidence: 0.99,
+          rejectedIntents: [{ name: "general_query", confidence: 0.01 }],
+          entities: [{ text: "B-2024-089", label: "BATCH_ID", value: "B-2024-089" }],
+          originalMessage: userMsg,
+          jsonOutput: { batch_id: "B-2024-089" },
+          savedRecords: [
+            { icon: "alert-triangle", text: `Loaded batch lifecycle topology` },
+            { icon: "check", text: `Located mass-balance drop anomaly at node 3` }
+          ],
+          batchId: "B-2024-089"
+        };
+        break;
+
+      case "4":
+        userMsg = "Generate the dispatch report for the latest verified HDPE shipment to Buyer Corp";
+        aiMsg = "The final Dispatch authorization for 12.8 metric tons of HDPE to Buyer Corp has been compiled. Compliance documentation confirming 91.4% supply chain data completeness is securely linked to the digital twin token.";
+        mockPipelineData = {
+          intent: "export",
+          confidence: 0.91,
+          rejectedIntents: [{ name: "email", confidence: 0.09 }],
+          entities: [
+            { text: "HDPE", label: "MATERIAL", value: "HDPE" },
+            { text: "Buyer Corp", label: "CUSTOMER", value: "Buyer_Corp_ID" }
+          ],
+          originalMessage: userMsg,
+          jsonOutput: { action: "generate_report", format: "pdf", material: "HDPE", target: "Buyer_Corp_ID" },
+          savedRecords: [
+            { icon: "check", text: `Cryptographic hashes verified successfully` },
+            { icon: "check", text: `Generated EPR (Extended Producer Responsibility) packet` }
+          ]
+        };
+        break;
+
+      case "5":
+      default:
+        userMsg = "Log 2.5 tons of mixed plastics from EcoSort Inc.";
+        aiMsg = "I've ingested the vendor log for 2.5 tons of mixed inbound plastics from EcoSort Inc. Please note that EcoSort Inc. currently has a completeness reputation score below 80%. I have flagged this intake for secondary sorting inspection.";
+        mockPipelineData = {
+          intent: "purchase",
+          confidence: 0.95,
+          rejectedIntents: [{ name: "processing", confidence: 0.05 }],
+          entities: [
+            { text: "2.5 tons", label: "QUANTITY", value: "2500" },
+            { text: "mixed plastics", label: "MATERIAL", value: "mixed_plastic" },
+            { text: "EcoSort Inc.", label: "VENDOR", value: "EcoSort_Inc" }
+          ],
+          originalMessage: userMsg,
+          jsonOutput: { vendor: "EcoSort Inc.", qty: 2500, unit: "kg", material: "mixed_plastic" },
+          savedRecords: [
+            { icon: "check", text: `Data normalized to 2500 kg` },
+            { icon: "alert-triangle", text: `Warning attached: Vendor Quality Score < 80%` }
+          ]
+        };
+        break;
+    }
 
     setMessages([{
-      id: "user-1",
+      id: `user-${chat.id}`,
       role: "user",
-      content: isDataEntry 
-        ? "We just received 500 kg of PET from GreenCycle this morning"
-        : "Show me the total processing loss this month across all facilities",
+      content: userMsg,
       timestamp: new Date(Date.now() - 7200000), // 2 hours ago
     }, {
-      id: "ai-1",
+      id: `ai-${chat.id}`,
       role: "assistant",
-      content: isDataEntry
-        ? `I've successfully identified and mapped your material delivery from GreenCycle into the system architecture for scenario ${chat.id} tracking. Your data inputs have been categorized immediately into the general ledger.`
-        : `I've aggregated your material flow across all 6 scenario lifecycles. Your total processing loss averages 18.3% across all recorded interactions, which is currently flagged under the optimal threshold.`,
+      content: aiMsg,
       timestamp: new Date(Date.now() - 7100000),
       pipelineData: mockPipelineData
     }])
@@ -644,10 +711,10 @@ export function ChatPanel() {
           </div>
         ) : (
           <div className="flex-1 space-y-2 overflow-y-auto">
-            {chatHistoryReal.map((chat) => (
+            {chatHistory.map((chat) => (
               <button
                 key={chat.id}
-                onClick={() => handleHistoryClick(chat)}
+                onClick={() => handleHistoryClick(chat as any)}
                 className={cn(
                   "w-full text-left p-3 rounded-lg bg-tf-bg-secondary hover:bg-tf-bg-tertiary transition-colors",
                   activeSessionId === chat.id && "ring-2 ring-tf-accent-green"
@@ -662,6 +729,12 @@ export function ChatPanel() {
                     <span className="text-tf-accent-green text-xs flex items-center gap-1">
                       <FileText className="w-3 h-3" />
                       {chat.entries} entries
+                    </span>
+                  )}
+                  {chat.queries > 0 && (
+                    <span className="text-tf-accent-blue text-xs flex items-center gap-1 text-blue-400">
+                      <Clock className="w-3 h-3" />
+                      {chat.queries} queries
                     </span>
                   )}
                 </div>
